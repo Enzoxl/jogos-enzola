@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Jogos Enzola</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: cabeçalho azul-marinho fixo, abas, conteúdo em largura de leitura; catálogo em linhas, galeria em pôsteres 2:3, tier list em faixas. */
+:root{
+  --navy:#14213D; --bg:#E3EAF5; --surface:#F8FAFD; --tile:#EEF3FA; --soft:#D7E3F4;
+  --fg:#1F2937; --muted:#64748B; --line:#D3DDEC; --accent:#2F5FA8; --accent-fg:#fff;
+  --fin:#2E8B6A; --fin-bg:#DDF1E9; --play:#B87A10; --play-bg:#FBEBC8; --todo:#4B6B9E; --todo-bg:#DCE6F5; --nobuy:#B14A47; --nobuy-bg:#F6DEDD;
+  --shadow:0 1px 2px rgba(20,33,61,.08),0 6px 18px rgba(20,33,61,.06);
+  --f-head:"Space Grotesk",system-ui,sans-serif; --f-body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --navy:#0B1223; --bg:#0E1524; --surface:#16213A; --tile:#1B2848; --soft:#243556;
+  --fg:#E6ECF7; --muted:#93A3BF; --line:#2A3A5C; --accent:#7FA8E8; --accent-fg:#0B1223;
+  --fin:#5FD0A5; --fin-bg:#173A33; --play:#F0B84F; --play-bg:#40330F; --todo:#8FB0E6; --todo-bg:#1F3157; --nobuy:#F08C88; --nobuy-bg:#43201F;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.25); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --navy:#0B1223; --bg:#0E1524; --surface:#16213A; --tile:#1B2848; --soft:#243556;
+  --fg:#E6ECF7; --muted:#93A3BF; --line:#2A3A5C; --accent:#7FA8E8; --accent-fg:#0B1223;
+  --fin:#5FD0A5; --fin-bg:#173A33; --play:#F0B84F; --play-bg:#40330F; --todo:#8FB0E6; --todo-bg:#1F3157; --nobuy:#F08C88; --nobuy-bg:#43201F;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.25); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.45;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+.wrap{max-width:1040px;margin:0 auto}
+header.top{background:var(--navy);color:#fff;margin-inline:calc(-1 * max(16px,env(safe-area-inset-left,0px))) calc(-1 * max(16px,env(safe-area-inset-right,0px)));padding:18px max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px))}
+header.top .in{max-width:1040px;margin:0 auto}
+h1{font:700 24px/1.1 var(--f-head);margin:0;letter-spacing:-.01em}
+.sub{color:#B8C6E0;font-size:13px;margin-top:4px}
+nav.tabs{display:flex;gap:4px;margin-top:14px;overflow-x:auto}
+nav.tabs button{background:none;border:0;color:#B8C6E0;font:500 14px var(--f-body);padding:10px 14px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:#fff;border-bottom-color:#9CC0F5}
+nav.tabs button:focus-visible,.btn:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{padding-top:20px}
+section[hidden]{display:none}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px}
+.bar .grow{flex:1 1 200px;min-width:0}
+input[type=search],input[type=text],input[type=number],select,textarea{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+textarea{width:100%;resize:vertical}
+.btn{font:600 13px var(--f-body);background:var(--accent);color:var(--accent-fg);border:0;border-radius:8px;padding:9px 14px;cursor:pointer}
+.btn.ghost{background:var(--tile);color:var(--fg);border:1px solid var(--line)}
+.btn.sm{padding:6px 10px;font-size:12px}
+.btn[disabled]{opacity:.5;cursor:default}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:500 12px var(--f-body);background:var(--surface);color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:5px 11px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+/* catálogo */
+.row{display:grid;grid-template-columns:36px 44px minmax(0,1fr) 140px 130px 54px 36px;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row.head{font:600 11px var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--navy);border-radius:12px 12px 0 0;border-bottom:0}
+.num{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12px}
+.nm{font-weight:600;overflow-wrap:anywhere}
+.meta{color:var(--muted);font-size:12px}
+.mini{width:44px;aspect-ratio:2/3;border-radius:5px;overflow:hidden;background:var(--soft)}
+.row select{width:100%;font-size:13px;padding:6px 8px}
+.rate{font:700 14px var(--f-head);text-align:center;font-variant-numeric:tabular-nums}
+.st-Finalizado{background:var(--fin-bg);color:var(--fin)} .st-Jogando{background:var(--play-bg);color:var(--play)}
+.st-Nao-iniciado{background:var(--todo-bg);color:var(--todo)} .st-Nao-comprado{background:var(--nobuy-bg);color:var(--nobuy)}
+.row select.stsel{font-weight:600;border-color:transparent}
+.iconbtn{background:none;border:0;color:var(--muted);cursor:pointer;font-size:16px;padding:6px;border-radius:6px}
+.iconbtn:hover{background:var(--tile);color:var(--fg)}
+@media (max-width:760px){
+  .row.head{display:none}
+  .row{grid-template-columns:44px minmax(0,1fr) 36px;grid-template-areas:"c n e" "c s s" "x r r"}
+  .row>.num{display:none}
+  .row>.mini{grid-area:c;align-self:start}
+  .row>.nmbox{grid-area:n}
+  .row>.stbox{grid-area:s}
+  .row>.exbox{grid-area:x;grid-column:1/3}
+  .row>.rate{grid-area:r;text-align:right}
+  .row>.iconbtn{grid-area:e}
+  .row{grid-template-areas:"c n e" "c s s" "c x r"}
+  .row>.exbox{grid-column:auto}
+}
+/* capa */
+.cover{width:100%;height:100%;display:flex;align-items:flex-end;padding:8%;color:#fff;font:700 clamp(9px,1.6vw,13px)/1.15 var(--f-head);overflow-wrap:anywhere;text-shadow:0 1px 3px rgba(0,0,0,.45)}
+.mini .cover{font-size:7px;padding:4px}
+.cover-img{width:100%;height:100%;object-fit:cover;display:block}
+/* galeria */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:var(--shadow);cursor:pointer;min-width:0;text-align:left;font:inherit;color:inherit;display:block;width:100%}
+.card .poster{aspect-ratio:2/3;border-radius:7px;overflow:hidden;background:var(--soft);max-width:100%}
+.card .t{font-weight:600;margin-top:8px;font-size:13px;overflow-wrap:anywhere}
+.card .b{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:6px}
+.badge{font:600 11px var(--f-body);border-radius:999px;padding:3px 9px;white-space:nowrap}
+/* tier */
+.tier{display:grid;grid-template-columns:72px minmax(0,1fr);margin-bottom:8px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}
+.tier .lab{display:flex;align-items:center;justify-content:center;font:700 28px var(--f-head);color:#14213D}
+.zone{display:flex;flex-wrap:wrap;gap:6px;padding:8px;min-height:104px;align-content:flex-start}
+.zone.over{background:var(--tile);outline:2px dashed var(--accent);outline-offset:-4px}
+.tc{width:56px;aspect-ratio:2/3;border-radius:6px;overflow:hidden;background:var(--soft);cursor:grab;border:2px solid transparent;flex:none;padding:0;position:relative}
+.tc[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.tc .cover{font-size:7px;padding:4px}
+.pool{margin-top:18px}
+.pool h3{font:700 15px var(--f-head);margin:0 0 8px}
+.hint{color:var(--muted);font-size:12px;margin:6px 0 10px}
+/* resumo */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+.tilec{padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--surface)}
+.tilec .k{font:600 11px var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.tilec .v{font:700 30px var(--f-head);margin-top:2px;font-variant-numeric:tabular-nums}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.two>.panel{padding:16px;min-width:0}
+h2{font:700 16px var(--f-head);margin:0 0 12px}
+.donutw{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.donut{width:150px;height:150px;border-radius:50%;position:relative;flex:none}
+.donut::after{content:"";position:absolute;inset:26px;background:var(--surface);border-radius:50%}
+.legend{display:grid;gap:6px;font-size:13px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:8px}
+.bars{display:grid;gap:8px}
+.br{display:grid;grid-template-columns:86px minmax(0,1fr) 28px;gap:8px;align-items:center;font-size:13px}
+.br .tr{height:14px;background:var(--tile);border-radius:7px;overflow:hidden}
+.br .fl{height:100%;border-radius:7px}
+.sug{display:grid;gap:8px;margin-top:10px}
+.sug .it{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--tile)}
+/* modal */
+.ov{position:fixed;inset:0;background:rgba(8,14,28,.55);display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow:auto;z-index:20}
+.modal{background:var(--surface);color:var(--fg);border-radius:14px;max-width:560px;width:100%;padding:20px;box-shadow:var(--shadow)}
+.modal h2{font-size:18px}
+.f{display:grid;gap:12px}
+.f label{display:grid;gap:4px;font-size:12px;font-weight:600;color:var(--muted)}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.acts{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}
+.coverrow{display:flex;gap:12px;align-items:center}
+.coverrow .mini{width:60px}
+.empty{padding:36px 20px;text-align:center;color:var(--muted)}
+.empty b{display:block;color:var(--fg);font:700 16px var(--f-head);margin-bottom:6px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;z-index:30;max-width:90vw}
+.theme{position:absolute;right:0;top:0}
+@media (prefers-reduced-motion:no-preference){.card{transition:transform .12s}.card:hover{transform:translateY(-2px)}}
+</style></head><body>
+<style>body{margin:0}[hidden]{display:none!important}</style>
+
+<header class="top"><div class="in" style="position:relative">
+  <h1>Jogos Enzola</h1>
+  <div class="sub" id="sub">Nossa biblioteca de jogos</div>
+  <button class="btn ghost sm theme" id="logout" hidden>Sair</button>
+  <nav class="tabs" role="tablist" aria-label="Seções">
+    <button role="tab" data-tab="catalogo">Catálogo</button>
+    <button role="tab" data-tab="galeria">Galeria</button>
+    <button role="tab" data-tab="tier">Tier List</button>
+    <button role="tab" data-tab="resumo">Resumo</button>
+  </nav>
+</div></header>
+
+<div class="wrap" id="app"><main>
+  <section id="catalogo">
+    <div class="bar">
+      <input type="search" id="q" class="grow" placeholder="Buscar jogo…" aria-label="Buscar jogo">
+      <select id="sort" aria-label="Ordenar">
+        <option value="n">Ordem da lista</option><option value="name">Nome (A–Z)</option><option value="rating">Maior nota</option><option value="exp">Melhor experiência</option>
+      </select>
+      <button class="btn" id="add">+ Adicionar jogo</button>
+    </div>
+    <div class="chips" id="fchips" style="margin-bottom:14px"></div>
+    <div class="panel" id="list"></div>
+  </section>
+
+  <section id="galeria" hidden>
+    <div class="chips" id="gchips" style="margin-bottom:14px"></div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section id="tier" hidden>
+    <div class="hint">Arraste um jogo para uma linha (no celular: toque no jogo e depois toque na linha). Toque em “Tirar da tier” para devolver.</div>
+    <div id="tiers"></div>
+    <div class="pool">
+      <h3>Jogos para classificar</h3>
+      <div class="chips" id="tchips" style="margin-bottom:10px"></div>
+      <div class="panel zone" id="pool" data-tier=""></div>
+    </div>
+  </section>
+
+  <section id="resumo" hidden></section>
+</main></div>
+
+<div id="auth" class="ov" hidden><div class="modal" style="margin-top:8vh"><h2>Jogos Enzola</h2><p class="meta" style="margin:0 0 14px">Entre com seu usuário e senha, ou crie uma conta nova.</p>
+<div class="f"><label>Usuário<input type="text" id="a-email" autocomplete="username" autocapitalize="none" spellcheck="false"></label><label>Senha<input type="password" id="a-pass" autocomplete="current-password" style="font:inherit;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0"></label></div>
+<div class="meta" id="auth-msg" style="margin-top:10px;min-height:18px"></div>
+<div class="acts"><button class="btn ghost" id="a-signup">Criar conta</button><button class="btn" id="a-login">Entrar</button></div></div></div>
+<div id="modal"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script>
+const CFG=window.APP_CONFIG||{};
+const STATUS=["Finalizado","Jogando","Não iniciado","Não comprado"];
+const EXPS=["Perfeito","Ótimo","Muito bom","Bom","Ok","Meh","Chumbos"];
+const EXPCOL={"Perfeito":"#2E8B6A","Ótimo":"#4C9F7A","Muito bom":"#6FA8DC","Bom":"#4B6B9E","Ok":"#C9A227","Meh":"#D98A3D","Chumbos":"#B14A47"};
+const TIERS=[["S","#F28B82"],["A","#F6B26B"],["B","#F5DC78"],["C","#A8D5A2"],["D","#9CC0F5"]];
+const PLATS=["PC","PlayStation","Xbox","Switch","Outro"];
+const sk=s=>s.replace("ã","a").replace(/ /g,"-");
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $=s=>document.querySelector(s);
+
+let sb=null,user=null,games=[],loaded=false;
+let tab="catalogo",fStatus="",gStatus="",tStatus="played",selected=null;
+let found=[];
+
+function toast(m){const t=$("#toast");t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,3500)}
+function hue(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))%360;return h}
+function coverHTML(g){
+  if(g.cover_url)return `<img class="cover-img" alt="" referrerpolicy="no-referrer" src="${esc(g.cover_url)}" loading="lazy">`;
+  const h=hue(g.name||"");
+  return `<div class="cover" style="background:linear-gradient(160deg,hsl(${h} 45% 38%),hsl(${(h+40)%360} 50% 20%))">${esc(g.name)}</div>`;
+}
+const stClass=s=>"st-"+sk(s||"Não iniciado");
+const rateTxt=g=>g.rating==null||g.rating===""?"—":Number(g.rating).toFixed(1).replace(".0","");
+
+/* ---------- dados (Supabase) ---------- */
+async function loadGames(){
+  const {data,error}=await sb.from("games").select("*").order("n",{ascending:true});
+  if(error){toast("Não foi possível carregar os jogos.");return}
+  games=data;loaded=true;render();
+}
+async function save(id,patch){
+  const g=games.find(x=>x.id===id);if(g)Object.assign(g,patch);render();
+  const {error}=await sb.from("games").update(patch).eq("id",id);
+  if(error){toast("Erro ao salvar. Recarregando…");loadGames()}
+}
+async function create(data){
+  const n=games.reduce((m,g)=>Math.max(m,g.n||0),0)+1;
+  const row={n,name:"",status:"Não iniciado",exp:"",...data};
+  const {data:ins,error}=await sb.from("games").insert(row).select().single();
+  if(error){toast("Erro ao adicionar o jogo.");return false}
+  games.push(ins);render();return true;
+}
+async function removeGame(id){
+  const {error}=await sb.from("games").delete().eq("id",id);
+  if(error){toast("Erro ao remover.");return}
+  games=games.filter(g=>g.id!==id);render();
+}
+
+/* ---------- filtros ---------- */
+function chipsHTML(cur,prefix){
+  const items=[["","Todos"],...STATUS.map(s=>[s,s])];
+  return items.map(([v,l])=>{const c=v?games.filter(g=>g.status===v).length:games.length;return `<button class="chip" data-${prefix}="${esc(v)}" aria-pressed="${cur===v}">${esc(l)} · ${c}</button>`}).join("");
+}
+function sorted(list,mode){
+  const a=[...list];
+  if(mode==="name")a.sort((x,y)=>x.name.localeCompare(y.name,"pt"));
+  else if(mode==="rating")a.sort((x,y)=>(y.rating??-1)-(x.rating??-1));
+  else if(mode==="exp")a.sort((x,y)=>{const i=v=>EXPS.indexOf(v)<0?99:EXPS.indexOf(v);return i(x.exp)-i(y.exp)});
+  else a.sort((x,y)=>(x.n||0)-(y.n||0));
+  return a;
+}
+
+/* ---------- catálogo ---------- */
+function renderCatalog(){
+  $("#fchips").innerHTML=chipsHTML(fStatus,"f");
+  const q=$("#q").value.trim().toLowerCase();
+  let list=games.filter(g=>(!fStatus||g.status===fStatus)&&(!q||g.name.toLowerCase().includes(q)));
+  list=sorted(list,$("#sort").value);
+  const box=$("#list");
+  if(!loaded){box.innerHTML=`<div class="empty"><b>Carregando sua biblioteca…</b></div>`;return}
+  if(!games.length){box.innerHTML=`<div class="empty"><b>Nenhum jogo ainda</b>Toque em “Adicionar jogo” para cadastrar o primeiro.</div>`;return}
+  if(!list.length){box.innerHTML=`<div class="empty"><b>Nada encontrado</b>Tente outro nome ou filtro.</div>`;return}
+  box.innerHTML=`<div class="row head"><span>Nº</span><span></span><span>Jogo</span><span>Status</span><span>Experiência</span><span style="text-align:center">Nota</span><span></span></div>`+
+  list.map(g=>`<div class="row" data-id="${g.id}">
+    <span class="num">${g.n??""}</span>
+    <div class="mini">${coverHTML(g)}</div>
+    <div class="nmbox" style="min-width:0"><div class="nm">${esc(g.name)}</div><div class="meta">${[g.platform,g.genre,g.year].filter(Boolean).map(esc).join(" · ")}${g.notes?(g.platform||g.genre||g.year?" · ":"")+esc(g.notes):""}</div></div>
+    <div class="stbox"><select class="stsel ${stClass(g.status)}" data-f="status" aria-label="Status de ${esc(g.name)}">${STATUS.map(s=>`<option${s===g.status?" selected":""}>${s}</option>`).join("")}</select></div>
+    <div class="exbox"><select data-f="exp" aria-label="Experiência de ${esc(g.name)}"><option value="">—</option>${EXPS.map(s=>`<option${s===g.exp?" selected":""}>${s}</option>`).join("")}</select></div>
+    <span class="rate">${rateTxt(g)}</span>
+    <button class="iconbtn" data-edit="${g.id}" aria-label="Editar ${esc(g.name)}">✎</button></div>`).join("");
+}
+
+/* ---------- galeria ---------- */
+function renderGallery(){
+  $("#gchips").innerHTML=chipsHTML(gStatus,"g");
+  const list=sorted(games.filter(g=>!gStatus||g.status===gStatus),"n");
+  $("#grid").innerHTML=!loaded?`<div class="empty"><b>Carregando…</b></div>`:!list.length?`<div class="empty" style="grid-column:1/-1"><b>Galeria vazia</b>Adicione jogos no Catálogo para vê-los aqui.</div>`:
+  list.map(g=>`<button class="card" data-edit="${g.id}"><div class="poster">${coverHTML(g)}</div><div class="t">${esc(g.name)}</div><div class="b"><span class="badge ${stClass(g.status)}">${esc(g.status)}</span><span class="rate">${rateTxt(g)}</span></div></button>`).join("");
+}
+
+/* ---------- tier list ---------- */
+function tcHTML(g){return `<button class="tc" draggable="true" data-tc="${g.id}" aria-pressed="${selected===g.id}" title="${esc(g.name)}" aria-label="${esc(g.name)}">${coverHTML(g)}</button>`}
+function renderTier(){
+  $("#tiers").innerHTML=TIERS.map(([t,c])=>{
+    const l=games.filter(g=>g.tier===t).sort((a,b)=>(a.tier_order||0)-(b.tier_order||0));
+    return `<div class="tier"><div class="lab" style="background:${c}">${t}</div><div class="zone" data-tier="${t}">${l.map(tcHTML).join("")}</div></div>`}).join("");
+  const opts=[["played","Jogados"],["","Todos"],["Não iniciado","Não iniciados"]];
+  $("#tchips").innerHTML=opts.map(([v,l])=>`<button class="chip" data-t="${esc(v)}" aria-pressed="${tStatus===v}">${l}</button>`).join("")+
+    (selected?`<button class="chip" data-t="__clear">Tirar da tier / cancelar seleção</button>`:"");
+  let pool=games.filter(g=>!g.tier);
+  if(tStatus==="played")pool=pool.filter(g=>g.status==="Finalizado"||g.status==="Jogando");
+  else if(tStatus)pool=pool.filter(g=>g.status===tStatus);
+  pool=sorted(pool,"n");
+  $("#pool").innerHTML=pool.length?pool.map(tcHTML).join(""):`<div class="meta" style="padding:8px">Nenhum jogo para classificar neste filtro.</div>`;
+}
+function setTier(id,tier,beforeId){
+  const g=games.find(x=>x.id===id);if(!g)return;
+  if(!tier){if(g.tier)save(id,{tier:null,tier_order:null});return}
+  const list=games.filter(x=>x.tier===tier&&x.id!==id).sort((a,b)=>(a.tier_order||0)-(b.tier_order||0));
+  let ord;
+  const i=beforeId?list.findIndex(x=>x.id===beforeId):-1;
+  if(i>=0){const nx=list[i],pv=list[i-1];ord=pv?(pv.tier_order+nx.tier_order)/2:nx.tier_order-1}
+  else ord=list.length?list[list.length-1].tier_order+1:1;
+  save(id,{tier,tier_order:ord});
+}
+
+/* ---------- resumo ---------- */
+function renderSummary(){
+  const el=$("#resumo");
+  if(!loaded||!games.length){el.innerHTML=`<div class="panel empty"><b>${loaded?"Sem dados ainda":"Carregando…"}</b>${loaded?"Adicione jogos para ver os gráficos.":""}</div>`;return}
+  const cnt=s=>games.filter(g=>g.status===s).length;
+  const rated=games.filter(g=>g.rating!=null&&g.rating!=="");
+  const avg=rated.length?(rated.reduce((a,g)=>a+Number(g.rating),0)/rated.length):null;
+  const colors={"Finalizado":"var(--fin)","Jogando":"var(--play)","Não iniciado":"var(--todo)","Não comprado":"var(--nobuy)"};
+  let acc=0;const segs=STATUS.map(s=>{const p=cnt(s)/games.length*100;const r=`${colors[s]} ${acc}% ${acc+p}%`;acc+=p;return r}).join(",");
+  const ec=EXPS.map(e=>[e,games.filter(g=>g.exp===e).length]);const mx=Math.max(1,...ec.map(x=>x[1]));
+  const top=sorted(rated,"rating").slice(0,5);
+  el.innerHTML=`
+  <div class="tiles">
+    <div class="tilec"><div class="k">Jogos</div><div class="v">${games.length}</div></div>
+    <div class="tilec"><div class="k">Finalizados</div><div class="v">${cnt("Finalizado")}</div></div>
+    <div class="tilec"><div class="k">Concluído</div><div class="v">${Math.round(cnt("Finalizado")/games.length*100)}%</div></div>
+    <div class="tilec"><div class="k">Nota média</div><div class="v">${avg==null?"—":avg.toFixed(1)}</div></div>
+  </div>
+  <div class="two">
+    <div class="panel"><h2>Por status</h2><div class="donutw"><div class="donut" role="img" aria-label="Distribuição por status" style="background:conic-gradient(${segs})"></div>
+      <div class="legend">${STATUS.map(s=>`<div><i style="background:${colors[s]}"></i>${s} · <b>${cnt(s)}</b></div>`).join("")}</div></div></div>
+    <div class="panel"><h2>Experiência</h2><div class="bars">${ec.map(([e,n])=>`<div class="br"><span>${e}</span><div class="tr"><div class="fl" style="width:${n/mx*100}%;background:${EXPCOL[e]}"></div></div><b>${n}</b></div>`).join("")}</div></div>
+    <div class="panel"><h2>Maiores notas</h2>${top.length?top.map(g=>`<div class="row" style="grid-template-columns:minmax(0,1fr) auto;padding:8px 0"><span class="nm">${esc(g.name)}</span><span class="rate">${rateTxt(g)}</span></div>`).join(""):`<div class="meta">Dê notas aos jogos para ver o ranking.</div>`}</div>
+  </div>`;
+}
+
+/* ---------- modal ---------- */
+function openModal(id){
+  const g=id?games.find(x=>x.id===id):{name:"",status:"Não iniciado",exp:"",rating:"",platform:"",notes:"",genre:"",year:"",cover_url:""};
+  if(!g)return;
+  $("#modal").innerHTML=`<div class="ov"><div class="modal" role="dialog" aria-modal="true" aria-label="${id?"Editar jogo":"Novo jogo"}">
+  <h2>${id?"Editar jogo":"Adicionar jogo"}</h2>
+  <div class="f">
+    <label>Nome<input type="text" id="m-name" value="${esc(g.name)}" placeholder="Ex.: Elden Ring"></label>
+    ${CFG.RAWG_KEY?`<div><button class="btn ghost sm" id="m-find">Buscar nas lojas (RAWG)</button><div class="sug" id="m-res"></div></div>`:`<div class="meta">Para buscar jogos e capas automaticamente, coloque a chave do RAWG no config.js.</div>`}
+    <div class="f2"><label>Status<select id="m-status">${STATUS.map(s=>`<option${s===g.status?" selected":""}>${s}</option>`).join("")}</select></label>
+    <label>Experiência<select id="m-exp"><option value="">—</option>${EXPS.map(s=>`<option${s===g.exp?" selected":""}>${s}</option>`).join("")}</select></label></div>
+    <div class="f2"><label>Nota (0 a 10)<input type="number" id="m-rating" min="0" max="10" step="0.5" value="${g.rating??""}"></label>
+    <label>Plataforma<select id="m-plat"><option value="">—</option>${PLATS.map(s=>`<option${s===g.platform?" selected":""}>${s}</option>`).join("")}</select></label></div>
+    <div class="f2"><label>Gênero<input type="text" id="m-genre" value="${esc(g.genre)}"></label><label>Ano<input type="text" id="m-year" value="${esc(g.year)}"></label></div>
+    <label>Observações<textarea id="m-notes" rows="3">${esc(g.notes)}</textarea></label>
+    <label>Link da capa (opcional)<input type="text" id="m-cover" value="${esc(g.cover_url)}" placeholder="https://…"></label>
+  </div>
+  <div class="acts">${id?`<button class="btn ghost" id="m-del" style="margin-right:auto;color:var(--nobuy)">Remover</button>`:""}<button class="btn ghost" data-close>Cancelar</button><button class="btn" id="m-save">Salvar</button></div></div></div>`;
+  $("#modal").dataset.id=id||"";
+  $("#m-name").focus();
+}
+function closeModal(){$("#modal").innerHTML=""}
+async function doSave(){
+  const id=$("#modal").dataset.id;
+  const r=$("#m-rating").value;
+  const data={name:$("#m-name").value.trim(),status:$("#m-status").value,exp:$("#m-exp").value,rating:r===""?null:Math.min(10,Math.max(0,Number(r))),platform:$("#m-plat").value,genre:$("#m-genre").value.trim(),year:$("#m-year").value.trim(),notes:$("#m-notes").value.trim(),cover_url:$("#m-cover").value.trim()||null};
+  if(!data.name){toast("Informe o nome do jogo.");return}
+  if(id){await save(id,data);closeModal()}else if(await create(data))closeModal();
+}
+function mapPlat(list){
+  const t=(list||[]).map(p=>p.platform.name).join(" ");
+  if(/PC/.test(t))return"PC";if(/PlayStation/.test(t))return"PlayStation";if(/Xbox/.test(t))return"Xbox";if(/Nintendo/.test(t))return"Switch";return"";
+}
+async function findGames(){
+  const q=$("#m-name").value.trim();if(!q){toast("Digite parte do nome primeiro.");return}
+  const res=$("#m-res");res.innerHTML=`<div class="meta">Buscando…</div>`;
+  try{
+    const r=await fetch(`https://api.rawg.io/api/games?key=${encodeURIComponent(CFG.RAWG_KEY)}&search=${encodeURIComponent(q)}&page_size=6`);
+    if(!r.ok)throw new Error(r.status);
+    const j=await r.json();
+    found=j.results.map(x=>({name:x.name,year:(x.released||"").slice(0,4),genre:(x.genres||[]).map(g=>g.name).slice(0,2).join(", "),platform:mapPlat(x.platforms),cover:x.background_image||""}));
+    res.innerHTML=found.map((s,i)=>`<div class="it"><div style="display:flex;gap:10px;align-items:center;min-width:0"><div class="mini" style="width:36px">${s.cover?`<img class="cover-img" alt="" referrerpolicy="no-referrer" src="${esc(s.cover)}">`:""}</div><div style="min-width:0"><div class="nm">${esc(s.name)}</div><div class="meta">${esc([s.year,s.genre,s.platform].filter(Boolean).join(" · "))}</div></div></div><button class="btn ghost sm" data-pick="${i}">Usar</button></div>`).join("")||`<div class="meta">Nada encontrado.</div>`;
+  }catch(e){res.innerHTML=`<div class="meta">Não foi possível buscar agora. Confira a chave do RAWG no config.js.</div>`}
+}
+
+/* ---------- login ---------- */
+function showAuth(show,msg){
+  $("#auth").hidden=!show;$("#app").hidden=show;
+  $("#logout").hidden=show;
+  if(msg!==undefined)$("#auth-msg").textContent=msg;
+}
+async function doAuth(signup){
+  const uname=$("#a-email").value.trim().toLowerCase(),password=$("#a-pass").value;
+  if(!/^[a-z0-9._-]{3,30}$/.test(uname)){$("#auth-msg").textContent="Usuário com 3 a 30 letras minúsculas, números, ponto, hífen ou sublinhado, sem espaços ou acentos.";return}
+  if(password.length<6){$("#auth-msg").textContent="A senha precisa ter pelo menos 6 caracteres.";return}
+  const email=uname+"@jogosenzola.app";
+  $("#auth-msg").textContent="Aguarde…";
+  const r=signup?await sb.auth.signUp({email,password}):await sb.auth.signInWithPassword({email,password});
+  if(r.error){$("#auth-msg").textContent=signup?(/registered|exists/i.test(r.error.message)?"Esse usuário já existe. Escolha outro.":"Não foi possível criar a conta: "+r.error.message):"Usuário ou senha incorretos.";return}
+  if(signup&&!r.data.session){$("#auth-msg").textContent="Conta criada, mas o Supabase ainda exige confirmação por e-mail. Desligue “Confirm email” em Authentication > Providers > Email e tente de novo.";return}
+}
+async function onSession(session){
+  user=session?session.user:null;
+  if(!user){games=[];loaded=false;showAuth(true,"");return}
+  showAuth(false);loaded=false;render();await loadGames();
+}
+
+/* ---------- navegação ---------- */
+function show(t){
+  tab=["catalogo","galeria","tier","resumo"].includes(t)?t:"catalogo";
+  for(const b of document.querySelectorAll("nav.tabs button"))b.setAttribute("aria-selected",b.dataset.tab===tab);
+  for(const s of document.querySelectorAll("main>section"))s.hidden=s.id!==tab;
+  render();
+}
+function render(){
+  $("#sub").textContent=loaded?`${games.length} jogos · ${games.filter(g=>g.status==="Finalizado").length} finalizados`:"Nossa biblioteca de jogos";
+  if(tab==="catalogo")renderCatalog();else if(tab==="galeria")renderGallery();else if(tab==="tier")renderTier();else renderSummary();
+}
+
+/* ---------- eventos ---------- */
+document.addEventListener("click",async e=>{
+  const t=e.target;const c=s=>t.closest(s);
+  let b;
+  if(b=c("nav.tabs button")){location.hash=b.dataset.tab;return}
+  if(b=c("#fchips .chip")){fStatus=b.dataset.f;render();return}
+  if(b=c("#gchips .chip")){gStatus=b.dataset.g;render();return}
+  if(b=c("#tchips .chip")){if(b.dataset.t==="__clear"){if(selected){setTier(selected,null)}selected=null}else tStatus=b.dataset.t;render();return}
+  if(c("#add")){openModal(null);return}
+  if(b=c("[data-edit]")){openModal(b.dataset.edit);return}
+  if(t.classList.contains("ov")&&c("#modal")||c("button[data-close]")){closeModal();return}
+  if(c("#m-save")){doSave();return}
+  if(c("#m-del")){const id=$("#modal").dataset.id;const d=c("#m-del");if(!d.dataset.sure){d.dataset.sure=1;d.textContent="Confirmar remoção";return}await removeGame(id);closeModal();return}
+  if(c("#m-find")){findGames();return}
+  if(b=c("[data-pick]")){const s=found[+b.dataset.pick];$("#m-name").value=s.name;$("#m-genre").value=s.genre||"";$("#m-year").value=s.year||"";if(PLATS.includes(s.platform))$("#m-plat").value=s.platform;$("#m-cover").value=s.cover||"";$("#m-res").innerHTML="";return}
+  if(b=c("[data-tc]")){selected=selected===b.dataset.tc?null:b.dataset.tc;renderTier();return}
+  if(b=c(".zone")){if(selected){setTier(selected,b.dataset.tier||null);selected=null}return}
+  if(c("#a-login")){doAuth(false);return}
+  if(c("#a-signup")){doAuth(true);return}
+  if(c("#logout")){await sb.auth.signOut();return}
+});
+document.addEventListener("change",e=>{
+  const s=e.target;
+  if(s.matches(".row select[data-f]")){const id=s.closest(".row").dataset.id;save(id,{[s.dataset.f]:s.value})}
+  else if(s.id==="sort")render();
+});
+$("#q").addEventListener("input",()=>renderCatalog());
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape")closeModal();
+  if(e.key==="Enter"&&!$("#auth").hidden&&e.target.closest("#auth"))doAuth(false);
+});
+let dragId=null;
+document.addEventListener("dragstart",e=>{const b=e.target.closest&&e.target.closest("[data-tc]");if(b){dragId=b.dataset.tc;e.dataTransfer.setData("text/plain",dragId);e.dataTransfer.effectAllowed="move"}});
+document.addEventListener("dragover",e=>{const z=e.target.closest&&e.target.closest(".zone");if(z&&dragId){e.preventDefault();for(const o of document.querySelectorAll(".zone.over"))if(o!==z)o.classList.remove("over");z.classList.add("over")}});
+document.addEventListener("dragleave",e=>{const z=e.target.closest&&e.target.closest(".zone");if(z&&!z.contains(e.relatedTarget))z.classList.remove("over")});
+document.addEventListener("drop",e=>{const z=e.target.closest&&e.target.closest(".zone");if(!z||!dragId)return;e.preventDefault();z.classList.remove("over");const before=e.target.closest("[data-tc]");setTier(dragId,z.dataset.tier||null,before&&before.dataset.tc!==dragId?before.dataset.tc:null);dragId=null;selected=null});
+document.addEventListener("dragend",()=>{dragId=null;for(const o of document.querySelectorAll(".zone.over"))o.classList.remove("over")});
+window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
+
+/* ---------- início ---------- */
+show(location.hash.slice(1));
+if(!window.supabase||!CFG.SUPABASE_URL||CFG.SUPABASE_URL.includes("COLE_AQUI")){
+  showAuth(true,"Configure o endereço e a chave do Supabase no arquivo config.js.");
+}else{
+  sb=window.supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_ANON_KEY);
+  sb.auth.onAuthStateChange((_ev,session)=>{setTimeout(()=>onSession(session),0)});
+  sb.auth.getSession().then(({data})=>{if(!data.session)showAuth(true,"")});
+}
+</script>
+
+</body></html>
