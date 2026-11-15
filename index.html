@@ -385,7 +385,7 @@ async function doAuth(signup){
   const uname=$("#a-email").value.trim().toLowerCase(),password=$("#a-pass").value;
   if(!/^[a-z0-9._-]{3,30}$/.test(uname)){$("#auth-msg").textContent="Usuário com 3 a 30 letras minúsculas, números, ponto, hífen ou sublinhado, sem espaços ou acentos.";return}
   if(password.length<6){$("#auth-msg").textContent="A senha precisa ter pelo menos 6 caracteres.";return}
-  const email=uname+"@jogosenzola.app";
+  const email=uname+"@gmail.com";
   $("#auth-msg").textContent="Aguarde…";
   const r=signup?await sb.auth.signUp({email,password}):await sb.auth.signInWithPassword({email,password});
   if(r.error){$("#auth-msg").textContent=signup?(/registered|exists/i.test(r.error.message)?"Esse usuário já existe. Escolha outro.":"Não foi possível criar a conta: "+r.error.message):"Usuário ou senha incorretos.";return}
