@@ -21,11 +21,13 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Jogos Enzola">
+<meta name="application-name" content="Jogos Enzola">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Figtree:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="styles.css">
-<script>try{var t=localStorage.getItem("theme");if(t==="light")document.documentElement.dataset.theme="light"}catch(e){}</script>
+<script>try{var t=localStorage.getItem("theme");if(t==="light"||(t==="auto"&&matchMedia("(prefers-color-scheme: light)").matches))document.documentElement.dataset.theme="light"}catch(e){}</script>
 </head>
 <body>
 
@@ -64,6 +66,20 @@
   <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.4M8.2 13.2l7.6 4.4"/></symbol>
   <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.5-4.5L4 8M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.5 4.5L20 16M20 20v-4h-4"/></symbol>
   <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4l2-2z"/><path d="M10 20a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-hand" viewBox="0 0 24 24"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12"/><path d="M11 11.5v-2a1.5 1.5 0 0 1 3 0V12"/><path d="M14 10.5a1.5 1.5 0 0 1 3 0V12"/><path d="M17 11.5a1.5 1.5 0 0 1 3 0V16a6 6 0 0 1-6 6h-2a6 6 0 0 1-5-2.7L4.3 15a1.6 1.6 0 0 1 2.6-1.8L8 14.5"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3 10 14"/><path d="m21 3-7 18-4-7-7-4 18-7z"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m10.8 12.2 9.2-9.2M17 6l3 3M14 9l2 2"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 18 9 12l6-6"/></symbol>
+  <symbol id="i-gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-8M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8s2-5 4.5-5a2.5 2.5 0 0 1 0 5"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></symbol>
+  <symbol id="i-insta" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8"/></symbol>
+  <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
+  <symbol id="i-pdf" viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8l-5-5z"/><path d="M14 3v5h5"/><path d="M9 17v-4h1.5a1.3 1.3 0 0 1 0 2.6H9M14 13v4"/></symbol>
   <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8l-5-5z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></symbol>
 </svg>
 
@@ -111,7 +127,9 @@
         <button type="submit" class="btn" id="a-login">Entrar</button>
         <button type="button" class="btn ghost" id="a-signup">Criar conta</button>
       </div>
+      <button type="button" class="link forgot" id="a-forgot">Esqueci minha senha</button>
       <p class="fine">Cada conta tem a sua própria biblioteca. Só aparece para outras pessoas se você deixar o perfil público.</p>
+      <button type="button" class="install-link" data-act="install" hidden><svg class="ic"><use href="#i-phone"/></svg>Instalar o app Jogos Enzola</button>
     </form>
   </section>
 </div>
@@ -142,10 +160,19 @@
         <button role="tab" data-tab="resumo"><svg class="ic"><use href="#i-chart"/></svg><span>Resumo</span></button>
       </nav>
       <div class="who">
-        <button class="iconbtn light" id="theme-btn" aria-label="Trocar tema claro/escuro" title="Trocar tema"><svg class="ic"><use href="#i-sun"/></svg></button>
-        <button class="who-btn" id="who-btn" aria-label="Abrir meu perfil"><span id="who-av" class="av xs"></span><span id="who-name" class="who-n"></span></button>
-        <button class="iconbtn light" id="logout" aria-label="Sair" title="Sair"><svg class="ic"><use href="#i-logout"/></svg></button>
+        <button class="iconbtn light" id="search-btn" aria-label="Pesquisar jogos" title="Pesquisar jogos (/)"><svg class="ic"><use href="#i-search"/></svg></button>
+        <button class="iconbtn light" id="bell" aria-label="Notificações" title="Notificações" aria-expanded="false"><svg class="ic"><use href="#i-bell"/></svg><i class="nb" id="nt-badge" hidden></i></button>
+        <button class="who-btn" id="who-btn" aria-label="Abrir menu da conta" aria-haspopup="menu" aria-expanded="false"><span id="who-av" class="av xs"></span><span id="who-name" class="who-n"></span><svg class="ic chev"><use href="#i-chev"/></svg></button>
       </div>
+      <div class="menu" id="menu" role="menu" hidden>
+        <button role="menuitem" data-go="perfil"><svg class="ic"><use href="#i-user"/></svg>Meu perfil</button>
+        <button role="menuitem" data-go="config"><svg class="ic"><use href="#i-gear"/></svg>Configurações</button>
+        <button role="menuitem" id="theme-btn"><svg class="ic"><use href="#i-sun"/></svg><span>Tema escuro</span></button>
+        <button role="menuitem" data-act="install" hidden><svg class="ic"><use href="#i-phone"/></svg>Instalar o app</button>
+        <hr>
+        <button role="menuitem" id="logout"><svg class="ic"><use href="#i-logout"/></svg>Sair</button>
+      </div>
+      <div class="npanel" id="npanel" hidden></div>
     </div>
   </header>
 
@@ -175,6 +202,7 @@
 
     <section id="galeria" hidden>
       <div class="sec-head"><div><h2 class="h">Galeria</h2><p class="muted">Todas as capas da sua biblioteca.</p></div></div>
+      <div class="bar"><span class="inp grow"><svg class="ic"><use href="#i-search"/></svg><input type="search" id="gq" placeholder="Buscar na galeria" aria-label="Buscar na galeria"></span></div>
       <div class="chips" id="gchips"></div>
       <div class="grid" id="grid"></div>
     </section>
@@ -182,25 +210,33 @@
     <section id="tier" hidden>
       <div class="sec-head"><div><h2 class="h">Tier List</h2><p class="muted">Arraste um jogo para uma linha. No celular, toque no jogo e depois na linha.</p></div>
         <button class="btn ghost" id="tier-img"><svg class="ic"><use href="#i-image"/></svg>Salvar como imagem</button></div>
+      <p class="sel-hint" hidden>Jogo selecionado. Agora toque na linha onde quer colocar.</p>
+      <div class="tier-wrap">
       <div id="tiers"></div>
       <div class="pool">
         <h3 class="h3">Jogos para classificar</h3>
         <div class="chips" id="tchips"></div>
         <div class="panel zone" id="pool" data-tier=""></div>
       </div>
+      </div>
     </section>
 
     <section id="desejos" hidden>
       <div class="sec-head"><div><h2 class="h">Lista de desejos</h2><p class="muted" id="wl-sub">Jogos que você pretende jogar ou comprar.</p></div>
         <div class="head-acts">
+          <button class="btn ghost" id="wl-pdf"><svg class="ic"><use href="#i-pdf"/></svg>Exportar PDF</button>
           <button class="btn ghost" id="wl-refresh"><svg class="ic"><use href="#i-refresh"/></svg>Atualizar preços</button>
           <button class="btn" id="add-wish"><svg class="ic"><use href="#i-plus"/></svg>Adicionar à lista</button>
         </div></div>
       <div class="wl-bar" id="wl-bar"></div>
+      <div class="bar"><span class="inp grow"><svg class="ic"><use href="#i-search"/></svg><input type="search" id="wq" placeholder="Buscar na lista de desejos" aria-label="Buscar na lista de desejos"></span></div>
       <div class="grid wgrid" id="wgrid"></div>
     </section>
 
     <section id="amigos" hidden></section>
+    <section id="amigo" hidden></section>
+    <section id="jogo" hidden></section>
+    <section id="config" hidden></section>
     <section id="resumo" hidden></section>
   </main>
 
@@ -212,19 +248,25 @@
       </div>
       <div class="foot-sp">
         <span class="lbl">Patrocínio</span>
-        <span class="sp">@labumgg</span>
-        <span class="sp">@movimento.enzola</span>
+        <a class="sp" href="https://www.instagram.com/labumgg/" target="_blank" rel="noopener"><svg class="ic"><use href="#i-insta"/></svg>@labumgg</a>
+        <a class="sp" href="https://www.instagram.com/movimento.enzola/" target="_blank" rel="noopener"><svg class="ic"><use href="#i-insta"/></svg>@movimento.enzola</a>
       </div>
       <p class="foot-credit">Dados e capas de jogos: <a href="https://rawg.io" target="_blank" rel="noopener">RAWG</a>. Preços: <a href="https://www.cheapshark.com" target="_blank" rel="noopener">CheapShark</a> e <a href="https://isthereanydeal.com" target="_blank" rel="noopener">IsThereAnyDeal</a>.</p>
     </div>
   </footer>
 </div>
 
+<div id="gsearch" class="gsearch" hidden></div>
+<div id="install-bar" class="install-bar" hidden></div>
 <div id="modal"></div>
+<div id="modal2"></div>
 <div id="toast" class="toast" role="status" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="config.js"></script>
 <script src="app.js"></script>
+<script src="jogo.js"></script>
+<script src="social.js"></script>
+<script src="extras.js"></script>
 </body>
 </html>

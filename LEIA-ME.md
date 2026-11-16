@@ -1,14 +1,33 @@
-# Jogos Enzola v2: como publicar
+# Jogos Enzola 3.0 — como publicar
 
-1. **Banco (obrigatório, uma vez):** Supabase > SQL Editor > New query > cole o `migracao.sql` > Run.
-   Sem esse passo o site funciona, mas não salva horas, preços, preço-alvo nem perfil público (aparece um aviso amarelo).
-2. **Arquivos:** substitua tudo no seu servidor: `index.html`, `styles.css`, `app.js`, `config.js`, `sw.js`,
-   `manifest.webmanifest`, `og-image.png`, a pasta `icons/` e a `logo.png`.
-3. **Contas novas sem e-mail de terceiros (recomendado):** no `config.js`, preencha `EMAIL_BASE` com um Gmail seu
-   (ex.: `movimento.enzola@gmail.com`). As contas antigas continuam entrando.
-4. **Preços em reais (opcional):** crie uma chave grátis no IsThereAnyDeal, publique `supabase/functions/precos`
-   como Edge Function, crie o segredo `ITAD_KEY` e coloque `PRICE_FUNCTION: "precos"` no `config.js`.
-   Sem isso, a lista mostra o menor preço de PC em dólar (CheapShark), com conversão aproximada.
-5. **Compartilhar no WhatsApp:** depois de publicar, troque `og:image` e `og:url` no `index.html`
-   pelo endereço completo (ex.: `https://seusite.com/og-image.png`).
-6. **Tempo real dos pedidos de amizade:** já é ativado pelo `migracao.sql`.
+## 1. Banco (obrigatório, uma vez)
+Supabase > SQL Editor > New query > cole o `migracao.sql` inteiro > Run.
+Pode rodar de novo sem problema. Ele cria: ID de 4 dígitos para todos, mensagens, notificações,
+cutucadas, sugestões, código de recuperação de senha, configurações e tempo real.
+
+## 2. Arquivos
+Substitua tudo no servidor: `index.html`, `styles.css`, `app.js`, `jogo.js`, `social.js`, `extras.js`,
+`config.js`, `sw.js`, `manifest.webmanifest`, `og-image.png`, `logo.png` e a pasta `icons/`.
+
+## 3. Função do servidor (recomendado)
+Ativa: "Esqueci minha senha", sinopse e análises em português, preço da Steam Brasil,
+preços em reais de lojas brasileiras, vídeos do YouTube e "Excluir conta".
+1. Supabase > Edge Functions > Deploy a new function > nome **enzola** > cole `supabase/functions/enzola/index.ts` > Deploy.
+2. No `config.js`, coloque `FUNCTION: "enzola"`.
+3. Opcional, em Edge Functions > Secrets:
+   - `ITAD_KEY`: chave grátis em isthereanydeal.com (preços em reais da Nuuvem, Steam BR, Epic, GOG…).
+   - `YOUTUBE_KEY`: chave grátis do YouTube Data API v3 no Google Cloud (gameplay de youtubers brasileiros).
+   - `YOUTUBE_CHANNELS`: lista de canais preferidos, separados por vírgula (já vem com alanzoka, BRKsEDU, Zangado, Cellbit…).
+
+## 4. Ajustes no painel do Supabase
+- Authentication > Providers > Email: deixe **Confirm email** e **Secure password change** desligados
+  (os e-mails das contas são internos; com eles ligados, cadastro e troca de senha travam).
+
+## 5. config.js
+- `EMAIL_BASE`: um Gmail seu (ex.: `movimento.enzola@gmail.com`). Contas novas usam `seuemail+usuario@gmail.com`
+  em vez do Gmail de desconhecidos. Contas antigas continuam entrando.
+
+## 6. Depois de publicar
+- Troque `og:image` e `og:url` no `index.html` pelo endereço completo do site (para a prévia no WhatsApp).
+- Se alguém perder a senha e não tiver o código: Supabase > Authentication > Users > usuário > "Reset password"
+  ou "Update user" para definir uma senha nova.

@@ -13,7 +13,13 @@ window.APP_CONFIG = {
   // As contas antigas continuam entrando normalmente. Vazio = comportamento antigo.
   EMAIL_BASE: "",
 
-  // Preços em reais (Steam BR, Nuuvem, GOG, Epic...): publique a função supabase/functions/precos
-  // e escreva o nome dela aqui ("precos"). Vazio = preços de PC em dólar pelo CheapShark.
-  PRICE_FUNCTION: ""
+  // Função do servidor (pasta supabase/functions/enzola). Depois de publicar, escreva "enzola" aqui.
+  // Ela ativa: "Esqueci minha senha", sinopse e análises em português, preço da Steam Brasil,
+  // preços em reais de lojas brasileiras (com o segredo ITAD_KEY), vídeos do YouTube (com YOUTUBE_KEY)
+  // e "Excluir conta". Vazio = o site funciona, sem esses extras.
+  FUNCTION: "",
+
+  // Opcional: chave do YouTube só para o navegador (restrinja ao domínio do site no Google Cloud).
+  // Prefira colocar a chave como segredo YOUTUBE_KEY na função, que guarda os vídeos em cache para todos.
+  YOUTUBE_KEY: ""
 };
