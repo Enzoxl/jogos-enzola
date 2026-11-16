@@ -4,11 +4,28 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Jogos Enzola</title>
-<meta name="theme-color" content="#14213D">
+<meta name="description" content="Catálogo, galeria de capas, tier list e lista de desejos com preços. Tudo num perfil gamer do Movimento Enzola.">
+<meta name="theme-color" content="#0B1129">
+<!-- Compartilhamento (WhatsApp, Instagram, X). Troque og:image e og:url pelo endereço completo do site depois de publicar. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Jogos Enzola">
+<meta property="og:title" content="Jogos Enzola">
+<meta property="og:description" content="Catálogo, tier list e lista de desejos com preços. Tudo num perfil gamer só seu.">
+<meta property="og:image" content="og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Figtree:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="styles.css">
+<script>try{var t=localStorage.getItem("theme");if(t==="light")document.documentElement.dataset.theme="light"}catch(e){}</script>
 </head>
 <body>
 
@@ -25,6 +42,7 @@
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
   <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="m13.5 6.5 4 4"/></symbol>
   <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v12M7 11l5 5 5-5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></symbol>
   <symbol id="i-gamepad" viewBox="0 0 24 24"><path d="M6 11h4M8 9v4"/><circle cx="15" cy="12" r=".8"/><circle cx="18" cy="10" r=".8"/><path d="M17.3 5H6.7a4 4 0 0 0-3.9 3.2L2 15a3 3 0 0 0 5 2.2L9 15h6l2 2.2a3 3 0 0 0 5-2.2l-.8-6.8A4 4 0 0 0 17.3 5z"/></symbol>
   <symbol id="i-message" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.7 7L4 20l1.1-4.2A8 8 0 1 1 21 12z"/></symbol>
   <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h4"/><path d="m16 17 5-5-5-5M21 12H9"/></symbol>
@@ -38,7 +56,19 @@
   <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20v-.5a5.5 5.5 0 0 1 5.5-5.5h2a5.5 5.5 0 0 1 5.5 5.5v.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8"/><path d="M18.5 14.3A5.5 5.5 0 0 1 21.5 19.5V20"/></symbol>
   <symbol id="i-userplus" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 0 1 6-6h2a6 6 0 0 1 6 6v1"/><path d="M19 8v6M16 11h6"/></symbol>
   <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.2 8 8 9 4.8-1 8-4.5 8-9V6l-8-3z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9-9-9z"/><circle cx="7.5" cy="7.5" r="1.5"/></symbol>
+  <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2 3h3l2.7 12.4a1 1 0 0 0 1 .8h9.6a1 1 0 0 0 1-.8L21 7H6"/></symbol>
+  <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.4M8.2 13.2l7.6 4.4"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.5-4.5L4 8M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.5 4.5L20 16M20 20v-4h-4"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8l-5-5z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></symbol>
 </svg>
+
+<!-- ============ ABERTURA ============ -->
+<div id="splash" class="splash" aria-hidden="true"><span class="logo xl"></span></div>
 
 <!-- ============ LOGIN ============ -->
 <div id="auth" class="auth" hidden>
@@ -48,7 +78,7 @@
       <i class="ap a1"><svg class="ic"><use href="#i-gamepad"/></svg></i>
       <i class="ap a2"><svg class="ic"><use href="#i-trophy"/></svg></i>
       <i class="ap a3"><svg class="ic"><use href="#i-star"/></svg></i>
-      <i class="ap a4"><svg class="ic"><use href="#i-play"/></svg></i>
+      <i class="ap a4"><svg class="ic"><use href="#i-tag"/></svg></i>
       <i class="ap a5"><svg class="ic"><use href="#i-heart"/></svg></i>
     </div>
     <div class="auth-copy">
@@ -58,8 +88,8 @@
       <ul class="auth-feat">
         <li><svg class="ic"><use href="#i-user"/></svg><span><b>Perfil gamer</b> com avatar, banner e favoritos</span></li>
         <li><svg class="ic"><use href="#i-grid"/></svg><span><b>Galeria de capas</b> para ver o que você já zerou</span></li>
-        <li><svg class="ic"><use href="#i-layers"/></svg><span><b>Tier list</b> montada com os seus jogos</span></li>
-        <li><svg class="ic"><use href="#i-bookmark"/></svg><span><b>Lista de desejos</b> do que vem por aí</span></li>
+        <li><svg class="ic"><use href="#i-layers"/></svg><span><b>Tier list</b> para montar e compartilhar como imagem</span></li>
+        <li><svg class="ic"><use href="#i-tag"/></svg><span><b>Lista de desejos</b> com o menor preço e o link da loja</span></li>
       </ul>
     </div>
     <div class="auth-by">Movimento Enzola</div>
@@ -81,9 +111,18 @@
         <button type="submit" class="btn" id="a-login">Entrar</button>
         <button type="button" class="btn ghost" id="a-signup">Criar conta</button>
       </div>
-      <p class="fine">Cada conta tem a sua própria biblioteca. Ninguém vê a lista de outra pessoa.</p>
+      <p class="fine">Cada conta tem a sua própria biblioteca. Só aparece para outras pessoas se você deixar o perfil público.</p>
     </form>
   </section>
+</div>
+
+<!-- ============ PERFIL PÚBLICO (link compartilhável) ============ -->
+<div id="pub" hidden>
+  <header class="top"><div class="top-in pub-top">
+    <a class="brand" href="#perfil" aria-label="Jogos Enzola"><span class="logo sm" role="img" aria-label="Movimento Enzola"></span><span class="brand-t">Jogos Enzola</span></a>
+    <a class="btn sm" href="#perfil" id="pub-cta">Criar meu perfil</a>
+  </div></header>
+  <main class="wrap" id="pub-body"></main>
 </div>
 
 <!-- ============ APP ============ -->
@@ -98,26 +137,36 @@
         <button role="tab" data-tab="catalogo"><svg class="ic"><use href="#i-list"/></svg><span>Catálogo</span></button>
         <button role="tab" data-tab="galeria"><svg class="ic"><use href="#i-grid"/></svg><span>Galeria</span></button>
         <button role="tab" data-tab="tier"><svg class="ic"><use href="#i-layers"/></svg><span>Tier List</span></button>
+        <button role="tab" data-tab="desejos"><svg class="ic"><use href="#i-bookmark"/></svg><span>Desejos</span></button>
+        <button role="tab" data-tab="amigos"><svg class="ic"><use href="#i-users"/></svg><span>Amigos</span><i class="nb" id="fr-badge" hidden></i></button>
         <button role="tab" data-tab="resumo"><svg class="ic"><use href="#i-chart"/></svg><span>Resumo</span></button>
       </nav>
       <div class="who">
-        <button class="iconbtn light" id="friends-btn" aria-label="Amigos" title="Amigos"><svg class="ic"><use href="#i-users"/></svg><i class="nb" id="fr-badge" hidden></i></button>
+        <button class="iconbtn light" id="theme-btn" aria-label="Trocar tema claro/escuro" title="Trocar tema"><svg class="ic"><use href="#i-sun"/></svg></button>
         <button class="who-btn" id="who-btn" aria-label="Abrir meu perfil"><span id="who-av" class="av xs"></span><span id="who-name" class="who-n"></span></button>
-        <button class="iconbtn light" id="logout" aria-label="Sair"><svg class="ic"><use href="#i-logout"/></svg></button>
+        <button class="iconbtn light" id="logout" aria-label="Sair" title="Sair"><svg class="ic"><use href="#i-logout"/></svg></button>
       </div>
     </div>
   </header>
+
+  <div class="mig" id="mig" hidden></div>
 
   <main class="wrap">
     <section id="perfil"></section>
 
     <section id="catalogo" hidden>
       <div class="sec-head"><div><h2 class="h">Catálogo</h2><p class="muted" id="cat-sub"></p></div>
-        <div class="head-acts"><button class="btn ghost" data-go="desejos"><svg class="ic"><use href="#i-bookmark"/></svg>Lista de desejos<span class="cnt" id="wl-n"></span></button><button class="btn" id="add"><svg class="ic"><use href="#i-plus"/></svg>Adicionar jogo</button></div></div>
+        <div class="head-acts">
+          <button class="btn ghost" id="csv-out" title="Baixar a biblioteca como planilha"><svg class="ic"><use href="#i-download"/></svg>Exportar</button>
+          <button class="btn ghost" id="csv-in" title="Importar jogos de uma planilha CSV"><svg class="ic"><use href="#i-file"/></svg>Importar</button>
+          <input type="file" id="csv-file" accept=".csv,text/csv" hidden>
+          <button class="btn" id="add"><svg class="ic"><use href="#i-plus"/></svg>Adicionar jogo</button>
+        </div></div>
       <div class="bar">
         <span class="inp grow"><svg class="ic"><use href="#i-search"/></svg><input type="search" id="q" placeholder="Buscar no catálogo" aria-label="Buscar no catálogo"></span>
+        <select id="plat" aria-label="Filtrar por plataforma"><option value="">Todas as plataformas</option></select>
         <select id="sort" aria-label="Ordenar">
-          <option value="n">Ordem da lista</option><option value="name">Nome (A–Z)</option><option value="rating">Maior nota</option><option value="exp">Melhor experiência</option>
+          <option value="n">Ordem da lista</option><option value="recent">Adicionados recentemente</option><option value="name">Nome (A–Z)</option><option value="rating">Maior nota</option><option value="exp">Melhor experiência</option><option value="hours">Mais horas jogadas</option>
         </select>
       </div>
       <div class="chips" id="fchips"></div>
@@ -131,7 +180,8 @@
     </section>
 
     <section id="tier" hidden>
-      <div class="sec-head"><div><h2 class="h">Tier List</h2><p class="muted">Arraste um jogo para uma linha. No celular, toque no jogo e depois na linha.</p></div></div>
+      <div class="sec-head"><div><h2 class="h">Tier List</h2><p class="muted">Arraste um jogo para uma linha. No celular, toque no jogo e depois na linha.</p></div>
+        <button class="btn ghost" id="tier-img"><svg class="ic"><use href="#i-image"/></svg>Salvar como imagem</button></div>
       <div id="tiers"></div>
       <div class="pool">
         <h3 class="h3">Jogos para classificar</h3>
@@ -141,9 +191,13 @@
     </section>
 
     <section id="desejos" hidden>
-      <div class="sec-head"><div><button class="link back" data-go="catalogo">← Voltar ao catálogo</button><h2 class="h">Lista de desejos</h2><p class="muted">Jogos que você pretende jogar ou comprar.</p></div>
-        <button class="btn" id="add-wish"><svg class="ic"><use href="#i-plus"/></svg>Adicionar à lista</button></div>
-      <div class="grid" id="wgrid"></div>
+      <div class="sec-head"><div><h2 class="h">Lista de desejos</h2><p class="muted" id="wl-sub">Jogos que você pretende jogar ou comprar.</p></div>
+        <div class="head-acts">
+          <button class="btn ghost" id="wl-refresh"><svg class="ic"><use href="#i-refresh"/></svg>Atualizar preços</button>
+          <button class="btn" id="add-wish"><svg class="ic"><use href="#i-plus"/></svg>Adicionar à lista</button>
+        </div></div>
+      <div class="wl-bar" id="wl-bar"></div>
+      <div class="grid wgrid" id="wgrid"></div>
     </section>
 
     <section id="amigos" hidden></section>
@@ -161,6 +215,7 @@
         <span class="sp">@labumgg</span>
         <span class="sp">@movimento.enzola</span>
       </div>
+      <p class="foot-credit">Dados e capas de jogos: <a href="https://rawg.io" target="_blank" rel="noopener">RAWG</a>. Preços: <a href="https://www.cheapshark.com" target="_blank" rel="noopener">CheapShark</a> e <a href="https://isthereanydeal.com" target="_blank" rel="noopener">IsThereAnyDeal</a>.</p>
     </div>
   </footer>
 </div>
