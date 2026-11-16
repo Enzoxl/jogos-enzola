@@ -5,7 +5,7 @@ const EXPS = ["Perfeito", "Ótimo", "Muito bom", "Bom", "Ok", "Meh", "Chumbos"];
 const EXPCOL = { "Perfeito": "#2E8B6A", "Ótimo": "#4C9F7A", "Muito bom": "#6FA8DC", "Bom": "#4B6B9E", "Ok": "#C9A227", "Meh": "#D98A3D", "Chumbos": "#B14A47" };
 const TIERS = [["S", "#F28B82"], ["A", "#F6B26B"], ["B", "#F5DC78"], ["C", "#A8D5A2"], ["D", "#9CC0F5"]];
 const PLATS = ["PC", "PlayStation", "Xbox", "Switch", "Outro"];
-const TABS = ["perfil", "catalogo", "galeria", "tier", "desejos", "resumo"];
+const TABS = ["perfil", "catalogo", "galeria", "tier", "desejos", "amigos", "resumo"];
 const PRESETS = [
   { k: "p1", icon: "gamepad", bg: "linear-gradient(135deg,#2F5FA8,#14213D)" },
   { k: "p2", icon: "trophy", bg: "linear-gradient(135deg,#C9A227,#7A5B0F)" },
@@ -82,11 +82,12 @@ async function uploadImage(file, kind) {
 /* ---------- dados ---------- */
 async function loadAll() {
   const [g, p] = await Promise.all([
-    sb.from("games").select("*").order("n", { ascending: true }),
-    sb.from("profiles").select("*").maybeSingle(),
+    sb.from("games").select("*").eq("user_id", user.id).order("n", { ascending: true }),
+    sb.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
   ]);
   if (g.error) { toast("Não foi possível carregar os jogos."); return }
   games = g.data; profile = p.data || null; loaded = true; render();
+  if (!profile || profile.username !== uname()) saveProfile({});
 }
 async function save(id, patch) {
   const g = gameById(id); if (!g) return;
@@ -122,7 +123,7 @@ async function removeGame(id) {
 }
 async function saveProfile(patch) {
   const next = { ...(profile || {}), ...patch };
-  const row = { user_id: user.id, nickname: next.nickname ?? null, bio: next.bio ?? null, avatar: next.avatar ?? null, banner: next.banner ?? null, favorites: next.favorites || [], now_playing: next.now_playing ?? null, updated_at: new Date().toISOString() };
+  const row = { user_id: user.id, username: uname(), nickname: next.nickname ?? null, bio: next.bio ?? null, avatar: next.avatar ?? null, banner: next.banner ?? null, favorites: next.favorites || [], now_playing: next.now_playing ?? null, updated_at: new Date().toISOString() };
   const { data, error } = await sb.from("profiles").upsert(row, { onConflict: "user_id" }).select().single();
   if (error) { toast("Não foi possível salvar o perfil."); return false }
   profile = data; render(); return true;
@@ -433,8 +434,8 @@ async function doAuth(signup) {
 }
 async function onSession(session) {
   user = session ? session.user : null;
-  if (!user) { games = []; profile = null; loaded = false; showAuth(true, ""); return }
-  showAuth(false); loaded = false; render(); await loadAll();
+  if (!user) { games = []; profile = null; loaded = false; fr = newFr(); showAuth(true, ""); return }
+  showAuth(false); loaded = false; render(); await loadAll(); loadFriends();
 }
 
 /* ---------- navegação ---------- */
@@ -442,12 +443,13 @@ function show(t) {
   tab = TABS.includes(t) ? t : "perfil";
   for (const b of document.querySelectorAll("nav.tabs button")) b.setAttribute("aria-selected", b.dataset.tab === tab);
   for (const s of document.querySelectorAll("main > section")) s.hidden = s.id !== tab;
+  if (tab === "amigos" && user) loadFriends();
   render(); window.scrollTo({ top: 0 });
 }
 function render() {
   $("#who-av").innerHTML = avatar(profile && profile.avatar); $("#who-name").textContent = nick();
   if (tab === "perfil") renderProfile(); else if (tab === "catalogo") renderCatalog(); else if (tab === "galeria") renderGallery();
-  else if (tab === "tier") renderTier(); else if (tab === "desejos") renderWishlist(); else renderSummary();
+  else if (tab === "amigos") renderFriends(); else if (tab === "tier") renderTier(); else if (tab === "desejos") renderWishlist(); else renderSummary();
 }
 
 /* ---------- eventos ---------- */
@@ -527,6 +529,137 @@ document.addEventListener("dragleave", e => { const z = e.target.closest && e.ta
 document.addEventListener("drop", e => { const z = e.target.closest && e.target.closest(".zone"); if (!z || !dragId) return; e.preventDefault(); z.classList.remove("over"); const bf = e.target.closest("[data-tc]"); setTier(dragId, z.dataset.tier || null, bf && bf.dataset.tc !== dragId ? bf.dataset.tc : null); dragId = null; selected = null });
 document.addEventListener("dragend", () => { dragId = null; for (const o of document.querySelectorAll(".zone.over")) o.classList.remove("over") });
 window.addEventListener("hashchange", () => show(location.hash.slice(1)));
+
+/* ---------- amigos e grupos ---------- */
+function newFr() { return { rows: [], profs: {}, groups: [], members: [], loaded: false, found: null, fmsg: "", q: "" } }
+let fr = newFr(), gBusy = false;
+const other = f => f.requester === user.id ? f.addressee : f.requester;
+const pOf = id => fr.profs[id] || { user_id: id, username: "usuário", nickname: "" };
+const pName = p => p.nickname || p.username || "usuário";
+const frAccepted = () => fr.rows.filter(f => f.status === "accepted");
+const frIn = () => fr.rows.filter(f => f.status === "pending" && f.addressee === user.id);
+const frOut = () => fr.rows.filter(f => f.status === "pending" && f.requester === user.id);
+const frRel = id => fr.rows.find(f => other(f) === id);
+
+async function loadFriends() {
+  if (!sb || !user) return;
+  const [a, b, c] = await Promise.all([sb.from("friendships").select("*"), sb.from("groups").select("*"), sb.from("group_members").select("*")]);
+  if (a.error || b.error || c.error) { toast("Não foi possível carregar os amigos."); return }
+  fr.rows = a.data || []; fr.groups = b.data || []; fr.members = c.data || [];
+  const ids = [...new Set([...fr.rows.map(other), ...fr.members.map(m => m.user_id), ...fr.groups.map(g => g.owner)])].filter(x => x !== user.id);
+  fr.profs = {};
+  if (ids.length) {
+    const p = await sb.from("profiles").select("user_id,username,nickname,avatar,banner,bio,favorites,now_playing").in("user_id", ids);
+    (p.data || []).forEach(x => fr.profs[x.user_id] = x);
+  }
+  fr.loaded = true; updateBadge(); if (tab === "amigos") renderFriends();
+}
+function updateBadge() { const b = $("#fr-badge"); if (!b) return; const n = frIn().length; b.hidden = !n; b.textContent = n }
+
+function person(p, extra = "", attrs = "") {
+  return `<div class="fcard"><div class="av md"${attrs}>${avatar(p.avatar)}</div><div class="fi"><div class="fn">${esc(pName(p))}</div><div class="fu">@${esc(p.username || "")}</div></div><div class="fa">${extra}</div></div>`;
+}
+function renderFriends() {
+  const el = $("#amigos");
+  if (!fr.loaded) { el.innerHTML = `<div class="panel empty"><b>Carregando amigos…</b></div>`; return }
+  const fl = frAccepted(), inc = frIn(), out = frOut();
+  let found = "";
+  if (fr.found) {
+    const f = fr.found, rr = frRel(f.user_id);
+    const st = f.user_id === user.id ? `<span class="muted">Esse é você</span>` : rr ? `<span class="muted">${rr.status === "accepted" ? "Já são amigos" : "Pedido pendente"}</span>` : `<button class="btn sm" data-fr="request" data-id="${f.user_id}">${ic("userplus")}Enviar pedido</button>`;
+    found = `<div class="panel" style="margin-top:12px">${person(f, st)}</div>`;
+  } else if (fr.fmsg) found = `<div class="muted" style="margin-top:10px">${esc(fr.fmsg)}</div>`;
+  const section = (title, n, body) => `<div class="blk"><div class="blk-h"><h3>${title}${n != null ? ` <span class="muted">· ${n}</span>` : ""}</h3></div>${body}</div>`;
+  const incHTML = inc.length ? section(ic("userplus") + "Pedidos recebidos", inc.length, `<div class="flist">${inc.map(f => person(pOf(f.requester), `<button class="btn sm" data-fr="accept" data-id="${f.id}">${ic("check")}Aceitar</button><button class="btn ghost sm" data-fr="remove" data-id="${f.id}">Recusar</button>`)).join("")}</div>`) : "";
+  const outHTML = out.length ? section(ic("clock") + "Pedidos enviados", out.length, `<div class="flist">${out.map(f => person(pOf(f.addressee), `<button class="btn ghost sm" data-fr="remove" data-id="${f.id}">Cancelar</button>`)).join("")}</div>`) : "";
+  const friendsHTML = section(ic("users") + "Meus amigos", fl.length, fl.length ? `<div class="flist">${fl.map(f => { const p = pOf(other(f)); return person(p, `<button class="btn ghost sm" data-fr="view" data-id="${p.user_id}">Ver perfil</button><button class="iconbtn" data-fr="unfriend" data-id="${f.id}" aria-label="Remover ${esc(pName(p))}" title="Remover amigo">${ic("trash")}</button>`) }).join("")}</div>` : `<div class="panel empty"><b>Nenhum amigo ainda</b>Busque pelo usuário de quem usa o site e envie um pedido.</div>`);
+  const groupsHTML = section(ic("layers") + "Grupos", fr.groups.length, (fr.groups.length ? `<div class="gwrap">${fr.groups.map(g => { const ms = fr.members.filter(m => m.group_id === g.id); return `<button class="gcard" data-fr="group" data-id="${g.id}"><div class="gn">${esc(g.name)}</div><div class="stackav">${ms.slice(0, 5).map(m => `<div class="av xs">${avatar(m.user_id === user.id ? profile && profile.avatar : pOf(m.user_id).avatar)}</div>`).join("")}</div><div class="muted">${ms.length} membro${ms.length === 1 ? "" : "s"}${g.owner === user.id ? " · você é o dono" : ""}</div></button>` }).join("")}</div>` : `<div class="panel empty"><b>Nenhum grupo</b>Crie um grupo e chame seus amigos.</div>`));
+  el.innerHTML = `<div class="sec-head"><div><h2 class="h">Amigos</h2><p class="muted">Adicione quem também usa o Jogos Enzola.</p></div><button class="btn" data-fr="newgroup">${ic("plus")}Novo grupo</button></div>
+  <div class="panel"><div class="bar" style="margin:0"><span class="inp grow">${ic("search")}<input type="search" id="fq" placeholder="Usuário do seu amigo (ex.: enzola)" value="${esc(fr.q)}"></span><button class="btn" data-fr="search">${ic("userplus")}Buscar</button></div>${found}</div>
+  ${incHTML}${friendsHTML}${outHTML}${groupsHTML}`;
+}
+
+async function frSearch() {
+  fr.q = $("#fq").value; const u = fr.q.trim().replace(/^@/, "");
+  if (!u) { toast("Digite o usuário do seu amigo."); return }
+  const { data, error } = await sb.rpc("find_user", { uname: u });
+  if (error) { toast("Não foi possível buscar agora."); return }
+  fr.found = data && data[0] ? data[0] : null; fr.fmsg = fr.found ? "" : "Nenhum usuário encontrado com esse nome. Confira se ele já entrou no site.";
+  if (fr.found) fr.profs[fr.found.user_id] = fr.profs[fr.found.user_id] || fr.found;
+  renderFriends();
+}
+async function frDo(q, ok) {
+  const { error } = await q;
+  if (error) { toast("Não foi possível concluir. Tente de novo."); return false }
+  if (ok) toast(ok); await loadFriends(); return true;
+}
+
+async function openFriend(uid) {
+  const p = pOf(uid);
+  modalShell(`<div class="empty"><b>Carregando perfil…</b></div>`, true);
+  const { data } = await sb.from("games").select("*").eq("user_id", uid).order("n");
+  const gs = data || [], fin = gs.filter(g => g.status === "Finalizado").length;
+  const favs = (p.favorites || []).map(id => gs.find(g => g.id === id)).filter(Boolean).slice(0, 5);
+  const cur = gs.find(g => g.id === p.now_playing) || gs.find(g => g.status === "Jogando");
+  modalShell(`<div class="banner sm" ${p.banner ? `style="background-image:url('${esc(p.banner)}')"` : ""}></div>
+  <div class="fv-head"><div class="av lg">${avatar(p.avatar)}</div><div><h2 style="margin:0">${esc(pName(p))}</h2><div class="muted">@${esc(p.username || "")}</div></div></div>
+  ${p.bio ? `<p class="bio">${esc(p.bio)}</p>` : ""}
+  <div class="pstats" style="margin:12px 0"><div class="pstat"><b>${gs.length}</b><span>Jogos</span></div><div class="pstat"><b>${fin}</b><span>Zerados</span></div></div>
+  ${cur ? `<div class="muted" style="margin-bottom:8px">Jogando agora: <b>${esc(cur.name)}</b></div>` : ""}
+  ${favs.length ? `<div class="fld" style="margin-bottom:8px">Favoritos</div><div class="wmini">${favs.map(g => `<div title="${esc(g.name)}"><div class="poster">${cover(g)}</div></div>`).join("")}</div>` : ""}
+  <div class="acts"><button class="btn ghost" data-close>Fechar</button></div>`, true);
+}
+
+function openNewGroup() {
+  const fl = frAccepted();
+  modalShell(`<h2>Novo grupo</h2><p class="sub">Dê um nome e escolha amigos para entrar.</p>
+  <div class="f"><label>Nome do grupo<input type="text" id="g-name" maxlength="40" placeholder="Ex.: Squad de sábado"></label>
+  <div><div class="fld" style="margin-bottom:6px">Amigos</div><div class="picker">${fl.length ? fl.map(f => { const p = pOf(other(f)); return `<label class="pk"><input type="checkbox" data-gk="${p.user_id}"><span class="av xs">${avatar(p.avatar)}</span><span>${esc(pName(p))} <span class="muted">@${esc(p.username || "")}</span></span></label>` }).join("") : `<div class="empty" style="padding:16px">Você ainda não tem amigos. Pode criar o grupo e adicionar depois.</div>`}</div></div></div>
+  <div class="acts"><button class="btn ghost" data-close>Cancelar</button><button class="btn" data-fr="gcreate">Criar grupo</button></div>`);
+  $("#g-name").focus();
+}
+function openGroup(gid) {
+  const g = fr.groups.find(x => x.id === gid); if (!g) { closeModal(); return }
+  const own = g.owner === user.id, ms = fr.members.filter(m => m.group_id === gid);
+  const addable = frAccepted().map(f => pOf(other(f))).filter(p => !ms.some(m => m.user_id === p.user_id));
+  modalShell(`<h2>${esc(g.name)}</h2><p class="sub">${ms.length} membro${ms.length === 1 ? "" : "s"}</p>
+  <div class="flist">${ms.map(m => { const me = m.user_id === user.id, p = me ? { ...(profile || {}), username: uname() } : pOf(m.user_id); const isF = !me && frAccepted().some(f => other(f) === m.user_id);
+    return person(p, `${m.user_id === g.owner ? `<span class="badge st-Jogando">dono</span>` : ""}${isF ? `<button class="btn ghost sm" data-fr="view" data-id="${m.user_id}">Perfil</button>` : ""}${own && !me ? `<button class="iconbtn" data-fr="gkick" data-gid="${gid}" data-id="${m.user_id}" aria-label="Remover do grupo">${ic("x")}</button>` : ""}`) }).join("")}</div>
+  ${own ? `<div class="bar" style="margin:14px 0 0"><select class="inp grow" id="g-add"><option value="">Adicionar amigo…</option>${addable.map(p => `<option value="${p.user_id}">${esc(pName(p))} (@${esc(p.username || "")})</option>`).join("")}</select><button class="btn" data-fr="gadd" data-gid="${gid}">Adicionar</button></div>` : ""}
+  <div class="acts">${own ? `<button class="btn danger left" data-fr="gdel" data-gid="${gid}">${ic("trash")}Excluir grupo</button>` : `<button class="btn danger left" data-fr="gleave" data-gid="${gid}">Sair do grupo</button>`}<button class="btn ghost" data-close>Fechar</button></div>`);
+}
+
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-fr]"); if (!b) return;
+  const a = b.dataset.fr, id = b.dataset.id, gid = b.dataset.gid;
+  if (a === "search") return frSearch();
+  if (a === "request") { await frDo(sb.from("friendships").insert({ addressee: id }), "Pedido enviado!"); fr.found = null; renderFriends(); return }
+  if (a === "accept") return frDo(sb.from("friendships").update({ status: "accepted" }).eq("id", id), "Agora vocês são amigos!");
+  if (a === "remove") return frDo(sb.from("friendships").delete().eq("id", id));
+  if (a === "unfriend") { if (!b.dataset.sure) { b.dataset.sure = 1; b.classList.add("sure"); toast("Clique de novo para remover este amigo."); return } return frDo(sb.from("friendships").delete().eq("id", id), "Amigo removido.") }
+  if (a === "view") return openFriend(id);
+  if (a === "newgroup") return openNewGroup();
+  if (a === "group") return openGroup(id);
+  if (a === "gcreate") {
+    const name = $("#g-name").value.trim(); if (!name) { toast("Dê um nome ao grupo."); return }
+    if (gBusy) return; gBusy = true;
+    try {
+      const { data, error } = await sb.from("groups").insert({ name }).select().single();
+      if (error) { toast("Não foi possível criar o grupo."); return }
+      const ids = [user.id, ...[...document.querySelectorAll("[data-gk]:checked")].map(x => x.dataset.gk)];
+      const r = await sb.from("group_members").insert(ids.map(u => ({ group_id: data.id, user_id: u })));
+      if (r.error) toast("Grupo criado, mas alguns membros não entraram.");
+      else toast("Grupo criado!");
+      await loadFriends(); openGroup(data.id);
+    } finally { gBusy = false }
+    return;
+  }
+  if (a === "gadd") { const u = $("#g-add").value; if (!u) return; if (await frDo(sb.from("group_members").insert({ group_id: gid, user_id: u }), "Membro adicionado.")) openGroup(gid); return }
+  if (a === "gkick") { if (await frDo(sb.from("group_members").delete().eq("group_id", gid).eq("user_id", id))) openGroup(gid); return }
+  if (a === "gleave") { if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = "Confirmar saída"; return } await frDo(sb.from("group_members").delete().eq("group_id", gid).eq("user_id", user.id), "Você saiu do grupo."); closeModal(); return }
+  if (a === "gdel") { if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = "Confirmar exclusão"; return } await frDo(sb.from("groups").delete().eq("id", gid), "Grupo excluído."); closeModal(); return }
+});
+document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.id === "fq") { e.preventDefault(); frSearch() } });
 
 /* ---------- início ---------- */
 show(location.hash.slice(1));
