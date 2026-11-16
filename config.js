@@ -17,7 +17,7 @@ window.APP_CONFIG = {
   // Ela ativa: "Esqueci minha senha", sinopse e análises em português, preço da Steam Brasil,
   // preços em reais de lojas brasileiras (com o segredo ITAD_KEY), vídeos do YouTube (com YOUTUBE_KEY)
   // e "Excluir conta". Vazio = o site funciona, sem esses extras.
-  FUNCTION: "",
+  FUNCTION: "enzola",
 
   // Opcional: chave do YouTube só para o navegador (restrinja ao domínio do site no Google Cloud).
   // Prefira colocar a chave como segredo YOUTUBE_KEY na função, que guarda os vídeos em cache para todos.
