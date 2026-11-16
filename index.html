@@ -95,15 +95,13 @@
         <span class="brand-t">Jogos Enzola</span>
       </a>
       <nav class="tabs" role="tablist" aria-label="Seções">
-        <button role="tab" data-tab="perfil"><svg class="ic"><use href="#i-user"/></svg><span>Perfil</span></button>
         <button role="tab" data-tab="catalogo"><svg class="ic"><use href="#i-list"/></svg><span>Catálogo</span></button>
         <button role="tab" data-tab="galeria"><svg class="ic"><use href="#i-grid"/></svg><span>Galeria</span></button>
         <button role="tab" data-tab="tier"><svg class="ic"><use href="#i-layers"/></svg><span>Tier List</span></button>
-        <button role="tab" data-tab="desejos"><svg class="ic"><use href="#i-bookmark"/></svg><span>Desejos</span></button>
-        <button role="tab" data-tab="amigos"><svg class="ic"><use href="#i-users"/></svg><span>Amigos</span><i class="nb" id="fr-badge" hidden></i></button>
         <button role="tab" data-tab="resumo"><svg class="ic"><use href="#i-chart"/></svg><span>Resumo</span></button>
       </nav>
       <div class="who">
+        <button class="iconbtn light" id="friends-btn" aria-label="Amigos" title="Amigos"><svg class="ic"><use href="#i-users"/></svg><i class="nb" id="fr-badge" hidden></i></button>
         <button class="who-btn" id="who-btn" aria-label="Abrir meu perfil"><span id="who-av" class="av xs"></span><span id="who-name" class="who-n"></span></button>
         <button class="iconbtn light" id="logout" aria-label="Sair"><svg class="ic"><use href="#i-logout"/></svg></button>
       </div>
@@ -115,7 +113,7 @@
 
     <section id="catalogo" hidden>
       <div class="sec-head"><div><h2 class="h">Catálogo</h2><p class="muted" id="cat-sub"></p></div>
-        <button class="btn" id="add"><svg class="ic"><use href="#i-plus"/></svg>Adicionar jogo</button></div>
+        <div class="head-acts"><button class="btn ghost" data-go="desejos"><svg class="ic"><use href="#i-bookmark"/></svg>Lista de desejos<span class="cnt" id="wl-n"></span></button><button class="btn" id="add"><svg class="ic"><use href="#i-plus"/></svg>Adicionar jogo</button></div></div>
       <div class="bar">
         <span class="inp grow"><svg class="ic"><use href="#i-search"/></svg><input type="search" id="q" placeholder="Buscar no catálogo" aria-label="Buscar no catálogo"></span>
         <select id="sort" aria-label="Ordenar">
@@ -143,7 +141,7 @@
     </section>
 
     <section id="desejos" hidden>
-      <div class="sec-head"><div><h2 class="h">Lista de desejos</h2><p class="muted">Jogos que você pretende jogar ou comprar.</p></div>
+      <div class="sec-head"><div><button class="link back" data-go="catalogo">← Voltar ao catálogo</button><h2 class="h">Lista de desejos</h2><p class="muted">Jogos que você pretende jogar ou comprar.</p></div>
         <button class="btn" id="add-wish"><svg class="ic"><use href="#i-plus"/></svg>Adicionar à lista</button></div>
       <div class="grid" id="wgrid"></div>
     </section>

@@ -222,7 +222,7 @@ function renderProfile() {
 /* ---------- catálogo ---------- */
 function renderCatalog() {
   $("#fchips").innerHTML = chipsHTML(fStatus, "f");
-  $("#cat-sub").textContent = loaded ? `${games.length} jogos na sua biblioteca` : "";
+  $("#wl-n").textContent = wishlist().length || ""; $("#cat-sub").textContent = loaded ? `${games.length} jogos na sua biblioteca` : "";
   const q = $("#q").value.trim().toLowerCase(), favs = (profile && profile.favorites) || [];
   const list = sorted(games.filter(g => (!fStatus || g.status === fStatus) && (!q || g.name.toLowerCase().includes(q))), $("#sort").value);
   const box = $("#list");
@@ -441,7 +441,9 @@ async function onSession(session) {
 /* ---------- navegação ---------- */
 function show(t) {
   tab = TABS.includes(t) ? t : "perfil";
-  for (const b of document.querySelectorAll("nav.tabs button")) b.setAttribute("aria-selected", b.dataset.tab === tab);
+  const hl = tab === "desejos" ? "catalogo" : tab;
+  for (const b of document.querySelectorAll("nav.tabs button")) b.setAttribute("aria-selected", b.dataset.tab === hl);
+  $("#friends-btn").classList.toggle("on", tab === "amigos"); $("#who-btn").classList.toggle("on", tab === "perfil");
   for (const s of document.querySelectorAll("main > section")) s.hidden = s.id !== tab;
   if (tab === "amigos" && user) loadFriends();
   render(); window.scrollTo({ top: 0 });
@@ -457,6 +459,7 @@ document.addEventListener("click", async e => {
   const t = e.target, c = s => t.closest(s); let b;
   if (b = c("nav.tabs button")) { location.hash = b.dataset.tab; return }
   if (c("#who-btn")) { location.hash = "perfil"; return }
+  if (c("#friends-btn")) { location.hash = "amigos"; return }
   if (c("#logout")) { await sb.auth.signOut(); return }
   if (b = c("[data-go]")) { location.hash = b.dataset.go; return }
   if (b = c("[data-open]")) { openForm(b.dataset.open); return }

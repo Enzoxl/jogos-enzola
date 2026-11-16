@@ -361,3 +361,8 @@ textarea{width:100%;resize:vertical}
 .fv-head{display:flex;gap:14px;align-items:flex-end;padding:0 8px;position:relative;margin-bottom:8px}
 @media (max-width:520px){.fcard{flex-wrap:wrap}.fa{width:100%;justify-content:flex-start}}
 #amigos>.panel{margin-bottom:24px}.fcard .av.md{width:48px;height:48px}
+.head-acts{display:flex;gap:10px;flex-wrap:wrap}
+.head-acts .cnt{background:var(--accent-soft);color:var(--accent);border-radius:999px;font:700 11px var(--f-head);padding:1px 7px}.head-acts .cnt:empty{display:none}
+.back{display:block;margin-bottom:6px;font-size:13px;text-align:left}
+#friends-btn{position:relative}#friends-btn .nb{position:absolute;top:0;right:0;margin:0}
+.iconbtn.light.on,.who-btn.on{background:rgba(255,255,255,.18);color:#fff}
