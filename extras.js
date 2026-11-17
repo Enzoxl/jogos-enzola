@@ -461,7 +461,7 @@ async function applyInvite() {
 // true = hipopótamo no centro com os coadjuvantes em bolhas; false = só o hipopótamo (versão anterior)
 const WELCOME_CAST = true;
 // [arquivo, x%, y%, tamanho(px), x% celular, y% celular, tamanho celular(px), flutuação(s)]
-const CAST = [["c1", 10, 17, 112, 12, 9, 54, 4.2], ["c9", 25, 10, 80, 31, 9, 54, 4.6], ["c3", 7, 54, 100, 88, 9, 54, 4.9], ["c10", 23, 40, 78, 69, 9, 54, 5.3], ["c11", 14, 83, 100, 26, 93, 50, 5.7], ["c4", 29, 88, 80, 10, 93, 50, 4.2], ["c2", 76, 12, 92, 50, 9, 54, 4.6], ["c5", 90, 26, 92, 42, 93, 50, 5.0], ["c12", 92, 56, 84, 58, 93, 50, 5.4], ["c6", 79, 44, 70, 74, 93, 50, 5.7], ["c8", 82, 84, 100, 90, 93, 50, 4.3]];
+const CAST = [["c1", 10, 17, 112, 10, 9, 50, 4.2], ["c9", 25, 10, 80, 26, 9, 50, 4.6], ["c3", 7, 54, 100, 74, 9, 50, 4.9], ["c10", 23, 40, 78, 58, 9, 50, 5.3], ["c11", 14, 83, 100, 26, 93, 50, 5.7], ["c4", 29, 88, 80, 10, 93, 50, 4.2], ["c2", 76, 12, 92, 42, 9, 50, 4.6], ["c5", 90, 26, 92, 42, 93, 50, 5.0], ["c12", 92, 56, 84, 58, 93, 50, 5.4], ["c6", 79, 44, 70, 74, 93, 50, 5.7], ["c8", 80, 82, 100, 90, 93, 50, 4.3], ["c13", 94, 86, 84, 90, 9, 50, 4.7]];
 function showWelcome(inviter, state) {
   if (document.getElementById("welcome")) return;
   const line = state === "sent" ? `<b>@${esc(inviter)}</b> te convidou. Já enviamos seu pedido de amizade.`
