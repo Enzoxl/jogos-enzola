@@ -995,7 +995,7 @@ a.fhead:hover .fn{color:var(--accent)}
 @keyframes cfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
 @media (max-width:640px){
   .w-stage.cast{--sh:clamp(260px,calc(100vh - 320px),440px);--sh:clamp(260px,calc(100dvh - 320px),440px)}
-  .w-stage.cast .w-hippo{height:calc(var(--sh)*.72)}
+  .w-stage.cast .w-hippo{height:calc(var(--sh)*.64)}
   .cb{padding:3px}
   .w-card h1{font-size:clamp(22px,6.6vw,30px)}
 }
@@ -1073,3 +1073,9 @@ body:has(.install-bar) .music-btn{bottom:calc(150px + env(safe-area-inset-bottom
 .music-btn[hidden]{display:none}
 .music-btn{touch-action:none}
 .music-btn.dragging{transition:none;opacity:.6}
+/* botão de som da tela de boas-vindas */
+.w-snd{position:fixed;top:max(14px,env(safe-area-inset-top));right:max(14px,env(safe-area-inset-right));z-index:3;width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:background .15s,transform .15s}
+.w-snd:hover{background:rgba(255,255,255,.22);transform:scale(1.05)}
+.w-snd .off{display:none}.w-snd.off .on{display:none}.w-snd.off .off{display:inline}
+.w-stage.cast{--sh:clamp(260px,calc(100vh - 300px),440px);--sh:clamp(260px,calc(100dvh - 300px),440px)}
+@media (max-width:640px){.w-stage.cast{--sh:clamp(330px,calc(100vh - 320px),470px);--sh:clamp(330px,calc(100dvh - 320px),470px)}.cb{padding:3px}}

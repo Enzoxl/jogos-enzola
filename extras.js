@@ -480,6 +480,7 @@ function showWelcome(inviter, state) {
   w.id = "welcome"; w.className = "welcome"; w.setAttribute("role", "dialog"); w.setAttribute("aria-modal", "true"); w.setAttribute("aria-labelledby", "w-title");
   const bubbles = Array.from({ length: 16 }, () => { const s = 8 + Math.random() * 26; return `<i class="bub" style="left:${(Math.random() * 100).toFixed(1)}%;width:${s.toFixed(0)}px;height:${s.toFixed(0)}px;animation-duration:${(7 + Math.random() * 9).toFixed(1)}s;animation-delay:${(-Math.random() * 12).toFixed(1)}s"></i>` }).join("");
   w.innerHTML = `<div class="w-rays" aria-hidden="true"></div><div class="w-bubs" aria-hidden="true">${bubbles}</div>
+    <button class="w-snd" id="w-snd" type="button" aria-label="Desligar a música" aria-pressed="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path class="on" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/><path class="off" d="m16 9 6 6m0-6-6 6"/></svg></button>
     <div class="w-card"><span class="logo sm w-logo" role="img" aria-label="Movimento Enzola"></span>
       <div class="w-stage${WELCOME_CAST ? " cast" : ""}">${WELCOME_CAST ? `<div class="w-cast" aria-hidden="true">${CAST_FILES.map((f, i) => `<span class="cb" style="--i:${i};--d:${(4 + Math.random() * 2.6).toFixed(1)}s"><img src="convite/${f}.jpg" alt="" loading="eager" draggable="false"></span>`).join("")}</div>` : ""}
       <img class="w-hippo" src="hipopotamo.webp" alt="Filhote de hipopótamo nadando na sua direção" width="300"></div>
@@ -490,7 +491,21 @@ function showWelcome(inviter, state) {
   document.body.append(w);
   const stage = w.querySelector(".w-stage.cast"), relayout = () => stage && layoutCast(stage);
   if (stage) { relayout(); window.addEventListener("resize", relayout) }
-  const close = () => { window.removeEventListener("resize", relayout); w.classList.add("out"); setTimeout(() => w.remove(), 350); document.removeEventListener("keydown", onKey) };
+  const audio = new Audio("musica.mp3"); audio.loop = true; audio.volume = 0; audio.preload = "auto";
+  let muted = !!lsGet("welcome-muted"), fade = 0, closed = false;
+  const fadeTo = (v, ms, done) => { clearInterval(fade); const from = audio.volume, t0 = performance.now();
+    fade = setInterval(() => { const k = Math.min(1, (performance.now() - t0) / ms); audio.volume = Math.max(0, Math.min(1, from + (v - from) * k)); if (k >= 1) { clearInterval(fade); if (done) done() } }, 40) };
+  const snd = w.querySelector("#w-snd");
+  const paintSnd = () => { snd.classList.toggle("off", muted); snd.setAttribute("aria-pressed", String(!muted)); snd.setAttribute("aria-label", muted ? "Ligar a música" : "Desligar a música") };
+  const startAudio = () => { if (muted || closed) return;
+    audio.play().then(() => fadeTo(.55, 1600)).catch(() => w.addEventListener("pointerdown", startAudio, { once: true })) };
+  const onVis = () => { if (document.hidden) audio.pause(); else if (!muted && !closed) audio.play().catch(() => { }) };
+  document.addEventListener("visibilitychange", onVis);
+  snd.addEventListener("click", ev => { ev.stopPropagation(); muted = !muted; lsSet("welcome-muted", muted); paintSnd();
+    if (muted) fadeTo(0, 400, () => audio.pause()); else startAudio() });
+  paintSnd(); startAudio();
+  const close = () => { closed = true; document.removeEventListener("visibilitychange", onVis); fadeTo(0, 600, () => { audio.pause(); audio.removeAttribute("src"); audio.load() });
+    window.removeEventListener("resize", relayout); w.classList.add("out"); setTimeout(() => w.remove(), 350); document.removeEventListener("keydown", onKey) };
   const onKey = ev => { if (ev.key === "Escape") close() };
   document.addEventListener("keydown", onKey);
   w.querySelector("#w-go").addEventListener("click", close); w.querySelector("#w-go").focus({ preventScroll: true });
@@ -499,18 +514,15 @@ function showWelcome(inviter, state) {
 // Espalha as bolhas de forma aleatória ao redor do hipopótamo, sem encostar nele nem umas nas outras
 function layoutCast(stage) {
   const W = stage.clientWidth, H = stage.clientHeight; if (!W || !H) return;
-  const mob = W < 560, hh = H * (mob ? .72 : .94), hw = hh * .854;
+  const mob = W < 560, hh = H * (mob ? .64 : .94), hw = hh * .854;
   const cx = W / 2, cy = H / 2, rx = hw / 2 + 10, ry = hh / 2 + 6;
-  const sizes = mob ? [42, 48, 54, 60] : [58, 66, 76, 88], minS = mob ? 36 : 44, placed = [];
-  const els = [...stage.querySelectorAll(".cb")].sort(() => Math.random() - .5);
-  for (const el of els) {
-    let s = sizes[Math.floor(Math.random() * sizes.length)], ok = false;
-    for (let t = 0; t < 1500 && !ok; t++) {
-      if (t % 150 === 149) s = Math.max(minS, s - 6);
-      // sorteia num anel em volta do hipopótamo (fica mais equilibrado que no retângulo todo)
-      const ang = Math.random() * Math.PI * 2, k = 1.12 + Math.random() * (mob ? .9 : 1.25);
-      const x = cx + Math.cos(ang) * (rx + s / 2) * k, y = cy + Math.sin(ang) * (ry + s / 2) * k;
-      if (x < s / 2 + 3 || x > W - s / 2 - 3 || y < s / 2 + 3 || y > H - s / 2 - 3) continue;
+  const sizes = mob ? [54, 58, 62, 66] : [80, 92, 104, 116], minS = mob ? 50 : 72, placed = [];
+  const els = [...stage.querySelectorAll(".cb")].sort(() => Math.random() - .5), big = els.map(() => sizes[Math.floor(Math.random() * sizes.length)]).sort((a, b) => b - a);
+  for (const [k, el] of els.entries()) {
+    let s = big[k], ok = false;
+    for (let t = 0; t < 1400 && !ok; t++) {
+      if (t % 200 === 199) s = Math.max(minS, s - 4);
+      const x = s / 2 + 3 + Math.random() * (W - s - 6), y = s / 2 + 3 + Math.random() * (H - s - 6);
       if (((x - cx) / (rx + s * .45)) ** 2 + ((y - cy) / (ry + s * .45)) ** 2 < 1) continue;
       if (placed.some(p => Math.hypot(p.x - x, p.y - y) < (p.s + s) / 2 + 6)) continue;
       placed.push({ x, y, s }); ok = true;
