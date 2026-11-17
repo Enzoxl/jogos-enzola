@@ -949,3 +949,7 @@ a.fhead:hover .fn{color:var(--accent)}
 .cfg-pw .f2{align-items:start}
 .cfg-pw .f2>label{align-content:start}
 .gp-cover .cv{object-position:center}
+.foot-brand .credit2{display:block;margin-top:2px}
+.foot-brand .credit2 a{display:inline-flex;align-items:center;gap:6px;color:inherit;font-weight:600;text-decoration:none;border-bottom:1px solid transparent;transition:border-color .15s,color .15s}
+.foot-brand .credit2 a:hover{border-bottom-color:currentColor}
+.foot-brand .credit2 .ic{color:#E1306C;width:1em;height:1em}
