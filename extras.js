@@ -491,7 +491,7 @@ function showWelcome(inviter, state) {
   document.body.append(w);
   const stage = w.querySelector(".w-stage.cast"), relayout = () => stage && layoutCast(stage);
   if (stage) { relayout(); window.addEventListener("resize", relayout) }
-  const audio = new Audio("musica.mp3"); audio.loop = true; audio.volume = 0; audio.preload = "auto";
+  const audio = new Audio("convite/musica.mp3"); audio.loop = true; audio.volume = 0; audio.preload = "auto";
   let muted = !!lsGet("welcome-muted"), fade = 0, closed = false;
   const fadeTo = (v, ms, done) => { clearInterval(fade); const from = audio.volume, t0 = performance.now();
     fade = setInterval(() => { const k = Math.min(1, (performance.now() - t0) / ms); audio.volume = Math.max(0, Math.min(1, from + (v - from) * k)); if (k >= 1) { clearInterval(fade); if (done) done() } }, 40) };
