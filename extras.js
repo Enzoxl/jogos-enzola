@@ -15,7 +15,6 @@ const curTheme = () => document.documentElement.dataset.theme === "light" ? "lig
 matchMedia("(prefers-color-scheme: light)").addEventListener?.("change", () => { if (themePref() === "auto") applyLocalPrefs() });
 
 /* ---------- configurações ---------- */
-let cfgRecovery = null;
 async function saveSettings(patch) {
   const settings = { ...((profile && profile.settings) || {}), ...patch };
   if (!caps.v3) { profile.settings = settings; render(); toast("Salvo só neste aparelho. Rode a migracao.sql para guardar na conta."); return }
@@ -27,22 +26,24 @@ function renderConfig() {
   const el = $("#config"); if (!el || tab !== "config") return;
   if (!loaded) { el.innerHTML = `<div class="sk" style="height:400px;border-radius:20px"></div>`; return }
   const p = profile || {}, t = themePref(), v3 = caps.v3;
-  if (v3 && cfgRecovery === null) { cfgRecovery = "…"; sb.rpc("has_recovery").then(r => { cfgRecovery = r.error ? "?" : !!r.data; renderConfig() }) }
   const standaloneNow = standalone();
-  const keep = ["pw-cur", "pw-new", "pw-new2"].map(id => [id, $("#" + id) ? $("#" + id).value : ""]), act = document.activeElement && document.activeElement.id;
+  const keep = ["pw-cur", "pw-new", "pw-new2", "em-new"].map(id => [id, $("#" + id) ? $("#" + id).value : ""]), act = document.activeElement && document.activeElement.id;
   el.innerHTML = `<div class="sec-head"><div><h2 class="h">Configurações</h2><p class="muted">Conta, aparência, privacidade e dados.</p></div></div>
   <div class="cfg">
     <nav class="cfg-nav" aria-label="Seções das configurações">${[["conta", "user", "Conta e segurança"], ["convite", "userplus", "Convidar amigos"], ["aparencia", "sun", "Aparência"], ["privacidade", "shield", "Privacidade"], ["notificacoes", "bell", "Notificações"], ["precos", "tag", "Preços e lojas"], ["dados", "file", "Seus dados"], ["app", "phone", "App"]].map(([id, i, l]) => `<a href="#config" data-cfg-jump="${id}">${ic(i)}${l}</a>`).join("")}</nav>
     <div class="cfg-body">
     <section class="panel cfg-sec" id="cfg-conta"><h3>${ic("user")}Conta e segurança</h3>
       ${row("Seu usuário", "Seus amigos podem te achar pelo usuário ou pelo ID.", `<span class="idtag big">@${esc(uname())}${p.tag ? " #" + esc(p.tag) : ""}</span>${p.tag ? `<button class="btn ghost sm" data-act="copy-id">Copiar</button>` : ""}`)}
+      <form class="cfg-pw" id="em-form" novalidate><b>E-mail da conta</b>
+        ${isLegacy() ? `<p class="cfg-warn">${ic("shield")}<span>Sua conta foi criada só com usuário e ainda não tem e-mail. Cadastre um para entrar com ele e conseguir recuperar a senha se esquecer.</span></p>` : `<span class="hint">Atual: <b>${esc(user.email)}</b>${user.new_email ? ` · aguardando confirmação de <b>${esc(user.new_email)}</b>` : ""}</span>`}
+        <div class="f2"><label>${isLegacy() ? "Seu e-mail" : "Novo e-mail"}<span class="inp">${ic("mail")}<input type="email" id="em-new" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="voce@email.com"></span></label><span></span></div>
+        <div><button class="btn${isLegacy() ? "" : " ghost"}" id="em-save">Salvar e-mail</button></div></form>
       <form class="cfg-pw" id="pw-form" autocomplete="on"><b>Alterar senha</b>
-        <input type="text" autocomplete="username" value="${esc(uname())}" hidden>
+        <input type="text" autocomplete="username" value="${esc(user.email)}" hidden>
         <div class="f2"><label>Senha atual<span class="inp">${ic("lock")}<input type="password" id="pw-cur" autocomplete="current-password"></span></label><span></span></div>
         <div class="f2"><label>Nova senha<span class="inp">${ic("key")}<input type="password" id="pw-new" autocomplete="new-password" minlength="6"></span><span class="pwmeter" id="pw-meter"><i></i></span><span class="hint" id="pw-hint">Use 8 ou mais caracteres, misturando letras e números.</span></label>
           <label>Repita a nova senha<span class="inp">${ic("key")}<input type="password" id="pw-new2" autocomplete="new-password"></span></label></div>
         <div><button class="btn" id="pw-save">Salvar nova senha</button></div></form>
-      ${v3 ? row("Código de recuperação", cfgRecovery === true ? "Você tem um código ativo. Ele serve para trocar a senha se você esquecer." : cfgRecovery === false ? "<b class='warn-t'>Você ainda não tem um código.</b> Sem ele, para recuperar a senha você vai precisar pedir ao administrador." : "Serve para trocar a senha se você esquecer.", `<button class="btn ${cfgRecovery === false ? "" : "ghost "}sm" data-cfg-act="recovery">${ic("key")}${cfgRecovery === true ? "Gerar novo código" : "Gerar código"}</button>`) : ""}
       ${row("Sair de todos os aparelhos", "Encerra a sessão no celular, no computador e onde mais você tiver entrado.", `<button class="btn ghost sm" data-cfg-act="logout-all">${ic("logout")}Sair de todos</button>`)}
       ${FN() ? row("Excluir conta", "Apaga para sempre sua biblioteca, amigos, mensagens e o seu usuário.", `<button class="btn danger sm" data-cfg-act="delete">${ic("trash")}Excluir minha conta</button>`) : ""}
     </section>
@@ -53,7 +54,7 @@ function renderConfig() {
     </section>
     <section class="panel cfg-sec" id="cfg-aparencia"><h3>${ic("sun")}Aparência</h3>
       ${row("Tema", "“Automático” segue o tema do seu celular ou computador.", `<div class="seg sm" role="radiogroup">${[["auto", "Automático"], ["light", "Claro"], ["dark", "Escuro"]].map(([v, l]) => `<button role="radio" aria-checked="${t === v}" data-cfg-theme="${v}">${l}</button>`).join("")}</div>`)}
-      ${row("Música de fundo", "“A Pipa do Vovô” tocando baixinho enquanto você usa o site. Ligada, aparece um botão no canto da tela; para tirá-lo, toque nele ou arraste para baixo.", `<input type="range" id="music-vol" min="5" max="80" step="5" value="${Math.round(musicVol() * 100)}" aria-label="Volume da música"${musicOn() ? "" : " disabled"}>` + sw(`data-cfg-local="pref-music" data-default="1"`, musicOn(), "Música de fundo"))}
+      ${row("Música de fundo", "Músicas do Silvio Santos tocando baixinho, em ordem aleatória. Ligada, aparece um botão discreto no canto da tela com anterior, pausa e próxima.", `<input type="range" id="music-vol" min="5" max="80" step="5" value="${Math.round(musicVol() * 100)}" aria-label="Volume da música"${musicOn() ? "" : " disabled"}>` + sw(`data-cfg-local="pref-music" data-default="1"`, musicOn(), "Música de fundo"))}
       ${row("Reduzir animações", "Desliga brilhos, flutuações e transições. Bom para aparelhos mais simples.", sw(`data-cfg-local="pref-calm"`, !!lsGet("pref-calm"), "Reduzir animações"))}
       ${row("Confete ao zerar um jogo", "", sw(`data-cfg="confetti"`, setting("confetti", true), "Confete ao zerar um jogo"))}
     </section>
@@ -84,7 +85,8 @@ function renderConfig() {
     </div>
   </div>`;
   for (const [id, v] of keep) if (v && $("#" + id)) $("#" + id).value = v;
-  if (act && $("#" + act) && /^pw-/.test(act)) $("#" + act).focus();
+  if ($("#pw-new") && $("#pw-new").value) $("#pw-meter").className = "pwmeter s" + pwScore($("#pw-new").value);
+  if (act && $("#" + act) && /^(pw|em)-/.test(act)) $("#" + act).focus();
 }
 function pwScore(s) { let n = 0; if (s.length >= 8) n++; if (s.length >= 12) n++; if (/[a-z]/.test(s) && /[A-Z]/.test(s)) n++; if (/\d/.test(s)) n++; if (/[^A-Za-z0-9]/.test(s)) n++; return Math.min(4, n) }
 async function changePassword() {
@@ -103,63 +105,73 @@ async function changePassword() {
   } finally { b.disabled = false; b.textContent = "Salvar nova senha" }
 }
 
-/* ---------- código de recuperação ---------- */
-const RC_ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-function genCode() { const a = new Uint32Array(16); crypto.getRandomValues(a); return [...a].map(x => RC_ALPHA[x % 32]).join("") }
-const fmtCode = c => c.match(/.{4}/g).join("-");
-async function sha256hex(s) { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join("") }
-async function offerRecoveryCode(isNew) {
-  if (!caps.v3) { if (!isNew) toast("Rode a migracao.sql para usar o código de recuperação."); return }
-  if (!(window.crypto && crypto.subtle)) { toast("Abra o site com https para gerar o código."); return }
-  const code = genCode();
-  const { error } = await sb.rpc("set_recovery_hash", { h: await sha256hex(`${user.id}:${code}`) });
-  if (error) { if (!isNew) toast("Não foi possível gerar o código agora."); return }
-  cfgRecovery = true;
-  const txt = `Jogos Enzola — código de recuperação\nUsuário: ${uname()}\nCódigo: ${fmtCode(code)}\n\nGuarde em um lugar seguro. Use em "Esqueci minha senha". Cada código funciona uma vez.`;
-  modal2(`<h2>${isNew ? "Conta criada! Guarde seu código" : "Seu novo código de recuperação"}</h2>
-    <p class="sub">Se você esquecer a senha, é com este código que você entra de novo. Ele aparece só agora.</p>
-    <div class="rcode" aria-label="Código de recuperação">${fmtCode(code)}</div>
-    <div class="rc-acts"><button class="btn ghost sm" data-rc="copy">${ic("file")}Copiar</button><button class="btn ghost sm" data-rc="save">${ic("download")}Salvar arquivo</button></div>
-    <p class="hint">Dica: tire um print ou guarde no seu gerenciador de senhas. ${isNew ? "" : "O código anterior deixou de funcionar."}</p>
-    <label class="tg" style="margin-top:12px"><input type="checkbox" id="rc-ok">Guardei meu código</label>
-    <div class="acts"><button class="btn" id="rc-done" disabled>Concluir</button></div>`);
-  modal2.txt = txt; modal2.code = fmtCode(code);
-  if (tab === "config") renderConfig();
-}
+/* ---------- e-mail da conta, esqueci a senha e nova senha ---------- */
 function openForgot() {
-  const u = $("#a-email").value.trim();
-  modalShell(`<h2>Recuperar acesso</h2>
-    ${FN() ? `<p class="sub">Use o código de recuperação que você guardou ao criar a conta (ou que gerou em Configurações).</p>
-    <form class="f" id="fg-form">
-      <label>Usuário<span class="inp">${ic("user")}<input type="text" id="fg-user" value="${esc(u)}" autocomplete="username" autocapitalize="none" spellcheck="false"></span></label>
-      <label>Código de recuperação<span class="inp">${ic("key")}<input type="text" id="fg-code" placeholder="XXXX-XXXX-XXXX-XXXX" autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="19"></span></label>
-      <div class="f2"><label>Nova senha<span class="inp">${ic("lock")}<input type="password" id="fg-pass" autocomplete="new-password"></span></label>
-        <label>Repita a nova senha<span class="inp">${ic("lock")}<input type="password" id="fg-pass2" autocomplete="new-password"></span></label></div>
+  const v = $("#a-id") ? $("#a-id").value.trim() : "";
+  modalShell(`<h2>Esqueci minha senha</h2>
+    <p class="sub">Digite o e-mail da sua conta. Vamos mandar um link para você criar uma senha nova.</p>
+    <form class="f" id="fg-form" novalidate>
+      <label>E-mail<span class="inp">${ic("mail")}<input type="email" id="fg-email" value="${esc(v.includes("@") ? v : "")}" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="voce@email.com"></span></label>
       <div class="auth-msg" id="fg-msg" role="status" aria-live="polite"></div>
-      <div class="acts" style="margin-top:4px"><button type="button" class="btn ghost" data-close>Cancelar</button><button class="btn" id="fg-go">Trocar senha e entrar</button></div>
-    </form>` : `<p class="sub">A recuperação automática ainda não foi ativada neste site.</p>`}
-    <div class="fg-help">${ic("insta")}<p><b>Não tem o código?</b> Mande uma mensagem para <a href="https://www.instagram.com/movimento.enzola/" target="_blank" rel="noopener">@movimento.enzola</a> no Instagram com o seu usuário. O administrador redefine sua senha pelo painel do Supabase.</p></div>`);
-  setTimeout(() => { const i = $(u ? "#fg-code" : "#fg-user"); if (i) i.focus() }, 50);
+      <div class="acts" style="margin-top:4px"><button type="button" class="btn ghost" data-close>Cancelar</button><button class="btn" id="fg-go">${ic("send")}Enviar link</button></div>
+    </form>
+    <div class="fg-help">${ic("insta")}<p><b>Sua conta é antiga e não tem e-mail?</b> Mande uma mensagem para <a href="https://www.instagram.com/movimento.enzola/" target="_blank" rel="noopener">@movimento.enzola</a> no Instagram com o seu usuário para redefinir a senha. Depois, cadastre seu e-mail em Configurações.</p></div>`);
+  setTimeout(() => $("#fg-email") && $("#fg-email").focus(), 50);
 }
 async function doForgot() {
-  const u = $("#fg-user").value.trim().toLowerCase().replace(/^@/, ""), code = $("#fg-code").value, p1 = $("#fg-pass").value, p2 = $("#fg-pass2").value, m = $("#fg-msg");
-  if (!/^[a-z0-9._-]{3,30}$/.test(u)) return m.textContent = "Confira o usuário.";
-  if (code.replace(/[^A-Za-z0-9]/g, "").length !== 16) return m.textContent = "O código tem 16 letras e números (ex.: ABCD-2345-EFGH-6789).";
-  if (p1.length < 6) return m.textContent = "A nova senha precisa ter pelo menos 6 caracteres.";
-  if (p1 !== p2) return m.textContent = "As duas senhas não são iguais.";
-  const b = $("#fg-go"); b.disabled = true; m.className = "auth-msg"; m.textContent = "Verificando…";
+  const email = $("#fg-email").value.trim().toLowerCase(), m = $("#fg-msg");
+  if (!EMAIL_RE.test(email)) { m.className = "auth-msg"; m.textContent = "Digite o e-mail da sua conta, como voce@email.com."; return }
+  const b = $("#fg-go"); b.disabled = true; m.className = "auth-msg"; m.textContent = "Enviando…";
   try {
-    const r = await api("recuperar", { username: u, code, password: p1 });
-    if (!r || !r.ok) throw new Error("Usuário ou código inválido.");
-    m.className = "auth-msg ok"; m.textContent = "Senha trocada! Entrando…";
-    const s = await sb.auth.signInWithPassword({ email: r.email, password: p1 });
-    if (s.error) { m.textContent = "Senha trocada. Entre com a nova senha."; return }
-    closeModal(); afterRecovery = true;
-  } catch (e) { m.className = "auth-msg"; m.textContent = /tentativas/.test(e.message) ? e.message : /inválid/.test(e.message) ? "Usuário ou código inválido." : "Não foi possível trocar a senha agora. Tente de novo." }
-  finally { b.disabled = false }
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: siteUrl() });
+    if (error) { m.textContent = authError(error) || "Não foi possível enviar agora. Tente de novo em alguns minutos."; return }
+    m.className = "auth-msg ok"; m.innerHTML = `Pronto! Se existir uma conta com <b>${esc(email)}</b>, o link chega em alguns minutos. Confira também a caixa de spam.`;
+    b.hidden = true;
+  } finally { b.disabled = false }
 }
-let afterRecovery = false;
-document.addEventListener("submit", e => { if (e.target.id === "fg-form") { e.preventDefault(); doForgot() } if (e.target.id === "pw-form") { e.preventDefault(); changePassword() } });
+function openNewPassword() {
+  modal2(`<h2>Crie uma nova senha</h2><p class="sub">Você entrou pelo link de recuperação. Escolha a senha nova da sua conta.</p>
+    <form class="f" id="np-form" novalidate>
+      <input type="text" autocomplete="username" value="${esc(user ? user.email : "")}" hidden>
+      <label>Nova senha<span class="inp">${ic("lock")}<input type="password" id="np-pass" autocomplete="new-password"></span><span class="pwmeter" id="np-meter"><i></i></span></label>
+      <label>Repita a nova senha<span class="inp">${ic("lock")}<input type="password" id="np-pass2" autocomplete="new-password"></span></label>
+      <div class="auth-msg" id="np-msg" role="status" aria-live="polite"></div>
+      <div class="acts"><button class="btn" id="np-go">Salvar nova senha</button></div>
+    </form>`);
+  setTimeout(() => $("#np-pass") && $("#np-pass").focus(), 50);
+}
+async function doNewPassword() {
+  const a = $("#np-pass").value, b2 = $("#np-pass2").value, m = $("#np-msg");
+  if (a.length < 6) return m.textContent = "A senha precisa ter pelo menos 6 caracteres.";
+  if (a !== b2) return m.textContent = "As duas senhas não são iguais.";
+  const b = $("#np-go"); b.disabled = true;
+  const r = await sb.auth.updateUser({ password: a }); b.disabled = false;
+  if (r.error) { m.textContent = authError(r.error) || "Não foi possível salvar: " + r.error.message; return }
+  closeModal2(); history.replaceState(null, "", siteUrl() + "#perfil"); toast("Senha nova salva. Pronto!");
+}
+async function changeEmail() {
+  const email = $("#em-new").value.trim().toLowerCase();
+  if (!EMAIL_RE.test(email)) return toast("Digite um e-mail válido, como voce@email.com.");
+  if (email === (user.email || "").toLowerCase()) return toast("Esse já é o e-mail da sua conta.");
+  const b = $("#em-save"); b.disabled = true; b.textContent = "Salvando…";
+  try {
+    const r = await sb.auth.updateUser({ email, data: { username: uname() } }, { emailRedirectTo: siteUrl() + "#config" });
+    if (r.error) return toast(authError(r.error) || "Não foi possível trocar o e-mail: " + r.error.message);
+    const u = r.data && r.data.user;
+    if (u && (u.email || "").toLowerCase() === email) {
+      await sb.auth.updateUser({ data: { real_email: true, username: uname() } });
+      user = { ...user, ...u, user_metadata: { ...(u.user_metadata || {}), real_email: true, username: uname() } };
+      toast("E-mail salvo. Agora você entra com ele e pode recuperar a senha.");
+    } else toast(`Enviamos um link de confirmação para ${email}. A troca vale depois do clique.`);
+    renderConfig();
+  } finally { const b2 = $("#em-save"); if (b2) { b2.disabled = false; b2.textContent = "Salvar e-mail" } }
+}
+document.addEventListener("submit", e => {
+  if (e.target.id === "fg-form") { e.preventDefault(); doForgot() }
+  if (e.target.id === "np-form") { e.preventDefault(); doNewPassword() }
+  if (e.target.id === "pw-form") { e.preventDefault(); changePassword() }
+  if (e.target.id === "em-form") { e.preventDefault(); changeEmail() }
+});
 
 /* ---------- instalar o app ---------- */
 let deferredPrompt = null;
@@ -373,8 +385,6 @@ document.addEventListener("click", async e => {
   if (c("[data-close2]")) { closeModal2(); return }
   if (b = c("[data-inst]")) { $$("[data-inst]").forEach(x => x.setAttribute("aria-checked", x === b)); $$("[data-inst-panel]").forEach(p => p.hidden = p.dataset.instPanel !== b.dataset.inst); return }
   if (c("[data-ib='close']")) { $("#install-bar").hidden = true; lsSet("install-dismissed", true); return }
-  if (b = c("[data-rc]")) { if (b.dataset.rc === "copy") copyText(modal2.code, "Código copiado."); else { const bl = new Blob([modal2.txt], { type: "text/plain;charset=utf-8" }); shareOrDownload(bl, "codigo-recuperacao-jogos-enzola.txt", "Código de recuperação") } return }
-  if (c("#rc-done")) { closeModal2(); if (afterRecovery) afterRecovery = false; return }
   if (b = c("[data-cfg-act=inv-copy]")) { copyText(inviteUrl(uname()), "Link de convite copiado."); return }
   if (b = c("[data-cfg-act=inv-share]")) { const url = inviteUrl(uname()), text = "Vem pro Jogos Enzola! Monte seu catálogo de jogos e me adicione como amigo.";
     if (navigator.share) { try { await navigator.share({ title: "Jogos Enzola", text, url }) } catch (er) { if (er.name !== "AbortError") copyText(url, "Link de convite copiado.") } } else copyText(url, "Link de convite copiado."); return }
@@ -382,8 +392,7 @@ document.addEventListener("click", async e => {
   if (b = c("[data-cfg-theme]")) { setTheme(b.dataset.cfgTheme); return }
   if (b = c("[data-cfg-act]")) {
     const a = b.dataset.cfgAct;
-    if (a === "recovery") offerRecoveryCode(false);
-    else if (a === "logout-all") { if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = "Confirmar"; return } await sb.auth.signOut({ scope: "global" }); location.hash = "" }
+    if (a === "logout-all") { if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = "Confirmar"; return } await sb.auth.signOut({ scope: "global" }); location.hash = "" }
     else if (a === "csv-out") exportCSV();
     else if (a === "csv-in") $("#csv-file").click();
     else if (a === "pdf") exportWishlistPDF();
@@ -392,11 +401,11 @@ document.addEventListener("click", async e => {
     return;
   }
   if (c("#pw-save")) { e.preventDefault(); changePassword(); return }
+  if (c("#em-save")) { e.preventDefault(); changeEmail(); return }
   if (c("#del-go")) { doDeleteAccount(); return }
 });
 document.addEventListener("change", async e => {
   const t = e.target;
-  if (t.id === "rc-ok") { $("#rc-done").disabled = !t.checked; return }
   if (t.dataset.cfg) return saveSettings({ [t.dataset.cfg]: t.checked });
   if (t.dataset.cfgSelect) return saveSettings({ [t.dataset.cfgSelect]: t.value });
   if (t.dataset.cfgLocal === "pref-music") { musicToggle(t.checked); const v = $("#music-vol"); if (v) v.disabled = !t.checked; return }
@@ -410,7 +419,7 @@ document.addEventListener("change", async e => {
 });
 document.addEventListener("input", e => {
   if (e.target.id === "pw-new") { const s = pwScore(e.target.value); $("#pw-meter").className = "pwmeter s" + s; $("#pw-hint").textContent = ["Muito fraca", "Fraca", "Razoável", "Boa", "Forte"][s] + (s < 3 ? ". Use 8 ou mais caracteres, misturando letras e números." : ".") }
-  if (e.target.id === "fg-code") { const v = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 16); e.target.value = v.match(/.{1,4}/g)?.join("-") || "" }
+  if (e.target.id === "np-pass") $("#np-meter").className = "pwmeter s" + pwScore(e.target.value);
 });
 function openDeleteAccount() {
   modalShell(`<h2>Excluir conta</h2><p class="sub">Isso apaga para sempre sua biblioteca, tier list, lista de desejos, amigos, grupos e mensagens. Não dá para desfazer.</p>
@@ -432,14 +441,14 @@ const inviteUrl = u => location.origin + location.pathname + "?convite=" + encod
     const q = new URLSearchParams(location.search), u = (q.get("convite") || "").trim().toLowerCase().replace(/^@/, "");
     if (!/^[a-z0-9._-]{3,30}$/.test(u)) return;
     lsSet("invite", u);
-    if (typeof setAuthMode === "function") setAuthMode("signup");
+    if (typeof setAuthTab === "function") setAuthTab(true);
     q.delete("convite"); const rest = q.toString();
     history.replaceState(null, "", location.pathname + (rest ? "?" + rest : "") + location.hash);
-    const msg = document.getElementById("auth-msg");
-    if (msg && !document.getElementById("invite-note")) {
+    const tabs = document.querySelector(".auth-tabs");
+    if (tabs && !document.getElementById("invite-note")) {
       const n = document.createElement("div"); n.id = "invite-note"; n.className = "invite-note";
-      n.innerHTML = `<b>Você foi convidado por @${esc(u)}</b><span>Crie sua conta ou entre. Vocês viram amigos assim que a pessoa aceitar.</span>`;
-      msg.parentNode.insertBefore(n, msg);
+      n.innerHTML = `<b>Você foi convidado por @${esc(u)}</b><span>Crie sua conta ou entre. O pedido de amizade é enviado sozinho.</span>`;
+      tabs.after(n);
     }
   } catch (er) { }
 })();
@@ -455,65 +464,27 @@ async function applyInvite() {
       else { const { error } = await sb.from("friendships").insert({ addressee: f.user_id }); if (!error) { state = "sent"; loadFriends() } }
     }
   }
-  showWelcome(u, state);
+  if (state === "sent") toast(`Pedido de amizade enviado para @${u}, que te convidou.`);
+  else if (state === "already") toast(`Você e @${u} já são amigos por aqui.`);
 }
 
-/* ---------- boas-vindas de quem entra por convite ---------- */
-// true = hipopótamo no centro com os coadjuvantes em bolhas; false = só o hipopótamo (versão anterior)
-const WELCOME_CAST = true;
+/* ---------- elenco da tela de abertura ---------- */
 const CAST_FILES = ["c1", "c2", "c3", "c4", "c5", "c6", "c8", "c9", "c10", "c11", "c12", "c13", "c14", "c15", "c16", "c17"];
-function showWelcome(inviter, state) {
-  if (document.getElementById("welcome")) return;
-  const line = state === "sent" ? `<b>@${esc(inviter)}</b> te convidou. Já enviamos seu pedido de amizade.`
-    : state === "already" ? `Você e <b>@${esc(inviter)}</b> já estão conectados por aqui.`
-    : `<b>@${esc(inviter)}</b> te convidou para jogar junto.`;
-  const w = document.createElement("div");
-  w.id = "welcome"; w.className = "welcome"; w.setAttribute("role", "dialog"); w.setAttribute("aria-modal", "true"); w.setAttribute("aria-labelledby", "w-title");
-  const bubbles = Array.from({ length: 16 }, () => { const s = 8 + Math.random() * 26; return `<i class="bub" style="left:${(Math.random() * 100).toFixed(1)}%;width:${s.toFixed(0)}px;height:${s.toFixed(0)}px;animation-duration:${(7 + Math.random() * 9).toFixed(1)}s;animation-delay:${(-Math.random() * 12).toFixed(1)}s"></i>` }).join("");
-  w.innerHTML = `<div class="w-rays" aria-hidden="true"></div><div class="w-bubs" aria-hidden="true">${bubbles}</div>
-    <button class="w-snd" id="w-snd" type="button" aria-label="Desligar a música" aria-pressed="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path class="on" d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/><path class="off" d="m16 9 6 6m0-6-6 6"/></svg></button>
-    <div class="w-card"><span class="logo sm w-logo" role="img" aria-label="Movimento Enzola"></span>
-      <div class="w-stage${WELCOME_CAST ? " cast" : ""}">${WELCOME_CAST ? `<div class="w-cast" aria-hidden="true">${CAST_FILES.map((f, i) => `<span class="cb" style="--i:${i};--d:${(4 + Math.random() * 2.6).toFixed(1)}s"><img src="convite/${f}.jpg" alt="" loading="eager" draggable="false"></span>`).join("")}</div>` : ""}
-      <img class="w-hippo" src="hipopotamo.webp" alt="Filhote de hipopótamo nadando na sua direção" width="300"></div>
-      <h1 id="w-title">Bem-vindo ao Jogos Enzola</h1>
-      <p>${line}</p>
-      <p class="w-sub">Monte seu catálogo, sua tier list e seu perfil gamer.</p>
-      <button class="btn w-go" id="w-go">Começar</button></div>`;
-  document.body.append(w);
-  const stage = w.querySelector(".w-stage.cast"), relayout = () => stage && layoutCast(stage);
-  if (stage) { relayout(); window.addEventListener("resize", relayout) }
-  const audio = new Audio("convite/musica.mp3"); audio.loop = true; audio.volume = 0; audio.preload = "auto";
-  let muted = !!lsGet("welcome-muted"), fade = 0, closed = false;
-  const fadeTo = (v, ms, done) => { clearInterval(fade); const from = audio.volume, t0 = performance.now();
-    fade = setInterval(() => { const k = Math.min(1, (performance.now() - t0) / ms); audio.volume = Math.max(0, Math.min(1, from + (v - from) * k)); if (k >= 1) { clearInterval(fade); if (done) done() } }, 40) };
-  const snd = w.querySelector("#w-snd");
-  const paintSnd = () => { snd.classList.toggle("off", muted); snd.setAttribute("aria-pressed", String(!muted)); snd.setAttribute("aria-label", muted ? "Ligar a música" : "Desligar a música") };
-  const startAudio = () => { if (muted || closed) return;
-    audio.play().then(() => fadeTo(.55, 1600)).catch(() => w.addEventListener("pointerdown", startAudio, { once: true })) };
-  const onVis = () => { if (document.hidden) audio.pause(); else if (!muted && !closed) audio.play().catch(() => { }) };
-  document.addEventListener("visibilitychange", onVis);
-  snd.addEventListener("click", ev => { ev.stopPropagation(); muted = !muted; lsSet("welcome-muted", muted); paintSnd();
-    if (muted) fadeTo(0, 400, () => audio.pause()); else startAudio() });
-  paintSnd(); startAudio();
-  const close = () => { closed = true; document.removeEventListener("visibilitychange", onVis); fadeTo(0, 600, () => { audio.pause(); audio.removeAttribute("src"); audio.load() });
-    window.removeEventListener("resize", relayout); w.classList.add("out"); setTimeout(() => w.remove(), 350); document.removeEventListener("keydown", onKey) };
-  const onKey = ev => { if (ev.key === "Escape") close() };
-  document.addEventListener("keydown", onKey);
-  w.querySelector("#w-go").addEventListener("click", close); w.querySelector("#w-go").focus({ preventScroll: true });
-}
-
 // Espalha as bolhas de forma aleatória ao redor do hipopótamo, sem encostar nele nem umas nas outras
 function layoutCast(stage) {
   const W = stage.clientWidth, H = stage.clientHeight; if (!W || !H) return;
-  const mob = W < 560, hh = H * (mob ? .64 : .94), hw = hh * .854;
+  const mob = W < 560, hh = H * (mob ? .72 : .94), hw = hh * .854;
   const cx = W / 2, cy = H / 2, rx = hw / 2 + 10, ry = hh / 2 + 6;
-  const sizes = mob ? [54, 58, 62, 66] : [80, 92, 104, 116], minS = mob ? 50 : 72, placed = [];
-  const els = [...stage.querySelectorAll(".cb")].sort(() => Math.random() - .5), big = els.map(() => sizes[Math.floor(Math.random() * sizes.length)]).sort((a, b) => b - a);
-  for (const [k, el] of els.entries()) {
-    let s = big[k], ok = false;
-    for (let t = 0; t < 1400 && !ok; t++) {
-      if (t % 200 === 199) s = Math.max(minS, s - 4);
-      const x = s / 2 + 3 + Math.random() * (W - s - 6), y = s / 2 + 3 + Math.random() * (H - s - 6);
+  const sizes = mob ? [42, 48, 54, 60] : [58, 66, 76, 88], minS = mob ? 36 : 44, placed = [];
+  const els = [...stage.querySelectorAll(".cb")].sort(() => Math.random() - .5);
+  for (const el of els) {
+    let s = sizes[Math.floor(Math.random() * sizes.length)], ok = false;
+    for (let t = 0; t < 1500 && !ok; t++) {
+      if (t % 150 === 149) s = Math.max(minS, s - 6);
+      // sorteia num anel em volta do hipopótamo (fica mais equilibrado que no retângulo todo)
+      const ang = Math.random() * Math.PI * 2, k = 1.12 + Math.random() * (mob ? .9 : 1.25);
+      const x = cx + Math.cos(ang) * (rx + s / 2) * k, y = cy + Math.sin(ang) * (ry + s / 2) * k;
+      if (x < s / 2 + 3 || x > W - s / 2 - 3 || y < s / 2 + 3 || y > H - s / 2 - 3) continue;
       if (((x - cx) / (rx + s * .45)) ** 2 + ((y - cy) / (ry + s * .45)) ** 2 < 1) continue;
       if (placed.some(p => Math.hypot(p.x - x, p.y - y) < (p.s + s) / 2 + 6)) continue;
       placed.push({ x, y, s }); ok = true;
@@ -585,95 +556,250 @@ async function pushLogout() {
   lsSet("pref-push", false);
 }
 
-/* ---------- música de fundo (A Pipa do Vovô, em looping) ----------
-   Navegadores só deixam tocar som depois do primeiro toque/clique na página, então ela começa aí.
-   Volume ambiente controlado por Web Audio (no iPhone o volume do <audio> é ignorado). */
-const bgm = { el: null, ctx: null, gain: null, want: false, started: false };
+/* ---------- música de fundo: playlist do Silvio Santos ----------
+   Navegadores só deixam tocar som depois do primeiro toque/clique, então ela começa aí
+   (o botão "Entrar" da tela de abertura já conta). O volume passa por Web Audio porque no
+   iPhone o volume do <audio> é ignorado. */
+const PLAYLIST = [
+  ["a-pipa-do-vovo", "A Pipa do Vovô"], ["batendo-palmas", "Batendo Palmas"], ["coracao-corinthiano", "Coração Corinthiano"],
+  ["cosa-nostra", "Cosa Nostra"], ["e-hora-de-brincar", "É Hora de Brincar"], ["hino-das-torcidas", "Hino das Torcidas"],
+  ["mandioca", "Mandioca"], ["marcha-do-barrigudinho", "Marcha do Barrigudinho"], ["marchinhas-carnaval-94", "Marchinhas do Carnaval 94"],
+  ["muito-bem", "Muito Bem"], ["o-bom-menino", "O Bom Menino"], ["ritmo-de-festa", "Ritmo de Festa"], ["shalom", "Shalom"],
+  ["show-de-alegria", "Show de Alegria"], ["silvio-santos-vem-ai", "Silvio Santos Vem Aí"], ["sorria", "Sorria"],
+];
+const bgm = { el: null, ctx: null, gain: null, started: false, order: [], pos: 0 };
 const musicOn = () => lsGet("pref-music") !== false;
 const musicVol = () => { const v = lsGet("pref-music-vol"); return typeof v === "number" ? v : 0.3 };
+(function shuffle() {   // ordem aleatória a cada visita, sem repetir até acabar a lista
+  const o = PLAYLIST.map((_, i) => i);
+  for (let i = o.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [o[i], o[j]] = [o[j], o[i]] }
+  bgm.order = o;
+})();
+const curTrack = () => PLAYLIST[bgm.order[bgm.pos]];
+function audioCtx() {
+  if (bgm.ctx !== null) return bgm.ctx;
+  try { const AC = window.AudioContext || window.webkitAudioContext; bgm.ctx = AC ? new AC() : false } catch (e) { bgm.ctx = false }
+  return bgm.ctx;
+}
+// liga um <audio> num volume próprio (Web Audio quando dá; senão, volume do elemento)
+function wire(a, vol) {
+  const ctx = audioCtx();
+  if (ctx) { try { const g = ctx.createGain(); g.gain.value = 0; ctx.createMediaElementSource(a).connect(g).connect(ctx.destination); a.volume = 1; return g } catch (e) { } }
+  a.volume = vol; return null;
+}
+function fade(g, el, to, ms) {
+  const ctx = bgm.ctx;
+  if (g && ctx) { const p = g.gain, t = ctx.currentTime; p.cancelScheduledValues(t); p.setValueAtTime(p.value, t); p.linearRampToValueAtTime(to, t + ms / 1000) }
+  else if (el) el.volume = Math.max(0, Math.min(1, to));
+}
+function resumeCtx() { try { if (bgm.ctx && bgm.ctx.state !== "running") bgm.ctx.resume().catch(() => { }) } catch (e) { } }
 function bgmInit() {
   if (bgm.el) return bgm.el;
-  const a = new Audio("musica.mp3"); a.loop = true; a.preload = "auto"; a.setAttribute("playsinline", ""); a.volume = musicVol();
-  bgm.el = a;
-  try {
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (AC) { bgm.ctx = new AC(); const src = bgm.ctx.createMediaElementSource(a); bgm.gain = bgm.ctx.createGain(); bgm.gain.gain.value = 0; src.connect(bgm.gain).connect(bgm.ctx.destination); a.volume = 1 }
-  } catch (e) { bgm.ctx = null; bgm.gain = null; a.volume = musicVol() }
-  a.addEventListener("playing", musicUI); a.addEventListener("pause", musicUI);
+  const a = new Audio(); a.preload = "auto"; a.setAttribute("playsinline", "");
+  a.src = `musica/${curTrack()[0]}.mp3`;
+  bgm.el = a; bgm.gain = wire(a, musicVol());
+  a.addEventListener("ended", () => musicSkip(1));
+  // arquivo que não carregou: pula para a próxima (no máximo 3 seguidas, para não ficar em looping sem internet)
+  a.addEventListener("error", () => { bgm.fails = (bgm.fails || 0) + 1; if (bgm.fails <= 3 && musicOn()) setTimeout(() => musicSkip(1), 800) });
+  a.addEventListener("playing", () => { bgm.fails = 0 });
+  ["playing", "pause"].forEach(ev => a.addEventListener(ev, musicUI));
   return a;
 }
-function bgmFade(to, ms = 1200) {
-  if (bgm.gain && bgm.ctx) { const g = bgm.gain.gain, t = bgm.ctx.currentTime; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(to, t + ms / 1000) }
-  else if (bgm.el) bgm.el.volume = to;
-}
+function blocked() { return !musicOn() || document.hidden || bgm.videoPaused || splashOpen() }
 async function musicPlay() {
-  if (!musicOn() || document.hidden || bgm.videoPaused) return;
+  if (blocked()) return;
   const a = bgmInit();
-  // play() e resume() chamados na mesma hora do toque (o iPhone exige)
-  const pr = a.play();
-  try { if (bgm.ctx && bgm.ctx.state !== "running") bgm.ctx.resume().catch(() => { }) } catch (e) { }
-  try { await pr; bgm.started = true; bgmFade(musicVol()) } catch (e) { /* aguardando o primeiro toque */ }
-  musicUI();
+  const pr = a.play();          // play() e resume() na mesma hora do toque (o iPhone exige)
+  resumeCtx();
+  try { await pr; bgm.started = true; fade(bgm.gain, a, musicVol(), 1200) } catch (e) { /* aguardando o primeiro toque */ }
+  musicUI(); mediaSession();
 }
-function musicPause(fade = true) {
-  if (!bgm.el || bgm.el.paused) return;
-  if (fade && bgm.gain) { bgmFade(0, 400); setTimeout(() => { if (bgm.el && (!musicOn() || document.hidden || bgm.videoPaused)) bgm.el.pause() }, 420) } else bgm.el.pause();
+function musicPause(smooth = true) {
+  const a = bgm.el; if (!a || a.paused) return;
+  if (smooth && bgm.gain) { fade(bgm.gain, a, 0, 400); setTimeout(() => { if (bgm.el && blocked()) bgm.el.pause() }, 420) } else a.pause();
+}
+function musicSkip(dir) {
+  const a = bgmInit();
+  if (dir < 0 && a.currentTime > 6) { a.currentTime = 0; return }   // como nos players: volta ao começo antes de voltar faixa
+  bgm.pos = (bgm.pos + dir + bgm.order.length) % bgm.order.length;
+  a.src = `musica/${curTrack()[0]}.mp3`;
+  if (!blocked()) { const pr = a.play(); resumeCtx(); pr.then(() => { bgm.started = true; fade(bgm.gain, a, musicVol(), 300) }).catch(() => { }) }
+  musicUI(); mediaSession();
+}
+function mediaSession() {
+  if (!("mediaSession" in navigator)) return;
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({ title: curTrack()[1], artist: "Silvio Santos", album: "Jogos Enzola", artwork: [{ src: "icons/icon-512.png", sizes: "512x512", type: "image/png" }] });
+    navigator.mediaSession.setActionHandler("nexttrack", () => musicSkip(1));
+    navigator.mediaSession.setActionHandler("previoustrack", () => musicSkip(-1));
+    navigator.mediaSession.setActionHandler("play", () => musicPlay());
+    navigator.mediaSession.setActionHandler("pause", () => musicPause(false));
+  } catch (e) { }
 }
 function musicUI() {
   const b = $("#music-btn"); if (!b) return;
   const playing = !!(bgm.el && !bgm.el.paused);
-  b.hidden = !musicOn();   // desligou: o botão sai da tela (religa em Configurações > Aparência)
-  b.setAttribute("aria-pressed", String(musicOn()));
-  b.classList.toggle("on", playing); b.classList.toggle("off", !musicOn());
-  b.title = musicOn() ? (playing ? "Música tocando — clique para desligar" : "Música ligada — toque em qualquer lugar para começar") : "Música desligada — clique para ligar";
-  b.querySelector("use").setAttribute("href", musicOn() ? "#i-music" : "#i-mute");
+  b.hidden = !musicOn() || splashOpen();
+  b.classList.toggle("on", playing);
+  b.setAttribute("aria-expanded", String(!!$("#music-pop")));
+  b.title = playing ? `Tocando: ${curTrack()[1]}` : "Música de fundo";
+  const p = $("#music-pop");
+  if (p && p.querySelector(".mp-t")) {
+    p.querySelector(".mp-t").textContent = curTrack()[1];
+    p.querySelector(".mp-s").textContent = playing ? "Tocando agora" : bgm.started ? "Pausada" : "Toque na página para começar";
+    const pp = p.querySelector("[data-mp=toggle]"); pp.innerHTML = ic(playing ? "pause" : "play"); pp.setAttribute("aria-label", playing ? "Pausar" : "Tocar");
+  }
+}
+function musicPopClose() { const p = $("#music-pop"); if (p) p.remove(); musicUI() }
+function musicPopOpen(confirm) {
+  musicPopClose();
+  const p = document.createElement("div"); p.id = "music-pop"; p.className = "music-pop"; p.setAttribute("role", "dialog"); p.setAttribute("aria-label", "Música de fundo");
+  p.innerHTML = confirm
+    ? `<p class="mp-q"><b>Desativar a música?</b>Ela para de tocar e o botão sai da tela. Dá para ligar de novo em Configurações &gt; Aparência.</p>
+       <div class="mp-a"><button class="btn ghost sm" data-mp="cancel">Cancelar</button><button class="btn danger sm" data-mp="off">Desativar</button></div>`
+    : `<div class="mp-info"><span class="mp-s"></span><b class="mp-t"></b></div>
+       <div class="mp-ctl"><button class="iconbtn" data-mp="prev" aria-label="Música anterior">${ic("prev")}</button><button class="iconbtn mp-main" data-mp="toggle"></button><button class="iconbtn" data-mp="next" aria-label="Próxima música">${ic("next")}</button></div>
+       <button class="link mp-off" data-mp="ask">Desativar música</button>`;
+  document.body.append(p);
+  const r = $("#music-btn") && $("#music-btn").getBoundingClientRect();   // abre logo acima do botão, onde ele estiver
+  if (r && r.width) { p.style.left = Math.max(8, r.left) + "px"; p.style.bottom = Math.max(8, innerHeight - r.top + 8) + "px" }
+  musicUI();
+  (p.querySelector(confirm ? "[data-mp=cancel]" : "[data-mp=next]")).focus({ preventScroll: true });
 }
 function musicToggle(force) {
   const on = typeof force === "boolean" ? force : !musicOn();
   lsSet("pref-music", on);
-  if (on) musicPlay(); else musicPause();
+  if (on) musicPlay(); else { musicPause(); musicPopClose() }
   musicUI();
 }
-function musicSetVol(v) { lsSet("pref-music-vol", v); if (bgm.el && !bgm.el.paused) bgmFade(v, 150) }
-// primeiro toque/clique/tecla em qualquer lugar liberam o som
-["pointerdown", "keydown", "touchend"].forEach(ev => document.addEventListener(ev, e => {
-  if (e.target && e.target.closest && e.target.closest("#music-btn,[data-cfg-local='pref-music']")) return;
-  if (!bgm.started && musicOn()) musicPlay();
-}, { capture: true, passive: true }));
-document.addEventListener("visibilitychange", () => { if (document.hidden) musicPause(false); else if (bgm.started) musicPlay() });
-// pausa a música enquanto um vídeo (trailer) estiver tocando
-document.addEventListener("play", e => { if (e.target.tagName === "VIDEO") { bgm.videoPaused = true; musicPause() } }, true);
-["pause", "ended"].forEach(ev => document.addEventListener(ev, e => { if (e.target.tagName === "VIDEO") { bgm.videoPaused = false; if (bgm.started) musicPlay() } }, true));
-function musicOffFromButton() {
-  musicToggle(false);
-  toast("Música desligada. Para ligar de novo: Configurações > Aparência > Música de fundo.");
-}
+function musicSetVol(v) { lsSet("pref-music-vol", v); if (bgm.el && !bgm.el.paused) fade(bgm.gain, bgm.el, v, 150) }
 document.addEventListener("click", e => {
-  if (!e.target.closest("#music-btn")) return;
-  e.preventDefault();
-  if (bgm.dragged) { bgm.dragged = false; return }
-  if (musicOn()) musicOffFromButton(); else musicToggle(true);
+  let b;
+  if (e.target.closest("#music-btn")) { e.preventDefault(); if (bgm.dragged) { bgm.dragged = false; return } $("#music-pop") ? musicPopClose() : musicPopOpen(false); return }
+  if (b = e.target.closest("[data-mp]")) {
+    const a = b.dataset.mp;
+    if (a === "prev") musicSkip(-1); else if (a === "next") musicSkip(1);
+    else if (a === "toggle") { if (bgm.el && !bgm.el.paused) { bgm.userPaused = true; musicPause(false) } else { bgm.userPaused = false; musicPlay() } }
+    else if (a === "ask") musicPopOpen(true);
+    else if (a === "cancel") musicPopOpen(false);
+    else if (a === "off") { musicToggle(false); toast("Música desativada. Para ligar de novo: Configurações > Aparência > Música de fundo.") }
+    return;
+  }
+  if ($("#music-pop") && !e.target.closest("#music-pop")) musicPopClose();
 });
-// arrastar o botão para baixo (ou para o lado) tira a música e o botão da tela
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#music-pop")) { musicPopClose(); $("#music-btn") && $("#music-btn").focus() } });
+// arrastar o botão para baixo (ou para o lado) pergunta se quer desativar
 (() => {
   let sx = 0, sy = 0, on = false;
-  document.addEventListener("pointerdown", e => { const b = e.target.closest("#music-btn"); if (!b) return; on = true; sx = e.clientX; sy = e.clientY; bgm.dragged = false; b.setPointerCapture && b.setPointerCapture(e.pointerId) });
+  document.addEventListener("pointerdown", e => { const b = e.target.closest("#music-btn"); if (!b) return; on = true; sx = e.clientX; sy = e.clientY; bgm.dragged = false });
   document.addEventListener("pointermove", e => {
     if (!on) return; const b = $("#music-btn"), dx = e.clientX - sx, dy = e.clientY - sy;
     if (Math.hypot(dx, dy) > 8) bgm.dragged = true;
-    if (!bgm.dragged) return;
-    const d = Math.max(0, dy) + Math.max(0, -dx);
-    b.classList.add("dragging"); b.style.transform = `translate(${Math.min(0, dx)}px,${Math.max(0, dy)}px)`; b.style.opacity = String(Math.max(.25, 1 - d / 120));
+    if (!bgm.dragged || !b) return;
+    b.classList.add("dragging"); b.style.transform = `translate(${Math.min(0, dx)}px,${Math.max(0, dy)}px)`;
   });
   const end = e => {
     if (!on) return; on = false; const b = $("#music-btn"); if (!b) return;
     const dx = e.clientX - sx, dy = e.clientY - sy;
-    b.classList.remove("dragging"); b.style.transform = ""; b.style.opacity = "";
-    if (bgm.dragged && (dy > 50 || dx < -50)) musicOffFromButton();
+    b.classList.remove("dragging"); b.style.transform = "";
+    if (bgm.dragged && (dy > 50 || dx < -50)) musicPopOpen(true);
   };
   document.addEventListener("pointerup", end); document.addEventListener("pointercancel", end);
 })();
+// primeiro toque/clique/tecla em qualquer lugar liberam o som
+["pointerdown", "keydown", "touchend"].forEach(ev => document.addEventListener(ev, e => {
+  if (e.target && e.target.closest && e.target.closest("#music-btn,#music-pop,[data-cfg-local='pref-music'],#w-go")) return;
+  if (splashOpen()) { splashSound(); return }
+  if (!bgm.started && !bgm.userPaused && musicOn()) musicPlay();
+}, { capture: true, passive: true }));
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) { musicPause(false); if (splash.el) splash.el.pause() }
+  else if (splashOpen()) { if (splash.started) splash.el.play().catch(() => { }) }
+  else if (bgm.started && !bgm.userPaused) musicPlay();
+});
+// pausa a música enquanto um vídeo (trailer) estiver tocando
+document.addEventListener("play", e => { if (e.target.tagName === "VIDEO") { bgm.videoPaused = true; musicPause() } }, true);
+["pause", "ended"].forEach(ev => document.addEventListener(ev, e => { if (e.target.tagName === "VIDEO") { bgm.videoPaused = false; if (bgm.started && !bgm.userPaused) musicPlay() } }, true));
 document.addEventListener("input", e => { if (e.target.id === "music-vol") musicSetVol(+e.target.value / 100) });
+
+/* ---------- tela de abertura: hipopótamo, elenco, balões e fogos ----------
+   Aparece toda vez que alguém abre o site. O áudio de abertura toca em looping até tocar em "Entrar". */
+const splash = { el: null, gain: null, started: false };
+const splashOpen = () => !!document.getElementById("welcome");
+function splashSound() {
+  if (!splashOpen() || (splash.el && !splash.el.paused)) return;
+  if (!splash.el) { const a = new Audio("musica/entrada.mp3"); a.loop = true; a.preload = "auto"; a.setAttribute("playsinline", ""); splash.el = a; splash.gain = wire(a, .55) }
+  const pr = splash.el.play(); resumeCtx();
+  pr.then(() => { splash.started = true; fade(splash.gain, splash.el, .55, 500); const h = $("#w-sound"); if (h) h.classList.add("on") }).catch(() => { });
+}
+function showSplash() {
+  if (splashOpen()) return;
+  const inv = lsGet("invite");
+  const w = document.createElement("div");
+  w.id = "welcome"; w.className = "welcome"; w.setAttribute("role", "dialog"); w.setAttribute("aria-modal", "true"); w.setAttribute("aria-labelledby", "w-title");
+  const COLORS = ["#FF5D73", "#FFC845", "#5BD1FF", "#8B7BFF", "#5EE3A1", "#FF8A3D"];
+  const balloons = Array.from({ length: 10 }, (_, i) => {
+    const s = 34 + Math.random() * 26;
+    return `<i class="bal" style="--c:${COLORS[i % COLORS.length]};left:${(4 + Math.random() * 92).toFixed(1)}%;width:${s.toFixed(0)}px;height:${(s * 1.22).toFixed(0)}px;animation-duration:${(11 + Math.random() * 9).toFixed(1)}s,${(2.6 + Math.random() * 2).toFixed(1)}s;animation-delay:${(-Math.random() * 18).toFixed(1)}s,0s"></i>`;
+  }).join("");
+  w.innerHTML = `<div class="w-rays" aria-hidden="true"></div><canvas class="w-fx" aria-hidden="true"></canvas><div class="w-bals" aria-hidden="true">${balloons}</div>
+    <button class="w-sound" id="w-sound" type="button" aria-label="Tocar o som da abertura">${ic("music")}<span>Toque para ouvir</span></button>
+    <div class="w-card"><span class="logo sm w-logo" role="img" aria-label="Movimento Enzola"></span>
+      <div class="w-stage cast"><div class="w-cast" aria-hidden="true">${CAST_FILES.map((f, i) => `<span class="cb" style="--i:${i};--d:${(4 + Math.random() * 2.6).toFixed(1)}s"><img src="convite/${f}.jpg" alt="" loading="eager" draggable="false"></span>`).join("")}</div>
+      <img class="w-hippo" src="hipopotamo.webp" alt="Filhote de hipopótamo nadando na sua direção" width="300"></div>
+      <h1 id="w-title">Jogos Enzola</h1>
+      <p>${inv ? `<b>@${esc(inv)}</b> te convidou para jogar junto.` : "Seu catálogo, sua tier list e seu perfil gamer."}</p>
+      <button class="btn w-go" id="w-go">Entrar</button></div>`;
+  document.body.append(w); document.documentElement.classList.add("splash-on");
+  const stage = w.querySelector(".w-stage.cast"), relayout = () => layoutCast(stage);
+  relayout(); window.addEventListener("resize", relayout);
+  const stopFx = fireworks(w.querySelector(".w-fx"));
+  splashSound();   // muitos navegadores bloqueiam; aí começa no primeiro toque na tela
+  const close = () => {
+    if (w.classList.contains("out")) return;
+    window.removeEventListener("resize", relayout); document.removeEventListener("keydown", onKey); stopFx();
+    w.classList.add("out");
+    if (splash.el) { fade(splash.gain, splash.el, 0, 300); const a = splash.el; setTimeout(() => a.pause(), 320) }
+    setTimeout(() => { w.remove(); document.documentElement.classList.remove("splash-on"); musicUI(); }, 350);
+    setTimeout(() => musicPlay(), 0);   // o toque em "Entrar" libera a playlist
+  };
+  // musicPlay checa splashOpen(): marca como saindo antes
+  const go = () => { w.id = "welcome-out"; close() };
+  const onKey = ev => { if (ev.key === "Escape" || ev.key === "Enter") { ev.preventDefault(); go() } };
+  document.addEventListener("keydown", onKey);
+  w.querySelector("#w-go").addEventListener("click", go);
+  w.querySelector("#w-sound").addEventListener("click", e => { e.stopPropagation(); splashSound() });
+  w.querySelector("#w-go").focus({ preventScroll: true });
+}
+// fogos de artifício leves num canvas (param sozinhos ao fechar; desligados em "Reduzir animações")
+function fireworks(cv) {
+  if (!cv || matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.classList.contains("calm")) return () => { };
+  const g = cv.getContext("2d"); let W = 0, H = 0, dpr = Math.min(2, devicePixelRatio || 1), parts = [], raf = 0, last = 0, next = 600, alive = true;
+  const size = () => { W = cv.clientWidth; H = cv.clientHeight; cv.width = W * dpr; cv.height = H * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0) };
+  size(); window.addEventListener("resize", size);
+  const COLS = ["#FFD166", "#FF6B8B", "#7BDFF2", "#B8A1FF", "#9BF6C1", "#FFFFFF"];
+  const burst = () => {
+    const x = W * (.12 + Math.random() * .76), y = H * (.08 + Math.random() * .32), c = COLS[Math.floor(Math.random() * COLS.length)], n = 26 + Math.floor(Math.random() * 14);
+    for (let i = 0; i < n; i++) { const a = Math.PI * 2 * i / n + Math.random() * .2, v = 1.2 + Math.random() * 1.8; parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 1, c }) }
+  };
+  const tick = t => {
+    if (!alive) return;
+    const dt = Math.min(50, t - (last || t)); last = t; next -= dt;
+    if (next <= 0 && !document.hidden) { burst(); next = 1100 + Math.random() * 1500 }
+    g.clearRect(0, 0, W, H);
+    parts = parts.filter(p => p.life > 0);
+    for (const p of parts) {
+      p.x += p.vx * dt / 16; p.y += p.vy * dt / 16; p.vy += .03 * dt / 16; p.vx *= .985; p.life -= .012 * dt / 16;
+      g.globalAlpha = Math.max(0, p.life) * .85; g.fillStyle = p.c; g.beginPath(); g.arc(p.x, p.y, 1.9, 0, 7); g.fill();
+    }
+    g.globalAlpha = 1; raf = requestAnimationFrame(tick);
+  };
+  raf = requestAnimationFrame(tick);
+  return () => { alive = false; cancelAnimationFrame(raf); window.removeEventListener("resize", size) };
+}
+
 // notificação tocada com o site aberto: o service worker pede para ir à tela certa
 if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message", e => { if (e.data && e.data.go) location.href = e.data.go });
+if (!/[?&]n=1/.test(location.search)) { if (!window.__noSplash) showSplash() }   // quem toca numa notificação vai direto para a tela certa
+else history.replaceState(null, "", location.pathname + location.hash);
 musicUI(); musicPlay();

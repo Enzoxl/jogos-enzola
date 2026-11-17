@@ -1,4 +1,4 @@
-# Jogos Enzola 3.2 — como publicar
+# Jogos Enzola 3.3 — como publicar
 
 Faça os passos na ordem. Os passos 1 e 3 são no painel do Supabase; o passo 2 é no GitHub (a Vercel publica sozinha).
 
@@ -13,9 +13,10 @@ Se aparecer erro em `pg_net`: Database > Extensions > procure **pg_net** > Enabl
 
 ## 2. Arquivos (GitHub)
 Substitua tudo no repositório pelos arquivos deste pacote: `index.html`, `styles.css`, `app.js`, `jogo.js`,
-`social.js`, `extras.js`, `config.js`, `sw.js`, `manifest.webmanifest`, `musica.mp3`, `hipopotamo.webp`,
-`logo.png`, `og-image.png`, as pastas `icons/`, `convite/` e `supabase/`.
-Apague do repositório: `hipopotamo.png` e a pasta `supabase/functions/precos` (não são mais usados).
+`social.js`, `extras.js`, `config.js`, `sw.js`, `vercel.json`, `manifest.webmanifest`, `hipopotamo.webp`,
+`logo.png`, `og-image.png`, as pastas `icons/`, `convite/`, `musica/`, `patrocinadores/` e `supabase/`.
+Apague do repositório, se existirem: `hipopotamo.png`, `musica.mp3` (agora as músicas ficam na pasta `musica/`)
+e a pasta `supabase/functions/precos`.
 
 ## 3. Função do servidor (publique de novo — ela mudou)
 Supabase > Edge Functions > **enzola** > Code > cole o novo `supabase/functions/enzola/index.ts` > Deploy.
@@ -44,11 +45,21 @@ Segredos opcionais (Edge Functions > Secrets): `ITAD_KEY` (preços em reais), `Y
   abrir pelo ícone e ativar por lá. A Apple não deixa sites mandarem notificação fora do app instalado.
 - Ao sair da conta, o aparelho para de receber as notificações dela.
 
-## 6. Música de fundo
-`musica.mp3` toca em looping, em volume ambiente. Os navegadores só liberam som depois do primeiro toque na página,
-então ela começa no primeiro clique. Cada pessoa pode desligar no botão de nota musical (canto inferior esquerdo)
-(tocar nele ou arrastar para baixo desliga a música e tira o botão da tela). Para religar ou ajustar o volume: Configurações > Aparência > Música de fundo. A escolha fica salva no aparelho.
+## 6. Tela de abertura e música
+- **Abertura**: toda vez que alguém abre o site aparece o hipopótamo com o elenco, balões e fogos, com o áudio
+  `musica/entrada.mp3` em looping. Os navegadores só liberam som depois do primeiro toque, por isso existe o botão
+  "Toque para ouvir". "Entrar" (ou Enter) fecha a abertura. Quem abre o site tocando numa notificação vai direto
+  para a tela certa, sem abertura.
+- **Playlist**: 16 músicas do Silvio Santos em `musica/`, em ordem aleatória, uma depois da outra, em volume ambiente.
+  O botão discreto no canto inferior esquerdo abre anterior / pausar / próxima e "Desativar música", que pede
+  confirmação. Arrastar o botão para baixo também pergunta. Para religar ou mudar o volume:
+  Configurações > Aparência > Música de fundo. No celular, os controles também aparecem na tela de bloqueio.
+- Para trocar ou incluir músicas: coloque o MP3 em `musica/` e acrescente o nome na lista `PLAYLIST` do `extras.js`.
 
-## 7. Se a busca disser que a chave da RAWG foi recusada
+## 7. Patrocinadores
+As logos ficam em `patrocinadores/` (PNG sem fundo, em uma cor só; o site pinta na cor do tema).
+Para incluir outro, adicione um item na lista `.sp-list` do `index.html`, mantendo a ordem alfabética.
+
+## 8. Se a busca disser que a chave da RAWG foi recusada
 A chave grátis da RAWG tem limite mensal. Crie outra em https://rawg.io/apidocs e troque `RAWG_KEY` no `config.js`.
 Com a função publicada, a busca continua achando jogos pela Steam mesmo com a RAWG fora.

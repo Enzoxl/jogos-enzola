@@ -957,8 +957,6 @@ a.fhead:hover .fn{color:var(--accent)}
 .welcome{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:24px;background:radial-gradient(120% 90% at 50% 0%,#2F5FA8 0%,#1B2E57 45%,#14213D 100%);color:#fff;overflow:hidden;animation:wfade .45s ease both}
 .welcome.out{animation:wout .35s ease both}
 .w-rays{position:absolute;left:50%;top:-40%;width:160vmax;height:160vmax;margin-left:-80vmax;background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.09) 0 6deg,transparent 6deg 18deg);-webkit-mask:radial-gradient(circle,#000 0,transparent 62%);mask:radial-gradient(circle,#000 0,transparent 62%);animation:wspin 60s linear infinite;pointer-events:none}
-.w-bubs{position:absolute;inset:0;pointer-events:none}
-.bub{position:absolute;bottom:-60px;border-radius:50%;border:2px solid rgba(255,255,255,.32);background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.28),rgba(255,255,255,.04));animation:wrise linear infinite}
 .w-card{position:relative;display:grid;justify-items:center;gap:8px;text-align:center;max-width:min(94vw,920px)}
 .w-card h1,.w-card p{max-width:460px}
 .w-logo{opacity:.9;margin-bottom:4px;animation:wup .6s .1s ease both}
@@ -995,7 +993,7 @@ a.fhead:hover .fn{color:var(--accent)}
 @keyframes cfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
 @media (max-width:640px){
   .w-stage.cast{--sh:clamp(260px,calc(100vh - 320px),440px);--sh:clamp(260px,calc(100dvh - 320px),440px)}
-  .w-stage.cast .w-hippo{height:calc(var(--sh)*.64)}
+  .w-stage.cast .w-hippo{height:calc(var(--sh)*.72)}
   .cb{padding:3px}
   .w-card h1{font-size:clamp(22px,6.6vw,30px)}
 }
@@ -1054,28 +1052,76 @@ button.card,button.fav{font:inherit;color:inherit;text-align:left;background:non
 .np-push b{display:block;font-size:14px;margin-bottom:2px}
 .np-push-a{grid-column:2;display:flex;gap:12px;align-items:center}
 
-/* ---------- botão da música de fundo ---------- */
-.music-btn{position:fixed;left:14px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:18;display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 12px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);color:var(--muted);box-shadow:var(--shadow-lg);cursor:pointer;transition:color .15s,border-color .15s,opacity .2s;opacity:.85}
-.music-btn:hover{opacity:1;color:var(--fg)}
-.music-btn .ic{width:18px;height:18px}
-.music-btn .mb-eq{display:none;align-items:flex-end;gap:2px;height:14px}
-.music-btn .mb-eq i{width:3px;height:4px;border-radius:2px;background:var(--accent);animation:mbeq 1s ease-in-out infinite}
+/* ---------- botão da música de fundo (discreto) ---------- */
+.music-btn{position:fixed;left:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:18;display:inline-flex;align-items:center;justify-content:center;gap:4px;width:34px;height:34px;padding:0;border-radius:50%;border:1px solid var(--line);background:color-mix(in srgb,var(--surface) 82%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:var(--muted);cursor:pointer;opacity:.55;transition:opacity .2s,color .2s;touch-action:none}
+.music-btn:hover,.music-btn:focus-visible,.music-btn[aria-expanded="true"]{opacity:1;color:var(--fg)}
+.music-btn .ic{width:15px;height:15px}
+.music-btn .mb-eq{display:none;align-items:flex-end;gap:1.5px;height:11px}
+.music-btn .mb-eq i{width:2px;height:3px;border-radius:1px;background:var(--accent);animation:mbeq 1s ease-in-out infinite}
 .music-btn .mb-eq i:nth-child(2){animation-delay:-.35s}.music-btn .mb-eq i:nth-child(3){animation-delay:-.7s}
-.music-btn.on{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
-.music-btn.on .mb-eq{display:inline-flex}
-.music-btn.off{opacity:.6}
-@keyframes mbeq{0%,100%{height:4px}50%{height:14px}}
-:root.calm .music-btn .mb-eq i{animation:none;height:9px}
-@media (prefers-reduced-motion:reduce){.music-btn .mb-eq i{animation:none;height:9px}}
-@media (max-width:860px){.music-btn{bottom:calc(84px + env(safe-area-inset-bottom,0px));left:10px;width:38px;height:38px;padding:0;justify-content:center}.music-btn.on .mb-eq{display:none}}
+.music-btn.on .ic{display:none}.music-btn.on .mb-eq{display:inline-flex}
+.music-btn[hidden]{display:none}
+.music-btn.dragging{transition:none;opacity:.5}
+@keyframes mbeq{0%,100%{height:3px}50%{height:11px}}
+:root.calm .music-btn .mb-eq i{animation:none;height:7px}
+@media (prefers-reduced-motion:reduce){.music-btn .mb-eq i{animation:none;height:7px}}
+@media (max-width:860px){.music-btn{bottom:calc(80px + env(safe-area-inset-bottom,0px));left:8px;width:30px;height:30px}}
+body:has(.install-bar) .music-btn{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+.music-pop{position:fixed;left:12px;bottom:calc(56px + env(safe-area-inset-bottom,0px));z-index:40;width:min(268px,calc(100vw - 24px));padding:12px 14px;border-radius:16px;background:var(--surface);border:1px solid var(--line-2);box-shadow:var(--shadow-lg);display:grid;gap:10px;animation:mpin .16s ease-out both}
+@media (max-width:860px){.music-pop{left:8px;bottom:calc(118px + env(safe-area-inset-bottom,0px))}}
+.mp-info{display:grid;gap:2px;min-width:0}
+.mp-s{font-size:12px;color:var(--muted)}
+.mp-t{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-ctl{display:flex;align-items:center;justify-content:center;gap:14px}
+.mp-ctl .iconbtn{width:40px;height:40px}
+.mp-ctl .mp-main{width:48px;height:48px;border-radius:50%;background:var(--accent);color:#fff}
+.mp-ctl .mp-main:hover{filter:brightness(1.08)}
+.mp-off{justify-self:center;font-size:13px;color:var(--muted)}
+.mp-q{margin:0;font-size:13.5px;color:var(--muted);line-height:1.45}
+.mp-q b{display:block;color:var(--fg);font-size:15px;margin-bottom:2px}
+.mp-a{display:flex;justify-content:flex-end;gap:8px}
+@keyframes mpin{from{opacity:0;transform:translateY(6px)}}
 #music-vol{width:110px;margin-right:10px;accent-color:var(--accent);vertical-align:middle}
 body:has(.install-bar) .music-btn{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
 .music-btn[hidden]{display:none}
 .music-btn{touch-action:none}
 .music-btn.dragging{transition:none;opacity:.6}
-/* botão de som da tela de boas-vindas */
-.w-snd{position:fixed;top:max(14px,env(safe-area-inset-top));right:max(14px,env(safe-area-inset-right));z-index:3;width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.12);color:#fff;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:background .15s,transform .15s}
-.w-snd:hover{background:rgba(255,255,255,.22);transform:scale(1.05)}
-.w-snd .off{display:none}.w-snd.off .on{display:none}.w-snd.off .off{display:inline}
-.w-stage.cast{--sh:clamp(260px,calc(100vh - 300px),440px);--sh:clamp(260px,calc(100dvh - 300px),440px)}
-@media (max-width:640px){.w-stage.cast{--sh:clamp(330px,calc(100vh - 320px),470px);--sh:clamp(330px,calc(100dvh - 320px),470px)}.cb{padding:3px}}
+
+/* ---------- tela de abertura: balões, fogos e som ---------- */
+.w-fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.w-bals{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.bal{position:absolute;bottom:-120px;border-radius:50% 50% 48% 52%/55% 55% 45% 45%;background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.65) 0 8%,transparent 22%),var(--c);opacity:.78;box-shadow:inset -6px -8px 14px rgba(0,0,0,.18);animation:brise linear infinite,bsway ease-in-out infinite alternate}
+.bal::before{content:"";position:absolute;left:50%;bottom:-5px;width:8px;height:7px;margin-left:-4px;background:var(--c);clip-path:polygon(50% 0,100% 100%,0 100%)}
+.bal::after{content:"";position:absolute;left:50%;top:100%;width:1px;height:52px;background:rgba(255,255,255,.35);transform-origin:top;transform:rotate(4deg)}
+@keyframes brise{from{transform:translateY(0)}to{transform:translateY(calc(-100vh - 260px))}}
+@keyframes bsway{from{rotate:-9deg;translate:-10px 0}to{rotate:9deg;translate:10px 0}}
+.w-sound{position:absolute;top:max(14px,env(safe-area-inset-top));right:max(14px,env(safe-area-inset-right));z-index:3;display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.3);background:rgba(10,20,45,.35);color:#fff;font:600 13px/1 inherit;font-family:inherit;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:wup .5s .4s ease both}
+.w-sound .ic{width:16px;height:16px}
+.w-sound.on{display:none}
+.welcome .w-card{z-index:2}
+.w-card h1{font-size:clamp(30px,7vw,46px)}
+:root.splash-on body{overflow:hidden}
+:root.calm .bal,:root.calm .w-rays{animation:none}:root.calm .w-bals{display:none}
+@media (prefers-reduced-motion:reduce){.w-bals{display:none}}
+
+/* ---------- patrocinadores (ordem alfabética; logos em uma cor só, seguindo o tema) ---------- */
+.sponsors{max-width:1180px;margin:0 auto 26px;padding:0 max(20px,env(safe-area-inset-right,0px)) 26px max(20px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line);text-align:center}
+.sponsors h2{margin:0 0 18px;font:600 13px/1 inherit;font-family:inherit;color:var(--muted);letter-spacing:.02em}
+.sp-list{list-style:none;margin:0;padding:0;display:flex;justify-content:center;align-items:flex-start;flex-wrap:wrap;gap:12px 40px}
+.spn{display:grid;justify-items:center;gap:8px;color:var(--muted);text-decoration:none;border-radius:12px;padding:6px 8px;transition:color .2s}
+.sp-logo{display:block;width:64px;height:56px;background:currentColor;-webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat;opacity:.8;transition:opacity .2s,transform .2s}
+.sp-n{font-size:12.5px;font-weight:600}
+a.spn:hover,a.spn:focus-visible{color:var(--fg)}
+a.spn:hover .sp-logo,a.spn:focus-visible .sp-logo{opacity:1;transform:translateY(-2px)}
+@media (max-width:560px){.sp-list{gap:14px 22px}.sp-logo{width:48px;height:42px}.sp-n{font-size:11.5px}}
+
+/* ---------- ajustes da auditoria: telas bem pequenas (320–360px) ---------- */
+.cfg>*{min-width:0}
+.cfg-t{min-width:0}
+@media (max-width:420px){.cfg-row{flex-wrap:wrap;gap:10px 16px}.cfg-c{max-width:100%}.cfg-sec{padding:6px 16px 10px}}
+@media (max-width:360px){
+  .brand-t{display:none}
+  .tabs button{padding-left:2px;padding-right:2px;font-size:10.5px;min-width:0}
+  .tabs{gap:0}
+  .seg{flex-wrap:wrap}
+}

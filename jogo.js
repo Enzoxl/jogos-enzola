@@ -229,7 +229,7 @@ function priceBox(g) {
   if (isConsole(g.platform)) {
     const [store, url] = g.price && g.price.url ? [g.price.store, g.price.url] : storeSearch(g.name, g.platform);
     return `<div class="pbox console"><span class="pshop">${ic("gamepad")}${esc(g.platform)}</span>
-      <div class="pacts"><a class="btn sm" href="${esc(url)}" target="_blank" rel="noopener">${ic("external")}Ver preço na ${esc(store)}</a></div>
+      <div class="pacts"><a class="btn sm" href="${hrefOk(url)}" target="_blank" rel="noopener">${ic("external")}Ver preço na ${esc(store)}</a></div>
       <span class="hint">As lojas de console não liberam preços automáticos. O link abre a página oficial, com o preço em reais.</span>
       ${gameHref(g) ? `<a class="link" href="#${gameHref(g)}">Comparar com o preço no PC</a>` : ""}</div>`;
   }
@@ -243,14 +243,14 @@ function priceBox(g) {
     ${hit ? `<span class="hitlbl">${ic("check")}Abaixo do seu preço-alvo</span>` : ""}
     <div class="pnow"><b>${priceHTML(b)}</b>${b.cut > 0 ? `<s>${b.currency === "USD" && usdRate ? money(b.regular * usdRate, "BRL") : money(b.regular, b.currency)}</s>` : ""}</div>
     <div class="pshop">${esc(b.shop)} · PC ${kindChip(b)}</div>
-    <div class="pacts"><a class="btn sm" href="${esc(b.url || "#")}" target="_blank" rel="noopener">${ic("cart")}Comprar</a><button class="btn ghost sm" data-prices="${g.id}">Lojas</button></div>
+    <div class="pacts"><a class="btn sm" href="${hrefOk(b.url || "#")}" target="_blank" rel="noopener">${ic("cart")}Comprar</a><button class="btn ghost sm" data-prices="${g.id}">Lojas</button></div>
   </div>`;
 }
 function openPrices(id) {
   const g = gameById(id); if (!g) return;
   const p = g.price || {}, deals = isConsole(g.platform) ? [] : dealsOf(p), b = deals[0];
-  const dl = deals.map((d, i) => `<div class="deal"><span class="ds">${esc(d.shop)} ${kindChip(d)}</span><span class="dp">${d.cut > 0 ? `<i class="dc">-${d.cut}%</i>` : ""}<b>${priceHTML(d)}</b></span><a class="btn sm${i === 0 ? "" : " ghost"}" href="${esc(d.url || "#")}" target="_blank" rel="noopener">${ic("external")}Abrir</a></div>`).join("");
-  const links = storeLinks(g.name, g.platform).map(([pl, n, u, direct]) => `<a class="slink${pl === g.platform ? " mine" : ""}" href="${esc(u)}" target="_blank" rel="noopener"><span>${esc(n)}</span><small>${esc(pl)}${direct ? " · página do jogo" : " · busca"}</small>${ic("external")}</a>`).join("");
+  const dl = deals.map((d, i) => `<div class="deal"><span class="ds">${esc(d.shop)} ${kindChip(d)}</span><span class="dp">${d.cut > 0 ? `<i class="dc">-${d.cut}%</i>` : ""}<b>${priceHTML(d)}</b></span><a class="btn sm${i === 0 ? "" : " ghost"}" href="${hrefOk(d.url || "#")}" target="_blank" rel="noopener">${ic("external")}Abrir</a></div>`).join("");
+  const links = storeLinks(g.name, g.platform).map(([pl, n, u, direct]) => `<a class="slink${pl === g.platform ? " mine" : ""}" href="${hrefOk(u)}" target="_blank" rel="noopener"><span>${esc(n)}</span><small>${esc(pl)}${direct ? " · página do jogo" : " · busca"}</small>${ic("external")}</a>`).join("");
   modalShell(`<h2>Onde comprar</h2><p class="sub">${esc(g.name)} · ${platLabel(g.platform)}${p.title && norm(p.title) !== norm(g.name) ? ` <span class="hint">· resultado encontrado: ${esc(p.title)}</span>` : ""}</p>
     ${b ? `<div class="pmhead"><div><span class="k">Menor preço agora</span><b>${priceHTML(b)}</b></div>${p.low != null ? `<div><span class="k">Menor preço já registrado</span><b>${priceHTML({ amount: p.low, currency: p.currency })}</b></div>` : ""}</div>
       <div class="deals">${dl}</div>
@@ -404,7 +404,7 @@ function renderGame() {
     ["Duração média", d.playtime ? `${d.playtime} h` : ""],
     ["Tamanho (PC)", size || ""],
     ["Idiomas", s.languages || ""],
-    ["Site oficial", d.website ? `<a href="${esc(d.website)}" target="_blank" rel="noopener">${esc(d.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, ""))}</a>` : ""],
+    ["Site oficial", d.website ? `<a href="${hrefOk(d.website)}" target="_blank" rel="noopener">${esc(d.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, ""))}</a>` : ""],
   ].filter(f => f[1]);
   const v = gv.videos || {};
   const trailerRawg = gv.movies && gv.movies[0] && gv.movies[0].data ? gv.movies[0] : null;
@@ -442,7 +442,7 @@ function renderGame() {
           ${synPt ? `<div class="syn">${esc(synPt).replace(/\n/g, "<br>")}</div>` : synEn ? `<details class="syn"><summary>${esc(synEn.slice(0, 420))}${synEn.length > 420 ? "… <span class='link'>ler mais</span>" : ""}</summary>${esc(synEn.slice(420))}</details><p class="hint">Sinopse disponível só em inglês. <a href="https://translate.google.com/?sl=en&tl=pt&op=translate&text=${encodeURIComponent(synEn.slice(0, 1800))}" target="_blank" rel="noopener">Traduzir com o Google</a></p>` : `<p class="muted">Sem sinopse disponível.</p>`}
         </section>
         <section class="panel gp-sec"><h2 class="h3">Vídeos</h2><div class="vids">${videosHTML}</div>
-          ${shots.length ? `<div class="shots">${shots.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener"><img alt="" loading="lazy" referrerpolicy="no-referrer" src="${esc(u)}"></a>`).join("")}</div>` : ""}</section>
+          ${shots.length ? `<div class="shots">${shots.map((u, i) => `<a href="${hrefOk(u)}" target="_blank" rel="noopener" aria-label="Abrir imagem ${i + 1} de ${esc(d.name)} em tamanho grande"><img alt="" loading="lazy" referrerpolicy="no-referrer" src="${esc(u)}"></a>`).join("")}</div>` : ""}</section>
         <section class="panel gp-sec"><h2 class="h3">Avaliações de jogadores</h2>
           ${ratingsTotal ? `<div class="rbars">${["exceptional", "recommended", "meh", "skip"].map(k => { const r = ratings.find(x => x.title === k) || { count: 0 }; const pct = Math.round(r.count / ratingsTotal * 100); return `<div class="br"><span>${RATING_PT[k]}</span><div class="tr"><div class="fl" style="width:${pct}%;background:${RATING_COL[k]}"></div></div><b>${pct}%</b></div>` }).join("")}</div><p class="hint">${ratingsTotal.toLocaleString("pt-BR")} avaliações de jogadores no RAWG.</p>` : ""}
           ${s.reviews_summary ? `<p class="steamsum"><b>${esc(s.reviews_summary.desc)}</b> na Steam · ${s.reviews_summary.total.toLocaleString("pt-BR")} análises${s.reviews_br && s.reviews_br.total ? `, ${s.reviews_br.total.toLocaleString("pt-BR")} em português` : ""}</p>` : ""}
@@ -473,8 +473,8 @@ function buyPanel(d, plat) {
     const [name, search] = storeSearch(d.name, plat);
     const url = store ? localizeStore(store.url) : search;
     return `<div class="buy-console"><p>O preço da ${esc(name)} aparece na página oficial, em reais.</p>
-      <a class="btn" href="${esc(url)}" target="_blank" rel="noopener">${ic("external")}Ver preço na ${esc(name)}</a>
-      ${store ? `<a class="link" href="${esc(search)}" target="_blank" rel="noopener">Não abriu? Buscar na ${esc(name)}</a>` : ""}
+      <a class="btn" href="${hrefOk(url)}" target="_blank" rel="noopener">${ic("external")}Ver preço na ${esc(name)}</a>
+      ${store ? `<a class="link" href="${hrefOk(search)}" target="_blank" rel="noopener">Não abriu? Buscar na ${esc(name)}</a>` : ""}
       <p class="hint">PlayStation, Xbox e Nintendo não liberam preços para sites de terceiros. Por isso o valor de console não aparece aqui automaticamente.</p></div>`;
   }
   const p = gv.price, s = gv.steam || {};
@@ -485,13 +485,13 @@ function buyPanel(d, plat) {
     deals.push({ shop: "Steam", amount: s.price.amount, regular: s.price.regular, cut: s.price.cut, currency: s.price.currency || "BRL", url: s.url, kind: "oficial", br: true });
     deals.sort((a, b) => sortVal(a) - sortVal(b));
   }
-  if (s.free) return `<div class="buy-free"><b>Gratuito</b> na Steam. <a class="btn sm" href="${esc(s.url)}" target="_blank" rel="noopener">${ic("external")}Abrir na Steam</a></div>`;
+  if (s.free) return `<div class="buy-free"><b>Gratuito</b> na Steam. <a class="btn sm" href="${hrefOk(s.url)}" target="_blank" rel="noopener">${ic("external")}Abrir na Steam</a></div>`;
   if (!deals.length) return `<div class="panel empty" style="padding:18px"><b>Sem oferta no momento</b>${p.error ? "Não foi possível consultar os preços agora." : "Nenhuma loja confiável vende para PC agora."}</div>
-    <div class="slinks">${storeLinks(d.name, "PC", gv.stores).filter(x => x[0] === "PC").map(([pl, n, u]) => `<a class="slink" href="${esc(u)}" target="_blank" rel="noopener"><span>${esc(n)}</span><small>PC</small>${ic("external")}</a>`).join("")}</div>`;
+    <div class="slinks">${storeLinks(d.name, "PC", gv.stores).filter(x => x[0] === "PC").map(([pl, n, u]) => `<a class="slink" href="${hrefOk(u)}" target="_blank" rel="noopener"><span>${esc(n)}</span><small>PC</small>${ic("external")}</a>`).join("")}</div>`;
   const b = deals[0];
   return `<div class="buy-best"><span class="k">Menor preço no PC</span><b>${priceHTML(b)}</b><span class="pshop">${esc(b.shop)} ${kindChip(b)}${b.cut > 0 ? ` <i class="dc">-${b.cut}%</i>` : ""}</span>
-    <a class="btn" href="${esc(b.url)}" target="_blank" rel="noopener">${ic("cart")}Comprar na ${esc(b.shop)}</a></div>
-    ${deals.length > 1 ? `<div class="deals">${deals.slice(1, 6).map(x => `<div class="deal"><span class="ds">${esc(x.shop)} ${kindChip(x)}</span><span class="dp">${x.cut > 0 ? `<i class="dc">-${x.cut}%</i>` : ""}<b>${priceHTML(x)}</b></span><a class="btn ghost sm" href="${esc(x.url)}" target="_blank" rel="noopener">Abrir</a></div>`).join("")}</div>` : ""}
+    <a class="btn" href="${hrefOk(b.url)}" target="_blank" rel="noopener">${ic("cart")}Comprar na ${esc(b.shop)}</a></div>
+    ${deals.length > 1 ? `<div class="deals">${deals.slice(1, 6).map(x => `<div class="deal"><span class="ds">${esc(x.shop)} ${kindChip(x)}</span><span class="dp">${x.cut > 0 ? `<i class="dc">-${x.cut}%</i>` : ""}<b>${priceHTML(x)}</b></span><a class="btn ghost sm" href="${hrefOk(x.url)}" target="_blank" rel="noopener">Abrir</a></div>`).join("")}</div>` : ""}
     <p class="hint">${p.low != null ? `Menor preço já registrado: ${priceHTML({ amount: p.low, currency: p.currency })}. ` : ""}${p.currency === "USD" && usdRate ? `Cotação de hoje: US$ 1 = ${money(usdRate, "BRL")}.` : ""} Só lojas oficiais e revendas autorizadas.</p>`;
 }
 async function gameAdd(kind) {

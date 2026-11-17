@@ -1,6 +1,6 @@
 /* Jogos Enzola — service worker: abre rápido, funciona com internet ruim e recebe notificações no celular.
    Só guarda os arquivos do próprio site; dados do Supabase e preços sempre vêm da rede. */
-const CACHE = "jogos-enzola-v6";
+const CACHE = "jogos-enzola-v3-3";
 const SHELL = ["./", "index.html", "styles.css", "app.js", "jogo.js", "social.js", "extras.js", "config.js", "logo.png", "hipopotamo.webp", "manifest.webmanifest",
   "icons/icon-192.png", "icons/icon-512.png", "icons/favicon.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())) });
@@ -11,7 +11,7 @@ self.addEventListener("fetch", e => {
   const r = e.request, u = new URL(r.url);
   if (r.method !== "GET" || u.origin !== location.origin) return;
   // música e outros arquivos de mídia: deixa o navegador cuidar (pedidos em partes / Range)
-  if (r.headers.has("range") || /\.(mp3|m4a|ogg|mp4|webm)$/i.test(u.pathname)) return;
+  if (r.headers.has("range") || /\.(mp3|m4a|ogg|mp4|webm|wav)$/i.test(u.pathname)) return;
   e.respondWith(fetch(r).then(res => { if (res.ok && res.status === 200) { const cp = res.clone(); caches.open(CACHE).then(c => c.put(r, cp)) } return res })
     .catch(() => caches.match(r).then(m => m || caches.match("index.html"))));
 });
@@ -32,7 +32,8 @@ self.addEventListener("push", e => {
 });
 self.addEventListener("notificationclick", e => {
   e.notification.close();
-  const target = new URL("./" + ((e.notification.data && e.notification.data.url) || ""), self.registration.scope).href;
+  // ?n=1: abre direto na tela da notificação, sem a tela de abertura
+  const target = new URL("./?n=1" + ((e.notification.data && e.notification.data.url) || ""), self.registration.scope).href;
   e.waitUntil((async () => {
     const cs = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
     const c = cs.find(x => x.url.startsWith(self.registration.scope));

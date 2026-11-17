@@ -1,9 +1,9 @@
-# Relatório de testes — Jogos Enzola 3.2
+# Relatório de testes — Jogos Enzola 3.3
 
-**230/230 verificações passaram.** Erros no console: 0.
+**250/250 verificações passaram.** Erros no console: 0.
 
 Ambiente: Chrome automatizado (Playwright), no computador e no celular, com Supabase, RAWG, Steam, CheapShark, câmbio e a função do servidor simulados.
-Também: `migracao.sql` rodada duas vezes em PostgreSQL 16 (gatilho de notificação, segredos protegidos, regras de acesso) e a função do servidor testada em Node com 15 casos — incluindo a criptografia das notificações (RFC 8291) conferida por uma implementação independente.
+Também: `migracao.sql` rodada duas vezes em PostgreSQL 16, a função do servidor testada em Node (15 casos, incluindo a criptografia das notificações) e uma varredura de layout em 320, 390, 768, 1024 e 1440 px em todas as telas.
 
 
 ## Cadastro com e-mail, login e recuperação de senha
@@ -301,19 +301,49 @@ Também: `migracao.sql` rodada duas vezes em PostgreSQL 16 (gatilho de notifica�
 | Sair da conta para de mandar notificações para este aparelho | ✅ |
 | Service worker mostra a notificação e abre a tela certa ao tocar | ✅ |
 
-## Música de fundo
+## Tela de abertura
 
 | Verificação | Resultado |
 |---|---|
-| Botão da música visível já na tela de entrada | ✅ |
-| Música começa no primeiro toque e fica em looping | ✅ |
+| Abertura aparece ao acessar, com hipopótamo e elenco | ✅ |
+| Balões e fogos na abertura | ✅ |
+| Botão da música fica escondido durante a abertura | ✅ |
+| Áudio da abertura toca em looping depois do primeiro toque | ✅ |
+| 'Entrar' fecha a abertura, para o áudio dela e começa a playlist | ✅ |
+| Depois da abertura aparece a tela de login | ✅ |
+| Abertura aparece de novo a cada acesso | ✅ |
+| Enter também entra | ✅ |
+| Quem abre pela notificação vai direto, sem a abertura | ✅ |
+| Convite aparece na abertura | ✅ |
+
+## Música de fundo (playlist)
+
+| Verificação | Resultado |
+|---|---|
+| Botão da música discreto (pequeno e meio transparente) | ✅ |
+| Playlist começa no primeiro toque | ✅ |
 | Volume ambiente (nem alto nem baixo) | ✅ |
-| Arquivo de música leve (< 2,5 MB) | ✅ |
-| Tocar no botão desliga a música e lembra a escolha | ✅ |
-| Botão some da tela e avisa onde religar | ✅ |
+| Playlist tem as 16 músicas, todas leves | ✅ |
+| Próxima música | ✅ |
+| Música anterior | ✅ |
+| Ao terminar, passa sozinha para a próxima | ✅ |
+| Pausar | ✅ |
+| Tocar de novo | ✅ |
+| 'Desativar música' pede confirmação antes | ✅ |
+| Cancelar mantém a música | ✅ |
+| Confirmar desliga, tira o botão e avisa onde religar | ✅ |
 | Depois de recarregar continua desligada e sem botão | ✅ |
 | Religar em Configurações: volta a tocar e o botão reaparece | ✅ |
-| Celular: arrastar o botão para baixo tira ele da tela e desliga a música | ✅ |
+| Celular: arrastar o botão para baixo pede confirmação | ✅ |
+
+## Patrocinadores
+
+| Verificação | Resultado |
+|---|---|
+| Quatro patrocinadores em ordem alfabética | ✅ |
+| daanzada leva ao Pinterest | ✅ |
+| Labum leva ao site da Labum | ✅ |
+| Logos sem fundo, na cor do tema | ✅ |
 
 ## Imagens na exportação (celular)
 

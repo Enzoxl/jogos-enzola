@@ -6,7 +6,6 @@
 //   busca          → pesquisa na loja da Steam (acha jogos novos que a RAWG ainda não tem, como "Fart Together").
 //   videos         → gameplay de youtubers brasileiros e trailer no YouTube. Precisa do segredo YOUTUBE_KEY.
 //   push_key/push  → notificações no celular (cutucadas, sugestões, mensagens). As chaves são criadas sozinhas.
-//   recuperar      → troca a senha com o código de recuperação (sem e-mail).
 //   excluir_conta  → apaga a conta e todos os dados do usuário logado.
 //
 // Como publicar: Supabase > Edge Functions > Deploy a new function > nome "enzola" > cole este arquivo > Deploy.
@@ -33,11 +32,6 @@ async function getJSON(url: string, init?: RequestInit) {
   const r = await fetch(url, init);
   if (!r.ok) throw new Error(`HTTP ${r.status} em ${new URL(url).host}`);
   return r.json();
-}
-
-async function sha256(s: string) {
-  const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
-  return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
 }
 
 // ---- acesso ao banco com a chave de serviço (só aqui no servidor) ----
@@ -150,7 +144,8 @@ async function videos(b: any) {
   if (!name) return json({ error: "nome vazio" }, 400);
   if (rawg && SB() && KEY()) {
     const c = await rest(`video_cache?rawg_id=eq.${rawg}&select=data,updated_at`).then((r) => r.json()).catch(() => []);
-    if (Array.isArray(c) && c[0] && Date.now() - new Date(c[0].updated_at).getTime() < 7 * 864e5) return json({ ...c[0].data, cached: true });
+    // o cache só vale para o mesmo nome (evita alguém gravar vídeos de outro jogo no id errado)
+    if (Array.isArray(c) && c[0] && norm(c[0].data?.name || "") === norm(name) && Date.now() - new Date(c[0].updated_at).getTime() < 7 * 864e5) return json({ ...c[0].data, cached: true });
   }
   if (!key) return json({ error: "sem_chave" }, 501);
   const yt = (q: string, n: number) => getJSON(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoEmbeddable=true&maxResults=${n}&regionCode=BR&relevanceLanguage=pt&q=${encodeURIComponent(q)}&key=${key}`);
@@ -158,7 +153,7 @@ async function videos(b: any) {
   const pick = (it: any) => it && { id: it.id.videoId, title: strip(it.snippet.title), channel: it.snippet.channelTitle };
   const items = gp.items || [];
   const fav = items.find((it: any) => CHANNELS.some((c: string) => norm(it.snippet.channelTitle).includes(norm(c))));
-  const data = { gameplay: pick(fav || items[0]), gameplay_br: !!fav, trailer: pick((tr.items || [])[0]) };
+  const data = { name, gameplay: pick(fav || items[0]), gameplay_br: !!fav, trailer: pick((tr.items || [])[0]) };
   if (rawg && SB() && KEY()) await rest("video_cache", { method: "POST", headers: { Prefer: "resolution=merge-duplicates" }, body: JSON.stringify({ rawg_id: rawg, data, updated_at: new Date().toISOString() }) }).catch(() => null);
   return json(data);
 }
@@ -270,34 +265,6 @@ async function push(b: any) {
   return json({ sent: res.filter((x) => x >= 200 && x < 300).length });
 }
 
-// ---------------- recuperar senha com código ----------------
-async function recuperar(b: any) {
-  const username = String(b.username || "").trim().toLowerCase().replace(/^@/, "");
-  const code = String(b.code || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-  const password = String(b.password || "");
-  const bad = () => json({ error: "Usuário ou código inválido." }, 400);
-  if (!/^[a-z0-9._-]{3,30}$/.test(username) || code.length !== 16) return bad();
-  if (password.length < 6 || password.length > 72) return json({ error: "A senha precisa ter de 6 a 72 caracteres." }, 400);
-  const prof = await rest(`profiles?username=eq.${encodeURIComponent(username)}&select=user_id`).then((r) => r.json());
-  const uid = Array.isArray(prof) && prof[0]?.user_id;
-  if (!uid) return bad();
-  const rec = await rest(`account_recovery?user_id=eq.${uid}&select=*`).then((r) => r.json());
-  const row = Array.isArray(rec) ? rec[0] : null;
-  if (!row || !row.code_hash) return bad();
-  if (row.locked_until && new Date(row.locked_until) > new Date()) return json({ error: "Muitas tentativas. Tente de novo em 15 minutos." }, 429);
-  if ((await sha256(`${uid}:${code}`)) !== row.code_hash) {
-    const failed = (row.failed || 0) + 1;
-    await rest(`account_recovery?user_id=eq.${uid}`, { method: "PATCH", body: JSON.stringify({ failed: failed >= 5 ? 0 : failed, locked_until: failed >= 5 ? new Date(Date.now() + 15 * 60e3).toISOString() : null }) });
-    return bad();
-  }
-  const up = await authAdmin(`users/${uid}`, { method: "PUT", body: JSON.stringify({ password }) });
-  if (!up.ok) return json({ error: "Não foi possível trocar a senha agora." }, 500);
-  const user = await up.json();
-  // o código vale uma vez só
-  await rest(`account_recovery?user_id=eq.${uid}`, { method: "PATCH", body: JSON.stringify({ code_hash: null, failed: 0, locked_until: null, updated_at: new Date().toISOString() }) });
-  return json({ ok: true, email: user.email });
-}
-
 // ---------------- excluir conta ----------------
 async function excluirConta(req: Request) {
   const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
@@ -334,7 +301,6 @@ export async function handle(req: Request): Promise<Response> {
       case "busca": return await busca(b);
       case "push_key": return await pushKey();
       case "push": return await push(b);
-      case "recuperar": return await recuperar(b);
       case "excluir_conta": return await excluirConta(req);
       case "ping": return json({ ok: true, itad: !!env("ITAD_KEY"), youtube: !!env("YOUTUBE_KEY") });
       default: return json({ error: "ação desconhecida" }, 400);

@@ -2,7 +2,7 @@
    Outros arquivos: jogo.js (busca e página do jogo, preços), social.js (amigos, mensagens, notificações),
    extras.js (configurações, senha, PDF, instalar app, recorte de imagem). */
 const CFG = window.APP_CONFIG || {};
-const VERSION = "3.2";
+const VERSION = "3.3";
 const STATUS = ["Finalizado", "Jogando", "Não iniciado", "Não comprado"];
 const EXPS = ["Perfeito", "Ótimo", "Muito bom", "Bom", "Ok", "Meh", "Chumbos"];
 const EXPCOL = { "Perfeito": "#2E8B6A", "Ótimo": "#4C9F7A", "Muito bom": "#6FA8DC", "Bom": "#4B6B9E", "Ok": "#C9A227", "Meh": "#D98A3D", "Chumbos": "#B14A47" };
@@ -26,6 +26,9 @@ const PRESETS = [
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+// links e imagens vindos de fora (APIs, perfis): só http(s); bloqueia "javascript:" e quebra de CSS
+const hrefOk = u => esc(/^(https?:\/\/|#|mailto:)/i.test(String(u || "")) ? u : "#");
+const cssUrl = u => /^(https?:\/\/|data:image\/|blob:)/i.test(String(u || "")) ? String(u).replace(/['"()\\\s<>]/g, c => "%" + c.charCodeAt(0).toString(16).padStart(2, "0")) : "";
 const ic = (n, cls = "") => `<svg class="ic ${cls}"><use href="#i-${n}"/></svg>`;
 const sk = s => s.replace("ã", "a").replace(/ /g, "-");
 const stClass = s => "st-" + sk(s || "Não iniciado");
@@ -79,8 +82,8 @@ function avatar(a) {
   return `<div class="av-preset" style="background:${p.bg}">${ic(p.icon)}</div>`;
 }
 function bannerHTML(p, cur, extraCls = "") {
-  if (p.banner) return `<div class="banner ${extraCls}" style="background-image:url('${esc(p.banner)}')">`;
-  if (cur && cur.cover_url) return `<div class="banner auto ${extraCls}"><div class="bgauto" style="background-image:url('${esc(cur.cover_url)}')"></div><span class="logo wm" aria-hidden="true"></span>`;
+  if (p.banner) return `<div class="banner ${extraCls}" style="background-image:url('${cssUrl(p.banner)}')">`;
+  if (cur && cur.cover_url) return `<div class="banner auto ${extraCls}"><div class="bgauto" style="background-image:url('${cssUrl(cur.cover_url)}')"></div><span class="logo wm" aria-hidden="true"></span>`;
   return `<div class="banner ${extraCls}"><span class="logo wm" aria-hidden="true"></span>`;
 }
 const skRows = n => Array.from({ length: n }, () => `<div class="row skrow"><span class="sk" style="width:18px;height:12px"></span><span class="sk" style="width:44px;aspect-ratio:2/3"></span><span><span class="sk" style="width:55%;height:14px"></span><span class="sk" style="width:35%;height:10px;margin-top:8px"></span></span><span class="sk" style="height:30px;border-radius:999px"></span><span class="sk" style="height:30px"></span><span class="sk" style="height:18px"></span><span></span></div>`).join("");
@@ -603,7 +606,7 @@ function openProfileEditor() {
     <div class="pe-av"><button type="button" class="av md av-edit" id="pe-av" aria-label="Escolher foto">${avatar(pe.avatar)}<span class="av-cam">${ic("camera")}</span></button>
       <div style="display:grid;gap:8px"><button class="btn ghost sm" id="pe-up">${ic("image")}Escolher foto da galeria</button><span class="hint">Você pode recortar e ajustar antes de salvar. Ou escolha um avatar:</span></div></div>
     <div class="presets" id="pe-presets">${PRESETS.map(x => `<button type="button" data-preset="${x.k}" aria-label="Avatar ${x.k}" aria-pressed="${pe.avatar === "preset:" + x.k}"><div class="av-preset" style="background:${x.bg}">${ic(x.icon)}</div></button>`).join("")}</div>
-    <div><div class="fld" style="margin-bottom:6px">Banner <span class="hint">· sem banner, usamos a capa do jogo do momento</span></div><div class="pe-ban" id="pe-ban" style="${pe.banner ? `background-image:url('${esc(pe.banner)}')` : ""}"></div>
+    <div><div class="fld" style="margin-bottom:6px">Banner <span class="hint">· sem banner, usamos a capa do jogo do momento</span></div><div class="pe-ban" id="pe-ban" style="${pe.banner ? `background-image:url('${cssUrl(pe.banner)}')` : ""}"></div>
       <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn ghost sm" id="pe-bup">${ic("image")}Escolher banner da galeria</button><button class="btn ghost sm" id="pe-brm">${ic("trash")}Remover</button></div></div>
     <div class="f2"><label>Nickname<input type="text" id="pe-nick" maxlength="30" value="${esc(p.nickname || "")}" placeholder="${esc(uname())}"></label>
       <label>Jogo do momento<select id="pe-cur"><option value="">Automático (jogando agora)</option>${sorted(games, "name").map(g => `<option value="${g.id}"${p.now_playing === g.id ? " selected" : ""}>${esc(g.name)}</option>`).join("")}</select></label></div>
@@ -626,7 +629,7 @@ function renderPicker() {
 async function peImage(kind) {
   const url = await pickAndUpload(kind); if (!url || !pe) return;
   if (kind === "avatar") { pe.avatar = url; $("#pe-av").innerHTML = avatar(url) + `<span class="av-cam">${ic("camera")}</span>`; for (const b of $$("#pe-presets button")) b.setAttribute("aria-pressed", "false") }
-  else { pe.banner = url; $("#pe-ban").style.backgroundImage = `url('${url}')` }
+  else { pe.banner = url; $("#pe-ban").style.backgroundImage = `url('${cssUrl(url)}')` }
   toast("Imagem pronta. Clique em Salvar perfil.");
 }
 async function copyText(t, msg = "Link copiado.") {
@@ -734,83 +737,77 @@ function showAuth(show, msg) {
   if (msg !== undefined) { const m = $("#auth-msg"); m.textContent = msg; m.className = "auth-msg" }
   updateInstallUI();
 }
-function emailFor(u) {
-  const b = String(CFG.EMAIL_BASE || "").trim();
-  if (/^[^@\s+]+@[^@\s]+\.[^@\s]+$/.test(b)) { const [l, d] = b.split("@"); return `${l}+${u}@${d}` }
-  return u + "@gmail.com";
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+function authMsg(id, text, ok) { const m = $(id); m.textContent = text; m.className = "auth-msg" + (ok ? " ok" : "") }
+function authError(e) {
+  const m = String((e && (e.code || e.message)) || "");
+  if (/not.?confirmed/i.test(m)) return "confirm";
+  if (/already|registered|exists/i.test(m)) return "Já existe uma conta com esse e-mail. Entre com ele ou use “Esqueci minha senha”.";
+  if (/not.?authorized/i.test(m)) return "O site ainda não consegue enviar e-mails. Avise o administrador (Instagram @movimento.enzola).";
+  if (/rate.?limit|too many/i.test(m)) return "Muitas tentativas agora. Espere alguns minutos e tente de novo.";
+  if (/password/i.test(m) && /weak|short|least/i.test(m)) return "Senha fraca. Use pelo menos 6 caracteres.";
+  if (/invalid.*email|email.*invalid/i.test(m)) return "Esse e-mail não parece válido. Confira e tente de novo.";
+  return null;
 }
-async function signInUser(u, pass) {
-  let r = await sb.auth.signInWithPassword({ email: emailFor(u), password: pass });
-  const legacy = u + "@gmail.com";
-  if (r.error && emailFor(u) !== legacy) r = await sb.auth.signInWithPassword({ email: legacy, password: pass });
-  return r;
-}
-let authMode = "login", authBusy = false, availT = 0;
-function setAuthMode(mode) {
-  authMode = mode === "signup" ? "signup" : "login";
-  const s = authMode === "signup";
-  $("#auth-title").textContent = s ? "Criar sua conta" : "Bem-vindo de volta";
-  $("#auth-sub").textContent = s ? "Escolha um usuário e uma senha. Leva menos de um minuto." : "Entre com seu usuário e senha.";
-  $("#a-login").textContent = s ? "Criar conta" : "Entrar";
-  $("#a-signup").textContent = s ? "Já tenho conta" : "Criar conta";
-  $("#f-pass2").hidden = !s; $("#a-forgot").hidden = s;
-  $("#a-pass").autocomplete = s ? "new-password" : "current-password";
-  $("#a-pass2").value = ""; $("#auth-msg").textContent = ""; $("#auth-msg").className = "auth-msg";
-  const av = $("#a-avail"); av.hidden = true; av.textContent = "";
-  $("#auth-form").dataset.mode = authMode;
-  if (s) checkAvail(); $("#a-email").focus({ preventScroll: true });
-}
-function checkAvail() {
-  clearTimeout(availT); const av = $("#a-avail"); if (authMode !== "signup" || !sb) return;
-  const u = $("#a-email").value.trim().toLowerCase().replace(/^@/, "");
-  if (!u) { av.hidden = true; return }
-  av.hidden = false;
-  if (!/^[a-z0-9._-]{3,30}$/.test(u)) { av.className = "avail bad"; av.textContent = "Use 3 a 30 letras minúsculas, números, ponto, hífen ou sublinhado."; return }
-  av.className = "avail"; av.textContent = "Verificando…";
-  availT = setTimeout(async () => {
-    const t = await sb.rpc("username_taken", { uname: u });
-    if ($("#a-email").value.trim().toLowerCase().replace(/^@/, "") !== u || authMode !== "signup") return;
-    if (t.error) { av.hidden = true; return }
-    av.className = "avail " + (t.data ? "bad" : "ok"); av.textContent = t.data ? `@${u} já existe. Escolha outro.` : `@${u} está disponível.`;
-  }, 400);
-}
-async function doAuth(signup) {
-  if (!sb || authBusy) return;
-  const u = $("#a-email").value.trim().toLowerCase().replace(/^@/, ""), pass = $("#a-pass").value, m = $("#auth-msg");
-  m.className = "auth-msg";
-  if (!/^[a-z0-9._-]{3,30}$/.test(u)) { m.textContent = "Usuário com 3 a 30 letras minúsculas, números, ponto, hífen ou sublinhado, sem espaços ou acentos."; return }
-  if (pass.length < 6) { m.textContent = "A senha precisa ter pelo menos 6 caracteres."; return }
-  if (signup && pass !== $("#a-pass2").value) { m.textContent = "As duas senhas não são iguais."; return }
-  authBusy = true; m.textContent = signup ? "Criando sua conta…" : "Entrando…"; for (const b of $$(".auth-acts .btn")) b.disabled = true;
+async function doLogin() {
+  if (!sb) return;
+  const id = $("#a-id").value.trim(), pass = $("#a-pass").value;
+  if (!id) return authMsg("#auth-msg", "Digite seu e-mail.");
+  if (!pass) return authMsg("#auth-msg", "Digite sua senha.");
+  const byEmail = id.includes("@");
+  if (!byEmail && !/^@?[a-z0-9._-]{3,30}$/i.test(id)) return authMsg("#auth-msg", "Confira o e-mail digitado.");
+  const email = byEmail ? id.toLowerCase() : id.toLowerCase().replace(/^@/, "") + "@gmail.com";
+  authMsg("#auth-msg", "Entrando…"); $("#a-login").disabled = true;
   try {
-    let r;
-    if (signup) {
-      const t = await sb.rpc("username_taken", { uname: u });
-      if (!t.error && t.data === true) { m.textContent = "Esse usuário já existe. Escolha outro."; return }
-      newSignup = true;
-      r = await sb.auth.signUp({ email: emailFor(u), password: pass });
-    } else r = await signInUser(u, pass);
-    if (r.error) {
-      newSignup = false;
-      if (signup) m.textContent = /registered|exists/i.test(r.error.message) ? "Esse usuário já existe. Escolha outro." : "Não foi possível criar a conta: " + r.error.message;
-      else {
-        const t = await sb.rpc("username_taken", { uname: u });
-        m.textContent = !t.error && t.data === false ? "Não encontramos esse usuário. Toque em “Criar conta” para cadastrar." : "Usuário ou senha incorretos.";
-      }
-      return;
-    }
-    if (signup && !r.data.session) m.textContent = "Conta criada, mas o Supabase ainda exige confirmação por e-mail. Desligue “Confirm email” em Authentication > Providers > Email e tente de novo.";
-    else m.textContent = "";
-  } finally { authBusy = false; for (const b of $$(".auth-acts .btn")) b.disabled = false }
+    const r = await sb.auth.signInWithPassword({ email, password: pass });
+    if (!r.error) { authMsg("#auth-msg", ""); return }
+    const k = authError(r.error);
+    if (k === "confirm") { $("#auth-msg").innerHTML = `Confirme seu e-mail pelo link que enviamos para <b>${esc(email)}</b>. <button type="button" class="link" data-resend="${esc(email)}">Reenviar link</button>`; $("#auth-msg").className = "auth-msg"; return }
+    authMsg("#auth-msg", k || (byEmail ? "E-mail ou senha incorretos." : "Usuário ou senha incorretos. Se você criou a conta com e-mail, entre com o e-mail."));
+  } finally { $("#a-login").disabled = false }
 }
-let newSignup = false;
+async function doSignup() {
+  if (!sb) return;
+  const email = $("#s-email").value.trim().toLowerCase(), u = $("#s-user").value.trim().toLowerCase().replace(/^@/, ""), pass = $("#s-pass").value;
+  if (!EMAIL_RE.test(email)) return authMsg("#signup-msg", "Digite um e-mail válido, como voce@email.com.");
+  if (!/^[a-z0-9._-]{3,30}$/.test(u)) return authMsg("#signup-msg", "O usuário precisa ter de 3 a 30 letras minúsculas, números, ponto, hífen ou sublinhado, sem espaços ou acentos.");
+  if (pass.length < 6) return authMsg("#signup-msg", "A senha precisa ter pelo menos 6 caracteres.");
+  authMsg("#signup-msg", "Criando sua conta…"); $("#a-signup").disabled = true;
+  try {
+    const t = await sb.rpc("username_taken", { uname: u });
+    if (!t.error && t.data === true) return authMsg("#signup-msg", "Esse usuário já existe. Escolha outro.");
+    const r = await sb.auth.signUp({ email, password: pass, options: { data: { username: u, real_email: true }, emailRedirectTo: siteUrl() } });
+    if (r.error) return authMsg("#signup-msg", authError(r.error) || "Não foi possível criar a conta: " + r.error.message);
+    if (!r.data.session) {
+      // Supabase com "Confirm email" ligado: a conta só entra depois do clique no link
+      $("#signup-msg").innerHTML = `Quase lá! Enviamos um link para <b>${esc(email)}</b>. Abra o e-mail, confirme e depois entre aqui. <button type="button" class="link" data-resend="${esc(email)}">Não chegou? Reenviar</button>`;
+      $("#signup-msg").className = "auth-msg ok";
+    } else authMsg("#signup-msg", "");
+  } finally { $("#a-signup").disabled = false }
+}
+let userTimer = null;
+function setAuthTab(up, focus) {
+  $$("[data-auth-tab]").forEach(b => b.setAttribute("aria-checked", String((b.dataset.authTab === "up") === up)));
+  $("#auth-form").hidden = up; $("#signup-form").hidden = !up;
+  if (focus) setTimeout(() => (up ? $("#s-email") : $("#a-id")).focus(), 30);
+}
+async function checkUsername() {
+  const u = $("#s-user").value.trim().toLowerCase(), h = $("#s-user-hint");
+  if (!u) { h.textContent = "É assim que seus amigos te encontram. Letras minúsculas, números, ponto, hífen ou sublinhado."; h.className = "hint"; return }
+  if (!/^[a-z0-9._-]{3,30}$/.test(u)) { h.textContent = "Use de 3 a 30 letras minúsculas, números, ponto, hífen ou sublinhado."; h.className = "hint bad"; return }
+  const t = await sb.rpc("username_taken", { uname: u });
+  if ($("#s-user").value.trim().toLowerCase() !== u) return;
+  if (t.error) { h.textContent = "É assim que seus amigos te encontram."; h.className = "hint"; return }
+  h.textContent = t.data ? `@${u} já existe. Escolha outro.` : `@${u} está livre.`; h.className = "hint " + (t.data ? "bad" : "good");
+}
 async function onSession(session, ev) {
   const was = user && user.id;
   user = session ? session.user : null; sessionKnown = true;
-  if (!user) { games = []; profile = null; loaded = false; socialReset(); route(); return }
+  if (user && was === user.id && tab === "config") renderConfig();
+  if (!user) { games = []; profile = null; loaded = false; socialReset(); if (was) { setAuthTab(false); $("#a-pass").value = ""; authMsg("#auth-msg", "") } route(); return }
   if (was === user.id) return;
   loaded = false; route(); await loadAll(); socialStart();
-  if (newSignup) { newSignup = false; setTimeout(() => offerRecoveryCode(true), 600) }
+  if (ev === "PASSWORD_RECOVERY") setTimeout(openNewPassword, 300);
   maybeShowInstallBar();
 }
 
@@ -943,9 +940,21 @@ document.addEventListener("keydown", e => {
   }
   if (e.key === "Enter" && e.target.id === "s-q") { e.preventDefault(); clearTimeout(searchTimer); runSearch() }
 });
-$("#auth-form").addEventListener("submit", e => { e.preventDefault(); doAuth(authMode === "signup") });
-$("#a-signup").addEventListener("click", () => setAuthMode(authMode === "signup" ? "login" : "signup"));
-$("#a-email").addEventListener("input", checkAvail);
+$("#auth-form").addEventListener("submit", e => { e.preventDefault(); doLogin() });
+$("#signup-form").addEventListener("submit", e => { e.preventDefault(); doSignup() });
+document.addEventListener("click", async e => {
+  const t = e.target.closest("[data-auth-tab]");
+  if (t) { setAuthTab(t.dataset.authTab === "up", true); return }
+  const r = e.target.closest("[data-resend]");
+  if (r) {
+    const { error } = await sb.auth.resend({ type: "signup", email: r.dataset.resend, options: { emailRedirectTo: siteUrl() } });
+    toast(error ? (authError(error) || "Não foi possível reenviar agora.") : "Link reenviado. Confira também a caixa de spam.");
+  }
+});
+document.addEventListener("input", e => {
+  if (e.target.id === "s-user") { e.target.value = e.target.value.toLowerCase().replace(/\s/g, ""); clearTimeout(userTimer); userTimer = setTimeout(checkUsername, 400) }
+  if (e.target.id === "s-pass") $("#s-meter").className = "pwmeter s" + pwScore(e.target.value);
+});
 
 /* arrastar e soltar (tier list) */
 let dragId = null;
@@ -964,7 +973,7 @@ function boot() {
     sessionKnown = true; showAuth(true, "Configure o endereço e a chave do Supabase no arquivo config.js."); return;
   }
   sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
-  sb.auth.onAuthStateChange((ev, session) => { setTimeout(() => { if (ev === "PASSWORD_RECOVERY") toast("Defina sua nova senha em Configurações."); onSession(session, ev) }, 0) });
+  sb.auth.onAuthStateChange((ev, session) => { setTimeout(() => { if (ev === "PASSWORD_RECOVERY" && user && session && user.id === session.user.id) openNewPassword(); onSession(session, ev) }, 0) });
   sb.auth.getSession().then(({ data }) => { if (!data.session && !sessionKnown) onSession(null) });
   route();
 }
