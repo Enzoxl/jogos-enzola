@@ -432,6 +432,7 @@ const inviteUrl = u => location.origin + location.pathname + "?convite=" + encod
     const q = new URLSearchParams(location.search), u = (q.get("convite") || "").trim().toLowerCase().replace(/^@/, "");
     if (!/^[a-z0-9._-]{3,30}$/.test(u)) return;
     lsSet("invite", u);
+    if (typeof setAuthMode === "function") setAuthMode("signup");
     q.delete("convite"); const rest = q.toString();
     history.replaceState(null, "", location.pathname + (rest ? "?" + rest : "") + location.hash);
     const msg = document.getElementById("auth-msg");

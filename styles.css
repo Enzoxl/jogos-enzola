@@ -1001,3 +1001,5 @@ a.fhead:hover .fn{color:var(--accent)}
 }
 @media (max-height:640px){.w-stage.cast{height:min(40vh,300px)}.w-stage.cast .w-hippo{height:min(36vh,260px)}}
 @media (prefers-reduced-motion:reduce){.cb{animation:none}}
+.avail{display:block;font-size:12.5px;margin-top:6px;color:var(--muted);font-weight:500}
+.avail.ok{color:#2E8B6A}.avail.bad{color:#B14A47}

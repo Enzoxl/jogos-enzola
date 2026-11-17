@@ -731,13 +731,43 @@ async function signInUser(u, pass) {
   if (r.error && emailFor(u) !== legacy) r = await sb.auth.signInWithPassword({ email: legacy, password: pass });
   return r;
 }
+let authMode = "login", authBusy = false, availT = 0;
+function setAuthMode(mode) {
+  authMode = mode === "signup" ? "signup" : "login";
+  const s = authMode === "signup";
+  $("#auth-title").textContent = s ? "Criar sua conta" : "Bem-vindo de volta";
+  $("#auth-sub").textContent = s ? "Escolha um usuário e uma senha. Leva menos de um minuto." : "Entre com seu usuário e senha.";
+  $("#a-login").textContent = s ? "Criar conta" : "Entrar";
+  $("#a-signup").textContent = s ? "Já tenho conta" : "Criar conta";
+  $("#f-pass2").hidden = !s; $("#a-forgot").hidden = s;
+  $("#a-pass").autocomplete = s ? "new-password" : "current-password";
+  $("#a-pass2").value = ""; $("#auth-msg").textContent = ""; $("#auth-msg").className = "auth-msg";
+  const av = $("#a-avail"); av.hidden = true; av.textContent = "";
+  $("#auth-form").dataset.mode = authMode;
+  if (s) checkAvail(); $("#a-email").focus({ preventScroll: true });
+}
+function checkAvail() {
+  clearTimeout(availT); const av = $("#a-avail"); if (authMode !== "signup" || !sb) return;
+  const u = $("#a-email").value.trim().toLowerCase().replace(/^@/, "");
+  if (!u) { av.hidden = true; return }
+  av.hidden = false;
+  if (!/^[a-z0-9._-]{3,30}$/.test(u)) { av.className = "avail bad"; av.textContent = "Use 3 a 30 letras minúsculas, números, ponto, hífen ou sublinhado."; return }
+  av.className = "avail"; av.textContent = "Verificando…";
+  availT = setTimeout(async () => {
+    const t = await sb.rpc("username_taken", { uname: u });
+    if ($("#a-email").value.trim().toLowerCase().replace(/^@/, "") !== u || authMode !== "signup") return;
+    if (t.error) { av.hidden = true; return }
+    av.className = "avail " + (t.data ? "bad" : "ok"); av.textContent = t.data ? `@${u} já existe. Escolha outro.` : `@${u} está disponível.`;
+  }, 400);
+}
 async function doAuth(signup) {
-  if (!sb) return;
+  if (!sb || authBusy) return;
   const u = $("#a-email").value.trim().toLowerCase().replace(/^@/, ""), pass = $("#a-pass").value, m = $("#auth-msg");
   m.className = "auth-msg";
   if (!/^[a-z0-9._-]{3,30}$/.test(u)) { m.textContent = "Usuário com 3 a 30 letras minúsculas, números, ponto, hífen ou sublinhado, sem espaços ou acentos."; return }
   if (pass.length < 6) { m.textContent = "A senha precisa ter pelo menos 6 caracteres."; return }
-  m.textContent = "Aguarde…"; for (const b of $$(".auth-acts .btn")) b.disabled = true;
+  if (signup && pass !== $("#a-pass2").value) { m.textContent = "As duas senhas não são iguais."; return }
+  authBusy = true; m.textContent = signup ? "Criando sua conta…" : "Entrando…"; for (const b of $$(".auth-acts .btn")) b.disabled = true;
   try {
     let r;
     if (signup) {
@@ -746,10 +776,18 @@ async function doAuth(signup) {
       newSignup = true;
       r = await sb.auth.signUp({ email: emailFor(u), password: pass });
     } else r = await signInUser(u, pass);
-    if (r.error) { newSignup = false; m.textContent = signup ? (/registered|exists/i.test(r.error.message) ? "Esse usuário já existe. Escolha outro." : "Não foi possível criar a conta: " + r.error.message) : "Usuário ou senha incorretos."; return }
+    if (r.error) {
+      newSignup = false;
+      if (signup) m.textContent = /registered|exists/i.test(r.error.message) ? "Esse usuário já existe. Escolha outro." : "Não foi possível criar a conta: " + r.error.message;
+      else {
+        const t = await sb.rpc("username_taken", { uname: u });
+        m.textContent = !t.error && t.data === false ? "Não encontramos esse usuário. Toque em “Criar conta” para cadastrar." : "Usuário ou senha incorretos.";
+      }
+      return;
+    }
     if (signup && !r.data.session) m.textContent = "Conta criada, mas o Supabase ainda exige confirmação por e-mail. Desligue “Confirm email” em Authentication > Providers > Email e tente de novo.";
     else m.textContent = "";
-  } finally { for (const b of $$(".auth-acts .btn")) b.disabled = false }
+  } finally { authBusy = false; for (const b of $$(".auth-acts .btn")) b.disabled = false }
 }
 let newSignup = false;
 async function onSession(session, ev) {
@@ -891,8 +929,9 @@ document.addEventListener("keydown", e => {
   }
   if (e.key === "Enter" && e.target.id === "s-q") { e.preventDefault(); clearTimeout(searchTimer); runSearch() }
 });
-$("#auth-form").addEventListener("submit", e => { e.preventDefault(); doAuth(false) });
-$("#a-signup").addEventListener("click", () => doAuth(true));
+$("#auth-form").addEventListener("submit", e => { e.preventDefault(); doAuth(authMode === "signup") });
+$("#a-signup").addEventListener("click", () => setAuthMode(authMode === "signup" ? "login" : "signup"));
+$("#a-email").addEventListener("input", checkAvail);
 
 /* arrastar e soltar (tier list) */
 let dragId = null;
