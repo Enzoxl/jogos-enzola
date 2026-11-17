@@ -32,7 +32,7 @@ function renderConfig() {
   const keep = ["pw-cur", "pw-new", "pw-new2"].map(id => [id, $("#" + id) ? $("#" + id).value : ""]), act = document.activeElement && document.activeElement.id;
   el.innerHTML = `<div class="sec-head"><div><h2 class="h">Configurações</h2><p class="muted">Conta, aparência, privacidade e dados.</p></div></div>
   <div class="cfg">
-    <nav class="cfg-nav" aria-label="Seções das configurações">${[["conta", "user", "Conta e segurança"], ["aparencia", "sun", "Aparência"], ["privacidade", "shield", "Privacidade"], ["notificacoes", "bell", "Notificações"], ["precos", "tag", "Preços e lojas"], ["dados", "file", "Seus dados"], ["app", "phone", "App"]].map(([id, i, l]) => `<a href="#config" data-cfg-jump="${id}">${ic(i)}${l}</a>`).join("")}</nav>
+    <nav class="cfg-nav" aria-label="Seções das configurações">${[["conta", "user", "Conta e segurança"], ["convite", "userplus", "Convidar amigos"], ["aparencia", "sun", "Aparência"], ["privacidade", "shield", "Privacidade"], ["notificacoes", "bell", "Notificações"], ["precos", "tag", "Preços e lojas"], ["dados", "file", "Seus dados"], ["app", "phone", "App"]].map(([id, i, l]) => `<a href="#config" data-cfg-jump="${id}">${ic(i)}${l}</a>`).join("")}</nav>
     <div class="cfg-body">
     <section class="panel cfg-sec" id="cfg-conta"><h3>${ic("user")}Conta e segurança</h3>
       ${row("Seu usuário", "Seus amigos podem te achar pelo usuário ou pelo ID.", `<span class="idtag big">@${esc(uname())}${p.tag ? " #" + esc(p.tag) : ""}</span>${p.tag ? `<button class="btn ghost sm" data-act="copy-id">Copiar</button>` : ""}`)}
@@ -45,6 +45,11 @@ function renderConfig() {
       ${v3 ? row("Código de recuperação", cfgRecovery === true ? "Você tem um código ativo. Ele serve para trocar a senha se você esquecer." : cfgRecovery === false ? "<b class='warn-t'>Você ainda não tem um código.</b> Sem ele, para recuperar a senha você vai precisar pedir ao administrador." : "Serve para trocar a senha se você esquecer.", `<button class="btn ${cfgRecovery === false ? "" : "ghost "}sm" data-cfg-act="recovery">${ic("key")}${cfgRecovery === true ? "Gerar novo código" : "Gerar código"}</button>`) : ""}
       ${row("Sair de todos os aparelhos", "Encerra a sessão no celular, no computador e onde mais você tiver entrado.", `<button class="btn ghost sm" data-cfg-act="logout-all">${ic("logout")}Sair de todos</button>`)}
       ${FN() ? row("Excluir conta", "Apaga para sempre sua biblioteca, amigos, mensagens e o seu usuário.", `<button class="btn danger sm" data-cfg-act="delete">${ic("trash")}Excluir minha conta</button>`) : ""}
+    </section>
+    <section class="panel cfg-sec" id="cfg-convite"><h3>${ic("userplus")}Convidar amigos</h3>
+      <p class="hint" style="margin:0 0 10px">Mande este link para quem você quer por aqui. Quando a pessoa criar a conta (ou entrar), ela já envia um pedido de amizade para você.</p>
+      <span class="bar" style="margin:0"><input type="text" readonly value="${esc(inviteUrl(uname()))}" class="grow" id="inv-link" aria-label="Link de convite"><button class="btn sm" data-cfg-act="inv-copy">${ic("file")}Copiar link</button></span>
+      <div class="inv-acts"><button class="btn ghost sm" data-cfg-act="inv-share">${ic("share")}Compartilhar</button><a class="btn ghost sm" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent("Vem pro Jogos Enzola! Monte seu catálogo de jogos e me adicione como amigo: " + inviteUrl(uname()))}">WhatsApp</a></div>
     </section>
     <section class="panel cfg-sec" id="cfg-aparencia"><h3>${ic("sun")}Aparência</h3>
       ${row("Tema", "“Automático” segue o tema do seu celular ou computador.", `<div class="seg sm" role="radiogroup">${[["auto", "Automático"], ["light", "Claro"], ["dark", "Escuro"]].map(([v, l]) => `<button role="radio" aria-checked="${t === v}" data-cfg-theme="${v}">${l}</button>`).join("")}</div>`)}
@@ -369,6 +374,9 @@ document.addEventListener("click", async e => {
   if (c("[data-ib='close']")) { $("#install-bar").hidden = true; lsSet("install-dismissed", true); return }
   if (b = c("[data-rc]")) { if (b.dataset.rc === "copy") copyText(modal2.code, "Código copiado."); else { const bl = new Blob([modal2.txt], { type: "text/plain;charset=utf-8" }); shareOrDownload(bl, "codigo-recuperacao-jogos-enzola.txt", "Código de recuperação") } return }
   if (c("#rc-done")) { closeModal2(); if (afterRecovery) afterRecovery = false; return }
+  if (b = c("[data-cfg-act=inv-copy]")) { copyText(inviteUrl(uname()), "Link de convite copiado."); return }
+  if (b = c("[data-cfg-act=inv-share]")) { const url = inviteUrl(uname()), text = "Vem pro Jogos Enzola! Monte seu catálogo de jogos e me adicione como amigo.";
+    if (navigator.share) { try { await navigator.share({ title: "Jogos Enzola", text, url }) } catch (er) { if (er.name !== "AbortError") copyText(url, "Link de convite copiado.") } } else copyText(url, "Link de convite copiado."); return }
   if (b = c("[data-cfg-jump]")) { e.preventDefault(); const s = $("#cfg-" + b.dataset.cfgJump); if (s) s.scrollIntoView({ behavior: "smooth", block: "start" }); return }
   if (b = c("[data-cfg-theme]")) { setTheme(b.dataset.cfgTheme); return }
   if (b = c("[data-cfg-act]")) {
@@ -414,4 +422,32 @@ async function doDeleteAccount() {
   const b = $("#del-go"); b.disabled = true; b.textContent = "Excluindo…";
   try { await api("excluir_conta"); closeModal(); await sb.auth.signOut(); location.hash = ""; toast("Sua conta foi excluída.") }
   catch (e) { toast("Não foi possível excluir agora. Tente de novo."); b.disabled = false; b.textContent = "Excluir para sempre" }
+}
+
+
+/* ---------- convite por link (?convite=usuario) ---------- */
+const inviteUrl = u => location.origin + location.pathname + "?convite=" + encodeURIComponent(u);
+(function captureInvite() {
+  try {
+    const q = new URLSearchParams(location.search), u = (q.get("convite") || "").trim().toLowerCase().replace(/^@/, "");
+    if (!/^[a-z0-9._-]{3,30}$/.test(u)) return;
+    lsSet("invite", u);
+    q.delete("convite"); const rest = q.toString();
+    history.replaceState(null, "", location.pathname + (rest ? "?" + rest : "") + location.hash);
+    const msg = document.getElementById("auth-msg");
+    if (msg && !document.getElementById("invite-note")) {
+      const n = document.createElement("div"); n.id = "invite-note"; n.className = "invite-note";
+      n.innerHTML = `<b>Você foi convidado por @${esc(u)}</b><span>Crie sua conta ou entre. Vocês viram amigos assim que a pessoa aceitar.</span>`;
+      msg.parentNode.insertBefore(n, msg);
+    }
+  } catch (er) { }
+})();
+async function applyInvite() {
+  const u = lsGet("invite"); if (!u || !user) return;
+  try { localStorage.removeItem("invite") } catch (er) { }
+  if (u === uname() || !caps.v3) return;
+  const r = await sb.rpc("find_user2", { q: u }), f = (r.data || []).find(x => x.username === u);
+  if (!f || fr.rows.some(x => other(x) === f.user_id)) return;
+  const { error } = await sb.from("friendships").insert({ addressee: f.user_id });
+  if (!error) { toast(`Pedido de amizade enviado para @${u}.`); loadFriends() }
 }

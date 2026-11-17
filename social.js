@@ -260,7 +260,7 @@ function subscribeRT() {
   } catch (e) { }
 }
 function unsubRT() { for (const c of rtChans) { try { sb.removeChannel(c) } catch (e) { } } rtChans = [] }
-async function socialStart() { await loadFriends(); await loadNotifs(); subscribeRT() }
+async function socialStart() { await loadFriends(); await applyInvite(); await loadNotifs(); subscribeRT() }
 function socialReset() { unsubRT(); fr = newFr(); fpv = null; chat = null; updateBadge(); updateBell() }
 
 /* ---------- jogos dos amigos (para "amigos que têm") ---------- */
