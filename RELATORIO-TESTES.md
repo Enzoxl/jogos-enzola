@@ -1,6 +1,6 @@
 # Relatório de testes — Jogos Enzola 3.2
 
-**228/228 verificações passaram.** Erros no console: 0.
+**230/230 verificações passaram.** Erros no console: 0.
 
 Ambiente: Chrome automatizado (Playwright), no computador e no celular, com Supabase, RAWG, Steam, CheapShark, câmbio e a função do servidor simulados.
 Também: `migracao.sql` rodada duas vezes em PostgreSQL 16 (gatilho de notificação, segredos protegidos, regras de acesso) e a função do servidor testada em Node com 15 casos — incluindo a criptografia das notificações (RFC 8291) conferida por uma implementação independente.
@@ -309,9 +309,11 @@ Também: `migracao.sql` rodada duas vezes em PostgreSQL 16 (gatilho de notifica�
 | Música começa no primeiro toque e fica em looping | ✅ |
 | Volume ambiente (nem alto nem baixo) | ✅ |
 | Arquivo de música leve (< 2,5 MB) | ✅ |
-| Botão desliga a música e lembra a escolha | ✅ |
-| Depois de recarregar continua desligada | ✅ |
-| Ligar de novo volta a tocar | ✅ |
+| Tocar no botão desliga a música e lembra a escolha | ✅ |
+| Botão some da tela e avisa onde religar | ✅ |
+| Depois de recarregar continua desligada e sem botão | ✅ |
+| Religar em Configurações: volta a tocar e o botão reaparece | ✅ |
+| Celular: arrastar o botão para baixo tira ele da tela e desliga a música | ✅ |
 
 ## Imagens na exportação (celular)
 

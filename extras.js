@@ -54,7 +54,7 @@ function renderConfig() {
     </section>
     <section class="panel cfg-sec" id="cfg-aparencia"><h3>${ic("sun")}Aparência</h3>
       ${row("Tema", "“Automático” segue o tema do seu celular ou computador.", `<div class="seg sm" role="radiogroup">${[["auto", "Automático"], ["light", "Claro"], ["dark", "Escuro"]].map(([v, l]) => `<button role="radio" aria-checked="${t === v}" data-cfg-theme="${v}">${l}</button>`).join("")}</div>`)}
-      ${row("Música de fundo", "“A Pipa do Vovô” tocando baixinho enquanto você usa o site.", `<input type="range" id="music-vol" min="5" max="80" step="5" value="${Math.round(musicVol() * 100)}" aria-label="Volume da música"${musicOn() ? "" : " disabled"}>` + sw(`data-cfg-local="pref-music" data-default="1"`, musicOn(), "Música de fundo"))}
+      ${row("Música de fundo", "“A Pipa do Vovô” tocando baixinho enquanto você usa o site. Ligada, aparece um botão no canto da tela; para tirá-lo, toque nele ou arraste para baixo.", `<input type="range" id="music-vol" min="5" max="80" step="5" value="${Math.round(musicVol() * 100)}" aria-label="Volume da música"${musicOn() ? "" : " disabled"}>` + sw(`data-cfg-local="pref-music" data-default="1"`, musicOn(), "Música de fundo"))}
       ${row("Reduzir animações", "Desliga brilhos, flutuações e transições. Bom para aparelhos mais simples.", sw(`data-cfg-local="pref-calm"`, !!lsGet("pref-calm"), "Reduzir animações"))}
       ${row("Confete ao zerar um jogo", "", sw(`data-cfg="confetti"`, setting("confetti", true), "Confete ao zerar um jogo"))}
     </section>
@@ -619,6 +619,7 @@ function musicPause(fade = true) {
 function musicUI() {
   const b = $("#music-btn"); if (!b) return;
   const playing = !!(bgm.el && !bgm.el.paused);
+  b.hidden = !musicOn();   // desligou: o botão sai da tela (religa em Configurações > Aparência)
   b.setAttribute("aria-pressed", String(musicOn()));
   b.classList.toggle("on", playing); b.classList.toggle("off", !musicOn());
   b.title = musicOn() ? (playing ? "Música tocando — clique para desligar" : "Música ligada — toque em qualquer lugar para começar") : "Música desligada — clique para ligar";
@@ -640,7 +641,35 @@ document.addEventListener("visibilitychange", () => { if (document.hidden) music
 // pausa a música enquanto um vídeo (trailer) estiver tocando
 document.addEventListener("play", e => { if (e.target.tagName === "VIDEO") { bgm.videoPaused = true; musicPause() } }, true);
 ["pause", "ended"].forEach(ev => document.addEventListener(ev, e => { if (e.target.tagName === "VIDEO") { bgm.videoPaused = false; if (bgm.started) musicPlay() } }, true));
-document.addEventListener("click", e => { if (e.target.closest("#music-btn")) { e.preventDefault(); musicToggle() } });
+function musicOffFromButton() {
+  musicToggle(false);
+  toast("Música desligada. Para ligar de novo: Configurações > Aparência > Música de fundo.");
+}
+document.addEventListener("click", e => {
+  if (!e.target.closest("#music-btn")) return;
+  e.preventDefault();
+  if (bgm.dragged) { bgm.dragged = false; return }
+  if (musicOn()) musicOffFromButton(); else musicToggle(true);
+});
+// arrastar o botão para baixo (ou para o lado) tira a música e o botão da tela
+(() => {
+  let sx = 0, sy = 0, on = false;
+  document.addEventListener("pointerdown", e => { const b = e.target.closest("#music-btn"); if (!b) return; on = true; sx = e.clientX; sy = e.clientY; bgm.dragged = false; b.setPointerCapture && b.setPointerCapture(e.pointerId) });
+  document.addEventListener("pointermove", e => {
+    if (!on) return; const b = $("#music-btn"), dx = e.clientX - sx, dy = e.clientY - sy;
+    if (Math.hypot(dx, dy) > 8) bgm.dragged = true;
+    if (!bgm.dragged) return;
+    const d = Math.max(0, dy) + Math.max(0, -dx);
+    b.classList.add("dragging"); b.style.transform = `translate(${Math.min(0, dx)}px,${Math.max(0, dy)}px)`; b.style.opacity = String(Math.max(.25, 1 - d / 120));
+  });
+  const end = e => {
+    if (!on) return; on = false; const b = $("#music-btn"); if (!b) return;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    b.classList.remove("dragging"); b.style.transform = ""; b.style.opacity = "";
+    if (bgm.dragged && (dy > 50 || dx < -50)) musicOffFromButton();
+  };
+  document.addEventListener("pointerup", end); document.addEventListener("pointercancel", end);
+})();
 document.addEventListener("input", e => { if (e.target.id === "music-vol") musicSetVol(+e.target.value / 100) });
 // notificação tocada com o site aberto: o service worker pede para ir à tela certa
 if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("message", e => { if (e.data && e.data.go) location.href = e.data.go });

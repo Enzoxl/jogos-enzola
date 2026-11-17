@@ -1070,3 +1070,6 @@ button.card,button.fav{font:inherit;color:inherit;text-align:left;background:non
 @media (max-width:860px){.music-btn{bottom:calc(84px + env(safe-area-inset-bottom,0px));left:10px;width:38px;height:38px;padding:0;justify-content:center}.music-btn.on .mb-eq{display:none}}
 #music-vol{width:110px;margin-right:10px;accent-color:var(--accent);vertical-align:middle}
 body:has(.install-bar) .music-btn{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+.music-btn[hidden]{display:none}
+.music-btn{touch-action:none}
+.music-btn.dragging{transition:none;opacity:.6}

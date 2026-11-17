@@ -47,7 +47,7 @@ Segredos opcionais (Edge Functions > Secrets): `ITAD_KEY` (preços em reais), `Y
 ## 6. Música de fundo
 `musica.mp3` toca em looping, em volume ambiente. Os navegadores só liberam som depois do primeiro toque na página,
 então ela começa no primeiro clique. Cada pessoa pode desligar no botão de nota musical (canto inferior esquerdo)
-ou ajustar o volume em Configurações > Aparência. A escolha fica salva no aparelho.
+(tocar nele ou arrastar para baixo desliga a música e tira o botão da tela). Para religar ou ajustar o volume: Configurações > Aparência > Música de fundo. A escolha fica salva no aparelho.
 
 ## 7. Se a busca disser que a chave da RAWG foi recusada
 A chave grátis da RAWG tem limite mensal. Crie outra em https://rawg.io/apidocs e troque `RAWG_KEY` no `config.js`.
