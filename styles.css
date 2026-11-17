@@ -963,7 +963,8 @@ a.fhead:hover .fn{color:var(--accent)}
 .w-rays{position:absolute;left:50%;top:-40%;width:160vmax;height:160vmax;margin-left:-80vmax;background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.09) 0 6deg,transparent 6deg 18deg);-webkit-mask:radial-gradient(circle,#000 0,transparent 62%);mask:radial-gradient(circle,#000 0,transparent 62%);animation:wspin 60s linear infinite;pointer-events:none}
 .w-bubs{position:absolute;inset:0;pointer-events:none}
 .bub{position:absolute;bottom:-60px;border-radius:50%;border:2px solid rgba(255,255,255,.32);background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.28),rgba(255,255,255,.04));animation:wrise linear infinite}
-.w-card{position:relative;display:grid;justify-items:center;gap:8px;text-align:center;max-width:460px}
+.w-card{position:relative;display:grid;justify-items:center;gap:8px;text-align:center;max-width:min(94vw,920px)}
+.w-card h1,.w-card p{max-width:460px}
 .w-logo{opacity:.9;margin-bottom:4px;animation:wup .6s .1s ease both}
 .w-hippo{width:min(68vw,290px);height:auto;filter:drop-shadow(0 22px 32px rgba(0,0,0,.5));animation:wswim 1.2s cubic-bezier(.2,1.25,.3,1) .15s both,wbob 4.2s ease-in-out 1.4s infinite}
 .w-card h1{font:700 clamp(26px,6vw,36px)/1.1 var(--f-head,inherit);letter-spacing:-.02em;margin:8px 0 0;text-wrap:balance;animation:wup .6s .55s ease both}
@@ -980,3 +981,23 @@ a.fhead:hover .fn{color:var(--accent)}
 @keyframes wbob{0%,100%{transform:translateY(0) rotate(-1.5deg)}50%{transform:translateY(-14px) rotate(1.5deg)}}
 @keyframes wup{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.w-rays,.bub,.w-hippo{animation:none}.w-bubs{display:none}.w-card *{animation-duration:.01s!important;animation-delay:0s!important}}
+
+/* ---- boas-vindas: elenco em bolhas (WELCOME_CAST em extras.js) ---- */
+.w-stage{position:relative;display:grid;place-items:center}
+.w-stage.cast{width:min(94vw,920px);height:min(46vh,430px)}
+.w-stage.cast .w-hippo{width:auto;height:min(42vh,400px);max-width:none;position:relative;z-index:2}
+.w-cast{position:absolute;inset:0;z-index:1}
+.cb{position:absolute;left:calc(var(--x)*1%);top:calc(var(--y)*1%);width:var(--s);height:var(--s);margin:calc(var(--s)/-2) 0 0 calc(var(--s)/-2);border-radius:50%;padding:4px;
+  background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.55),rgba(255,255,255,.12) 55%,rgba(255,255,255,.22));box-shadow:0 14px 30px rgba(0,0,0,.4),inset 0 0 0 2px rgba(255,255,255,.4);
+  animation:cpop .7s cubic-bezier(.2,1.5,.35,1) calc(.8s + var(--i)*.12s) both,cfloat var(--d) ease-in-out calc(1.6s + var(--i)*.12s) infinite}
+.cb img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;filter:saturate(1.05)}
+.cb::after{content:"";position:absolute;inset:4px;border-radius:50%;background:radial-gradient(circle at 28% 22%,rgba(255,255,255,.5),transparent 38%);pointer-events:none}
+@keyframes cpop{from{transform:scale(0) translateY(40px);opacity:0}to{transform:none;opacity:1}}
+@keyframes cfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@media (max-width:640px){
+  .w-stage.cast{width:min(96vw,420px);height:min(54vh,440px)}
+  .w-stage.cast .w-hippo{height:min(36vh,300px)}
+  .cb{left:calc(var(--mx)*1%);top:calc(var(--my)*1%);width:var(--ms);height:var(--ms);margin:calc(var(--ms)/-2) 0 0 calc(var(--ms)/-2)}
+}
+@media (max-height:640px){.w-stage.cast{height:min(40vh,300px)}.w-stage.cast .w-hippo{height:min(36vh,260px)}}
+@media (prefers-reduced-motion:reduce){.cb{animation:none}}

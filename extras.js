@@ -458,6 +458,11 @@ async function applyInvite() {
 }
 
 /* ---------- boas-vindas de quem entra por convite ---------- */
+// true = hipopótamo no centro com os coadjuvantes em bolhas; false = só o hipopótamo (versão anterior)
+const WELCOME_CAST = true;
+// [arquivo, x%, y%, tamanho(px), x% celular, y% celular, tamanho celular(px), flutuação(s)]
+const CAST = [["c1", 13, 27, 124, 15, 9, 64, 5.2], ["c2", 88, 24, 114, 85, 9, 64, 4.6], ["c3", 7, 70, 108, 15, 93, 64, 5.8], ["c4", 93, 68, 128, 85, 93, 64, 5.0],
+  ["c5", 25, 90, 96, 38, 93, 64, 4.4], ["c6", 75, 91, 84, 62, 93, 64, 6.0], ["c7", 29, 9, 88, 38, 9, 64, 5.4], ["c8", 72, 8, 94, 62, 9, 64, 4.8]];
 function showWelcome(inviter, state) {
   if (document.getElementById("welcome")) return;
   const line = state === "sent" ? `<b>@${esc(inviter)}</b> te convidou. Já enviamos seu pedido de amizade.`
@@ -468,7 +473,8 @@ function showWelcome(inviter, state) {
   const bubbles = Array.from({ length: 16 }, () => { const s = 8 + Math.random() * 26; return `<i class="bub" style="left:${(Math.random() * 100).toFixed(1)}%;width:${s.toFixed(0)}px;height:${s.toFixed(0)}px;animation-duration:${(7 + Math.random() * 9).toFixed(1)}s;animation-delay:${(-Math.random() * 12).toFixed(1)}s"></i>` }).join("");
   w.innerHTML = `<div class="w-rays" aria-hidden="true"></div><div class="w-bubs" aria-hidden="true">${bubbles}</div>
     <div class="w-card"><span class="logo sm w-logo" role="img" aria-label="Movimento Enzola"></span>
-      <img class="w-hippo" src="hipopotamo.png" alt="Filhote de hipopótamo nadando na sua direção" width="300">
+      <div class="w-stage${WELCOME_CAST ? " cast" : ""}">${WELCOME_CAST ? `<div class="w-cast" aria-hidden="true">${CAST.map(([f, x, y, s, mx, my, ms, d], i) => `<span class="cb" style="--x:${x};--y:${y};--s:${s}px;--mx:${mx};--my:${my};--ms:${ms}px;--d:${d}s;--i:${i}"><img src="convite/${f}.jpg" alt="" loading="eager" draggable="false"></span>`).join("")}</div>` : ""}
+      <img class="w-hippo" src="hipopotamo.png" alt="Filhote de hipopótamo nadando na sua direção" width="300"></div>
       <h1 id="w-title">Bem-vindo ao Jogos Enzola</h1>
       <p>${line}</p>
       <p class="w-sub">Monte seu catálogo, sua tier list e seu perfil gamer.</p>
