@@ -445,9 +445,37 @@ const inviteUrl = u => location.origin + location.pathname + "?convite=" + encod
 async function applyInvite() {
   const u = lsGet("invite"); if (!u || !user) return;
   try { localStorage.removeItem("invite") } catch (er) { }
-  if (u === uname() || !caps.v3) return;
-  const r = await sb.rpc("find_user2", { q: u }), f = (r.data || []).find(x => x.username === u);
-  if (!f || fr.rows.some(x => other(x) === f.user_id)) return;
-  const { error } = await sb.from("friendships").insert({ addressee: f.user_id });
-  if (!error) { toast(`Pedido de amizade enviado para @${u}.`); loadFriends() }
+  if (u === uname()) return;
+  let state = "none";
+  if (caps.v3) {
+    const r = await sb.rpc("find_user2", { q: u }), f = (r.data || []).find(x => x.username === u);
+    if (f) {
+      if (fr.rows.some(x => other(x) === f.user_id)) state = "already";
+      else { const { error } = await sb.from("friendships").insert({ addressee: f.user_id }); if (!error) { state = "sent"; loadFriends() } }
+    }
+  }
+  showWelcome(u, state);
+}
+
+/* ---------- boas-vindas de quem entra por convite ---------- */
+function showWelcome(inviter, state) {
+  if (document.getElementById("welcome")) return;
+  const line = state === "sent" ? `<b>@${esc(inviter)}</b> te convidou. Já enviamos seu pedido de amizade.`
+    : state === "already" ? `Você e <b>@${esc(inviter)}</b> já estão conectados por aqui.`
+    : `<b>@${esc(inviter)}</b> te convidou para jogar junto.`;
+  const w = document.createElement("div");
+  w.id = "welcome"; w.className = "welcome"; w.setAttribute("role", "dialog"); w.setAttribute("aria-modal", "true"); w.setAttribute("aria-labelledby", "w-title");
+  const bubbles = Array.from({ length: 16 }, () => { const s = 8 + Math.random() * 26; return `<i class="bub" style="left:${(Math.random() * 100).toFixed(1)}%;width:${s.toFixed(0)}px;height:${s.toFixed(0)}px;animation-duration:${(7 + Math.random() * 9).toFixed(1)}s;animation-delay:${(-Math.random() * 12).toFixed(1)}s"></i>` }).join("");
+  w.innerHTML = `<div class="w-rays" aria-hidden="true"></div><div class="w-bubs" aria-hidden="true">${bubbles}</div>
+    <div class="w-card"><span class="logo sm w-logo" role="img" aria-label="Movimento Enzola"></span>
+      <img class="w-hippo" src="hipopotamo.png" alt="Filhote de hipopótamo nadando na sua direção" width="300">
+      <h1 id="w-title">Bem-vindo ao Jogos Enzola</h1>
+      <p>${line}</p>
+      <p class="w-sub">Monte seu catálogo, sua tier list e seu perfil gamer.</p>
+      <button class="btn w-go" id="w-go">Começar</button></div>`;
+  document.body.append(w);
+  const close = () => { w.classList.add("out"); setTimeout(() => w.remove(), 350); document.removeEventListener("keydown", onKey) };
+  const onKey = ev => { if (ev.key === "Escape") close() };
+  document.addEventListener("keydown", onKey);
+  w.querySelector("#w-go").addEventListener("click", close); w.querySelector("#w-go").focus({ preventScroll: true });
 }

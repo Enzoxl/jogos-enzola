@@ -956,3 +956,27 @@ a.fhead:hover .fn{color:var(--accent)}
 .inv-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .invite-note{display:grid;gap:2px;background:var(--accent-soft);color:var(--fg);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:13px;margin-bottom:10px}
 .invite-note span{color:var(--muted);font-size:12.5px}
+
+/* ---- boas-vindas por convite ---- */
+.welcome{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:24px;background:radial-gradient(120% 90% at 50% 0%,#2F5FA8 0%,#1B2E57 45%,#14213D 100%);color:#fff;overflow:hidden;animation:wfade .45s ease both}
+.welcome.out{animation:wout .35s ease both}
+.w-rays{position:absolute;left:50%;top:-40%;width:160vmax;height:160vmax;margin-left:-80vmax;background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.09) 0 6deg,transparent 6deg 18deg);-webkit-mask:radial-gradient(circle,#000 0,transparent 62%);mask:radial-gradient(circle,#000 0,transparent 62%);animation:wspin 60s linear infinite;pointer-events:none}
+.w-bubs{position:absolute;inset:0;pointer-events:none}
+.bub{position:absolute;bottom:-60px;border-radius:50%;border:2px solid rgba(255,255,255,.32);background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.28),rgba(255,255,255,.04));animation:wrise linear infinite}
+.w-card{position:relative;display:grid;justify-items:center;gap:8px;text-align:center;max-width:460px}
+.w-logo{opacity:.9;margin-bottom:4px;animation:wup .6s .1s ease both}
+.w-hippo{width:min(68vw,290px);height:auto;filter:drop-shadow(0 22px 32px rgba(0,0,0,.5));animation:wswim 1.2s cubic-bezier(.2,1.25,.3,1) .15s both,wbob 4.2s ease-in-out 1.4s infinite}
+.w-card h1{font:700 clamp(26px,6vw,36px)/1.1 var(--f-head,inherit);letter-spacing:-.02em;margin:8px 0 0;text-wrap:balance;animation:wup .6s .55s ease both}
+.w-card p{margin:0;color:#D5E0F4;font-size:15px;animation:wup .6s .7s ease both}
+.w-card p b{color:#fff}
+.w-card .w-sub{color:#9FB3D6;font-size:13.5px;animation-delay:.82s}
+.w-go{margin-top:12px;padding:12px 34px;font-size:15px;background:#fff;color:#14213D;animation:wup .6s .95s ease both}
+.w-go:hover{background:#E3EAF5}
+@keyframes wfade{from{opacity:0}to{opacity:1}}
+@keyframes wout{to{opacity:0;transform:scale(1.03)}}
+@keyframes wspin{to{transform:rotate(360deg)}}
+@keyframes wrise{0%{transform:translateY(0) translateX(0);opacity:0}10%{opacity:1}100%{transform:translateY(-115vh) translateX(24px);opacity:0}}
+@keyframes wswim{from{transform:translateY(120px) scale(.55) rotate(-10deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes wbob{0%,100%{transform:translateY(0) rotate(-1.5deg)}50%{transform:translateY(-14px) rotate(1.5deg)}}
+@keyframes wup{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.w-rays,.bub,.w-hippo{animation:none}.w-bubs{display:none}.w-card *{animation-duration:.01s!important;animation-delay:0s!important}}
