@@ -982,24 +982,31 @@ a.fhead:hover .fn{color:var(--accent)}
 @keyframes wup{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.w-rays,.bub,.w-hippo{animation:none}.w-bubs{display:none}.w-card *{animation-duration:.01s!important;animation-delay:0s!important}}
 
-/* ---- boas-vindas: elenco em bolhas (WELCOME_CAST em extras.js) ---- */
-.w-stage{position:relative;display:grid;place-items:center}
-.w-stage.cast{width:min(94vw,920px);height:min(46vh,430px)}
-.w-stage.cast .w-hippo{width:auto;height:min(42vh,400px);max-width:none;position:relative;z-index:2}
+/* ---- boas-vindas: elenco em bolhas aleatórias (WELCOME_CAST em extras.js) ---- */
+.welcome{display:flex;flex-direction:column;overflow-x:hidden;overflow-y:auto;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));-webkit-overflow-scrolling:touch}
+.w-card{width:100%;max-width:920px;margin:auto;box-sizing:border-box}
+.w-card h1,.w-card p{width:100%;max-width:460px;box-sizing:border-box;padding:0 6px;overflow-wrap:break-word}
+.w-stage{position:relative;display:grid;place-items:center;width:100%}
+.w-stage.cast{--sh:clamp(240px,calc(100vh - 300px),430px);--sh:clamp(240px,calc(100dvh - 300px),430px);height:var(--sh)}
+.w-stage.cast .w-hippo{width:auto;height:calc(var(--sh)*.94);max-width:none;position:relative;z-index:2}
 .w-cast{position:absolute;inset:0;z-index:1}
-.cb{position:absolute;left:calc(var(--x)*1%);top:calc(var(--y)*1%);width:var(--s);height:var(--s);margin:calc(var(--s)/-2) 0 0 calc(var(--s)/-2);border-radius:50%;padding:4px;
-  background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.55),rgba(255,255,255,.12) 55%,rgba(255,255,255,.22));box-shadow:0 14px 30px rgba(0,0,0,.4),inset 0 0 0 2px rgba(255,255,255,.4);
-  animation:cpop .7s cubic-bezier(.2,1.5,.35,1) calc(.8s + var(--i)*.12s) both,cfloat var(--d) ease-in-out calc(1.6s + var(--i)*.12s) infinite}
+.cb{position:absolute;left:50%;top:50%;width:70px;height:70px;margin:-35px 0 0 -35px;border-radius:50%;padding:4px;box-sizing:border-box;
+  background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.55),rgba(255,255,255,.12) 55%,rgba(255,255,255,.22));box-shadow:0 12px 26px rgba(0,0,0,.4),inset 0 0 0 2px rgba(255,255,255,.4);
+  animation:cpop .7s cubic-bezier(.2,1.5,.35,1) calc(.8s + var(--i)*.09s) both,cfloat var(--d,5s) ease-in-out calc(1.6s + var(--i)*.09s) infinite}
 .cb img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;filter:saturate(1.05)}
 .cb::after{content:"";position:absolute;inset:4px;border-radius:50%;background:radial-gradient(circle at 28% 22%,rgba(255,255,255,.5),transparent 38%);pointer-events:none}
 @keyframes cpop{from{transform:scale(0) translateY(40px);opacity:0}to{transform:none;opacity:1}}
-@keyframes cfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes cfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
 @media (max-width:640px){
-  .w-stage.cast{width:min(96vw,420px);height:min(54vh,440px)}
-  .w-stage.cast .w-hippo{height:min(36vh,300px)}
-  .cb{left:calc(var(--mx)*1%);top:calc(var(--my)*1%);width:var(--ms);height:var(--ms);margin:calc(var(--ms)/-2) 0 0 calc(var(--ms)/-2)}
+  .w-stage.cast{--sh:clamp(260px,calc(100vh - 320px),440px);--sh:clamp(260px,calc(100dvh - 320px),440px)}
+  .w-stage.cast .w-hippo{height:calc(var(--sh)*.72)}
+  .cb{padding:3px}
+  .w-card h1{font-size:clamp(22px,6.6vw,30px)}
 }
-@media (max-height:640px){.w-stage.cast{height:min(40vh,300px)}.w-stage.cast .w-hippo{height:min(36vh,260px)}}
 @media (prefers-reduced-motion:reduce){.cb{animation:none}}
 .avail{display:block;font-size:12.5px;margin-top:6px;color:var(--muted);font-weight:500}
 .avail.ok{color:#2E8B6A}.avail.bad{color:#B14A47}
+/* boas-vindas: fundo preso à tela (não alarga nem faz a página deslizar para os lados) */
+.welcome{overscroll-behavior:contain;touch-action:pan-y}
+.welcome .w-rays{position:fixed}
+.welcome .w-bubs{position:fixed;inset:0;overflow:hidden}

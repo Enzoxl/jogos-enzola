@@ -461,8 +461,7 @@ async function applyInvite() {
 /* ---------- boas-vindas de quem entra por convite ---------- */
 // true = hipopótamo no centro com os coadjuvantes em bolhas; false = só o hipopótamo (versão anterior)
 const WELCOME_CAST = true;
-// [arquivo, x%, y%, tamanho(px), x% celular, y% celular, tamanho celular(px), flutuação(s)]
-const CAST = [["c1", 10, 17, 112, 10, 9, 50, 4.2], ["c9", 25, 10, 80, 26, 9, 50, 4.6], ["c3", 7, 54, 100, 74, 9, 50, 4.9], ["c10", 23, 40, 78, 58, 9, 50, 5.3], ["c11", 14, 83, 100, 26, 93, 50, 5.7], ["c4", 29, 88, 80, 10, 93, 50, 4.2], ["c2", 76, 12, 92, 42, 9, 50, 4.6], ["c5", 90, 26, 92, 42, 93, 50, 5.0], ["c12", 92, 56, 84, 58, 93, 50, 5.4], ["c6", 79, 44, 70, 74, 93, 50, 5.7], ["c8", 80, 82, 100, 90, 93, 50, 4.3], ["c13", 94, 86, 84, 90, 9, 50, 4.7]];
+const CAST_FILES = ["c1", "c2", "c3", "c4", "c5", "c6", "c8", "c9", "c10", "c11", "c12", "c13", "c14", "c15", "c16", "c17"];
 function showWelcome(inviter, state) {
   if (document.getElementById("welcome")) return;
   const line = state === "sent" ? `<b>@${esc(inviter)}</b> te convidou. Já enviamos seu pedido de amizade.`
@@ -473,15 +472,38 @@ function showWelcome(inviter, state) {
   const bubbles = Array.from({ length: 16 }, () => { const s = 8 + Math.random() * 26; return `<i class="bub" style="left:${(Math.random() * 100).toFixed(1)}%;width:${s.toFixed(0)}px;height:${s.toFixed(0)}px;animation-duration:${(7 + Math.random() * 9).toFixed(1)}s;animation-delay:${(-Math.random() * 12).toFixed(1)}s"></i>` }).join("");
   w.innerHTML = `<div class="w-rays" aria-hidden="true"></div><div class="w-bubs" aria-hidden="true">${bubbles}</div>
     <div class="w-card"><span class="logo sm w-logo" role="img" aria-label="Movimento Enzola"></span>
-      <div class="w-stage${WELCOME_CAST ? " cast" : ""}">${WELCOME_CAST ? `<div class="w-cast" aria-hidden="true">${CAST.map(([f, x, y, s, mx, my, ms, d], i) => `<span class="cb" style="--x:${x};--y:${y};--s:${s}px;--mx:${mx};--my:${my};--ms:${ms}px;--d:${d}s;--i:${i}"><img src="convite/${f}.jpg" alt="" loading="eager" draggable="false"></span>`).join("")}</div>` : ""}
+      <div class="w-stage${WELCOME_CAST ? " cast" : ""}">${WELCOME_CAST ? `<div class="w-cast" aria-hidden="true">${CAST_FILES.map((f, i) => `<span class="cb" style="--i:${i};--d:${(4 + Math.random() * 2.6).toFixed(1)}s"><img src="convite/${f}.jpg" alt="" loading="eager" draggable="false"></span>`).join("")}</div>` : ""}
       <img class="w-hippo" src="hipopotamo.png" alt="Filhote de hipopótamo nadando na sua direção" width="300"></div>
       <h1 id="w-title">Bem-vindo ao Jogos Enzola</h1>
       <p>${line}</p>
       <p class="w-sub">Monte seu catálogo, sua tier list e seu perfil gamer.</p>
       <button class="btn w-go" id="w-go">Começar</button></div>`;
   document.body.append(w);
-  const close = () => { w.classList.add("out"); setTimeout(() => w.remove(), 350); document.removeEventListener("keydown", onKey) };
+  const stage = w.querySelector(".w-stage.cast"), relayout = () => stage && layoutCast(stage);
+  if (stage) { relayout(); window.addEventListener("resize", relayout) }
+  const close = () => { window.removeEventListener("resize", relayout); w.classList.add("out"); setTimeout(() => w.remove(), 350); document.removeEventListener("keydown", onKey) };
   const onKey = ev => { if (ev.key === "Escape") close() };
   document.addEventListener("keydown", onKey);
   w.querySelector("#w-go").addEventListener("click", close); w.querySelector("#w-go").focus({ preventScroll: true });
+}
+
+// Espalha as bolhas de forma aleatória ao redor do hipopótamo, sem encostar nele nem umas nas outras
+function layoutCast(stage) {
+  const W = stage.clientWidth, H = stage.clientHeight; if (!W || !H) return;
+  const mob = W < 560, hh = H * (mob ? .72 : .94), hw = hh * .854;
+  const cx = W / 2, cy = H / 2, rx = hw / 2 + 10, ry = hh / 2 + 6;
+  const sizes = mob ? [42, 48, 54, 60] : [66, 78, 90, 104], minS = mob ? 36 : 52, placed = [];
+  const els = [...stage.querySelectorAll(".cb")].sort(() => Math.random() - .5);
+  for (const el of els) {
+    let s = sizes[Math.floor(Math.random() * sizes.length)], ok = false;
+    for (let t = 0; t < 600 && !ok; t++) {
+      if (t % 100 === 99) s = Math.max(minS, s - 6);
+      const x = s / 2 + 3 + Math.random() * (W - s - 6), y = s / 2 + 3 + Math.random() * (H - s - 6);
+      if (((x - cx) / (rx + s * .45)) ** 2 + ((y - cy) / (ry + s * .45)) ** 2 < 1) continue;
+      if (placed.some(p => Math.hypot(p.x - x, p.y - y) < (p.s + s) / 2 + 6)) continue;
+      placed.push({ x, y, s }); ok = true;
+      Object.assign(el.style, { left: (x / W * 100).toFixed(2) + "%", top: (y / H * 100).toFixed(2) + "%", width: s + "px", height: s + "px", margin: `${-s / 2}px 0 0 ${-s / 2}px`, display: "" });
+    }
+    if (!ok) el.style.display = "none";
+  }
 }
