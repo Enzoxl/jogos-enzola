@@ -112,17 +112,17 @@ document.addEventListener("input", e => {
   clearTimeout(sgTimer); const q = e.target.value.trim(); if (q.length < 2) return;
   sgTimer = setTimeout(async () => {
     try {
-      const r = await rawgSearch(q, 6); sgFound = r.map(rawgToDraft);
+      const r = await searchGames(q, 6); sgFound = r.map(rawgToDraft);
       const lib = games.filter(g => norm(g.name).includes(norm(q))).slice(0, 2);
       $("#sg-res").innerHTML = lib.map(x => `<button class="it sgi" data-sg-lib="${x.id}"><span class="ib"><span class="mini">${cover(x)}</span><span>${esc(x.name)} <small class="meta">· na sua biblioteca</small></span></span></button>`).join("") +
         sgFound.map((x, i) => `<button class="it sgi" data-sg-rawg="${i}"><span class="ib"><span class="mini">${x.cover_url ? `<img class="cv" alt="" referrerpolicy="no-referrer" src="${esc(x.cover_url)}">` : ""}</span><span>${esc(x.name)} <small class="meta">${esc(x.year)}</small></span></span></button>`).join("");
-    } catch (er) { }
+    } catch (er) { if ($("#sg-res")) $("#sg-res").innerHTML = `<p class="muted" style="padding:8px">${esc(er.user ? er.message : "Não foi possível pesquisar agora.")}</p>` }
   }, 350);
 });
 async function sendSuggest() {
   const g = openSuggest.game; if (!g) { toast("Escolha um jogo para sugerir."); return }
   const to = $("#sg-to").value, note = $("#sg-note").value.trim();
-  const { error } = await sb.from("notifications").insert({ user_id: to, actor: user.id, kind: "suggest", payload: { name: g.name, rawg_id: g.rawg_id || null, cover_url: g.cover_url || null, note } });
+  const { error } = await sb.from("notifications").insert({ user_id: to, actor: user.id, kind: "suggest", payload: { name: g.name, rawg_id: g.rawg_id || null, steam_id: g.steam_id || null, cover_url: g.cover_url || null, note } });
   if (error) { toast("Essa pessoa não aceita sugestões agora."); return }
   closeModal(); toast(`Sugestão enviada para ${pName(pOf(to))}.`);
 }
@@ -185,7 +185,7 @@ function nActions(n) {
   const a = n.actor;
   if (n.kind === "poke") return `<button class="btn ghost sm" data-fr="poke" data-id="${a}">${ic("hand")}Cutucar de volta</button>`;
   if (n.kind === "message") return `<button class="btn ghost sm" data-fr="chat" data-id="${a}">${ic("message")}Responder</button>`;
-  if (n.kind === "suggest") return `${n.payload.rawg_id ? `<a class="btn ghost sm" href="#jogo/${n.payload.rawg_id}">Ver jogo</a>` : ""}<button class="btn ghost sm" data-nt="addwish" data-id="${n.id}">${ic("bookmark")}Quero</button>`;
+  if (n.kind === "suggest") return `${gameHref(n.payload) ? `<a class="btn ghost sm" href="#${gameHref(n.payload)}">Ver jogo</a>` : ""}<button class="btn ghost sm" data-nt="addwish" data-id="${n.id}">${ic("bookmark")}Quero</button>`;
   if (n.kind === "friend_request") { const r = fr.rows.find(f => f.requester === a && f.addressee === user.id && f.status === "pending"); return r ? `<button class="btn sm" data-fr="accept" data-id="${r.id}">${ic("check")}Aceitar</button>` : `<a class="btn ghost sm" href="#amigos">Ver amigos</a>` }
   if (n.kind === "friend_accept") return `<a class="btn ghost sm" href="#amigo/${a}">Ver perfil</a>`;
   return "";
@@ -205,7 +205,7 @@ function updateBell() {
 }
 function renderNotifs() {
   const el = $("#npanel");
-  el.innerHTML = `<div class="np-h"><b>Notificações</b>${fr.notifs.some(n => !n.read_at) ? `<button class="link" data-nt="readall">Marcar todas como lidas</button>` : ""}</div>
+  el.innerHTML = `<div class="np-h"><b>Notificações</b>${fr.notifs.some(n => !n.read_at) ? `<button class="link" data-nt="readall">Marcar todas como lidas</button>` : ""}</div>${pushPromo()}
     <div class="np-list">${fr.notifs.length ? fr.notifs.map(n => `<div class="nt ${n.read_at ? "" : "new"}"><span class="av xs">${avatar(pOf(n.actor).avatar)}</span><span class="nt-ic ${n.kind}">${ic(NICON[n.kind] || "bell")}</span>
       <div class="nt-b"><p>${(NTXT[n.kind] || (() => ""))(n)}</p>${n.kind === "suggest" && n.payload.cover_url ? `<span class="nt-cover"><img alt="" referrerpolicy="no-referrer" loading="lazy" src="${esc(n.payload.cover_url)}"></span>` : ""}<time>${rel(n.created_at)}</time><div class="nt-a">${nActions(n)}</div></div></div>`).join("")
       : `<div class="empty" style="padding:28px 16px"><b>Nada por aqui</b>Cutucadas, sugestões e mensagens dos amigos aparecem aqui.</div>`}</div>`;
@@ -217,7 +217,7 @@ async function markAllRead() {
   await sb.from("notifications").update({ read_at: now }).eq("user_id", user.id).is("read_at", null);
 }
 async function sysNotify(title, body) {
-  if (!lsGet("pref-sysnotif") || !("Notification" in window) || Notification.permission !== "granted" || !document.hidden) return;
+  if (lsGet("pref-push") || !lsGet("pref-sysnotif") || !("Notification" in window) || Notification.permission !== "granted" || !document.hidden) return;
   try { const r = await navigator.serviceWorker.ready; r.showNotification(title, { body, icon: "icons/icon-192.png", badge: "icons/favicon.png", tag: "enzola" }) }
   catch (e) { try { new Notification(title, { body, icon: "icons/icon-192.png" }) } catch (e2) { } }
 }
@@ -260,7 +260,7 @@ function subscribeRT() {
   } catch (e) { }
 }
 function unsubRT() { for (const c of rtChans) { try { sb.removeChannel(c) } catch (e) { } } rtChans = [] }
-async function socialStart() { await loadFriends(); await applyInvite(); await loadNotifs(); subscribeRT() }
+async function socialStart() { await loadFriends(); await applyInvite(); await loadNotifs(); subscribeRT(); pushSync() }
 function socialReset() { unsubRT(); fr = newFr(); fpv = null; chat = null; updateBadge(); updateBell() }
 
 /* ---------- jogos dos amigos (para "amigos que têm") ---------- */
@@ -308,15 +308,16 @@ function renderFriendPage() {
   const unread = fr.unread[uid] || 0, v3 = caps.v3;
   const sub = fpv.sub;
   const subs = [["geral", "Visão geral"], ["biblioteca", `Biblioteca · ${lib.length}`], ["comum", `Em comum · ${common.length}`], ["desejos", `Desejos · ${wl.length}`]];
-  const gameCard = g => `<${g.rawg_id ? `a href="#jogo/${g.rawg_id}"` : "div"} class="card"><div class="poster"><span class="tag badge ${stClass(g.status)}">${esc(g.status)}</span>${cover(g)}</div><div class="t">${esc(g.name)}</div><div class="meta">${[g.platform, g.rating != null ? "nota " + rateTxt(g) : ""].filter(Boolean).map(esc).join(" · ")}</div></${g.rawg_id ? "a" : "div"}>`;
+  gs.forEach(g => qvGames.set("f:" + g.id, { g, owner: pName(p) }));
+  const gameCard = g => `<button class="card" data-qv="f:${g.id}" aria-label="Ver resumo de ${esc(g.name)}"><div class="poster"><span class="tag badge ${stClass(g.status)}">${esc(g.status)}</span>${cover(g)}</div><div class="t">${esc(g.name)}</div><div class="meta">${[g.platform, g.rating != null ? "nota " + rateTxt(g) : ""].filter(Boolean).map(esc).join(" · ")}</div></button>`;
   let body = "";
   if (sub === "geral") {
     const tiers = TIERS.map(([t, c]) => [t, c, gs.filter(g => g.tier === t).sort((a, b) => (a.tier_order || 0) - (b.tier_order || 0))]).filter(x => x[2].length);
     const act = activity(gs);
     body = `<div class="pgrid"><div>
-      ${cur ? `<div class="blk"><div class="blk-h"><h3>${ic("play")}Jogando agora</h3></div><div class="now nohover"><div class="poster">${cover(cur)}</div><div class="now-b"><span class="k">Jogando agora</span><span class="t">${esc(cur.name)}</span><span class="m">${[cur.platform, cur.genre, hoursTxt(cur.hours)].filter(Boolean).map(esc).join(" · ")}</span>${cur.review ? `<span class="q">“${esc(cur.review)}”</span>` : ""}${mine.has(norm(cur.name)) ? `<span class="kchip br">você também tem</span>` : ""}</div></div></div>` : ""}
-      ${favs.length ? `<div class="blk"><div class="blk-h"><h3>${ic("heart")}Favoritos</h3></div><div class="favgrid">${favs.map((g, i) => `<${g.rawg_id ? `a href="#jogo/${g.rawg_id}"` : "div"} class="fav"><div class="poster"><span class="rank">${i + 1}</span>${cover(g)}</div><div class="n">${esc(g.name)}</div><div class="r">${g.rating != null ? "Nota " + rateTxt(g) : ""}</div></${g.rawg_id ? "a" : "div"}>`).join("")}</div></div>` : ""}
-      ${tiers.length ? `<div class="blk"><div class="blk-h"><h3>${ic("layers")}Tier list</h3></div>${tiers.map(([t, c, l]) => `<div class="tier"><div class="lab" style="background:${c}">${t}</div><div class="zone">${l.map(g => `<div class="tc" title="${esc(g.name)}">${cover(g)}</div>`).join("")}</div></div>`).join("")}</div>` : ""}
+      ${cur ? `<div class="blk"><div class="blk-h"><h3>${ic("play")}Jogando agora</h3></div><div class="now nohover"><button class="poster qv-btn" data-qv="f:${cur.id}" aria-label="Ver resumo de ${esc(cur.name)}">${cover(cur)}</button><div class="now-b"><span class="k">Jogando agora</span><span class="t">${esc(cur.name)}</span><span class="m">${[cur.platform, cur.genre, hoursTxt(cur.hours)].filter(Boolean).map(esc).join(" · ")}</span>${cur.review ? `<span class="q">“${esc(cur.review)}”</span>` : ""}${mine.has(norm(cur.name)) ? `<span class="kchip br">você também tem</span>` : ""}</div></div></div>` : ""}
+      ${favs.length ? `<div class="blk"><div class="blk-h"><h3>${ic("heart")}Favoritos</h3></div><div class="favgrid">${favs.map((g, i) => `<button class="fav" data-qv="f:${g.id}" aria-label="Ver resumo de ${esc(g.name)}"><div class="poster"><span class="rank">${i + 1}</span>${cover(g)}</div><div class="n">${esc(g.name)}</div><div class="r">${g.rating != null ? "Nota " + rateTxt(g) : ""}</div></button>`).join("")}</div></div>` : ""}
+      ${tiers.length ? `<div class="blk"><div class="blk-h"><h3>${ic("layers")}Tier list</h3></div>${tiers.map(([t, c, l]) => `<div class="tier"><div class="lab" style="background:${c}">${t}</div><div class="zone">${l.map(g => `<button class="tc" data-qv="f:${g.id}" title="${esc(g.name)}">${cover(g)}</button>`).join("")}</div></div>`).join("")}</div>` : ""}
       ${!cur && !favs.length && !tiers.length ? `<div class="panel empty"><b>Perfil ainda vazio</b>${esc(pName(p))} ainda não montou favoritos nem tier list.</div>` : ""}
     </div><aside>
       <div class="blk"><div class="blk-h"><h3>${ic("clock")}Atividade recente</h3></div><div class="panel act">${act.length ? act.map(e => { const [c, i] = actIcon(e); return `<div class="actrow"><span class="dot ${c}">${ic(i)}</span><span class="tx">${actText(e)}<span class="tm">${rel(e.t)}</span></span></div>` }).join("") : `<div class="empty" style="padding:24px 12px">Sem atividade ainda.</div>`}</div></div>
@@ -385,18 +386,20 @@ document.addEventListener("click", async e => {
   if (b = c("[data-nt]")) {
     const a = b.dataset.nt;
     if (a === "readall") markAllRead();
+    else if (a === "push-on") { if (await enablePush()) renderNotifs() }
+    else if (a === "push-no") { lsSet("push-promo-off", true); renderNotifs() }
     else if (a === "addwish") {
       const n = fr.notifs.find(x => x.id === b.dataset.id); if (!n) return;
       $("#npanel").hidden = true;
-      if (n.payload.rawg_id) location.hash = "jogo/" + n.payload.rawg_id;
+      if (gameHref(n.payload)) location.hash = gameHref(n.payload);
       else { const ins = await create({ name: n.payload.name, cover_url: n.payload.cover_url, status: "Não comprado", wishlist: true }); if (ins) toast(`${n.payload.name} entrou na sua lista de desejos.`) }
     }
     return;
   }
   if (b = c("[data-fp-sub]")) { fpv.sub = b.dataset.fpSub; renderFriendPage(); $(".subtabs") && $(".subtabs").scrollIntoView({ block: "nearest", behavior: "smooth" }); return }
   if (b = c("[data-fpst]")) { fpv.st = b.dataset.fpst; renderFriendPage(); return }
-  if (b = c("[data-sg-lib]")) { const g = gameById(b.dataset.sgLib); openSuggest.game = { name: g.name, rawg_id: g.rawg_id, cover_url: g.cover_url }; $("#sg-game").innerHTML = sgGameHTML(); return }
-  if (b = c("[data-sg-rawg]")) { const g = sgFound[+b.dataset.sgRawg]; openSuggest.game = { name: g.name, rawg_id: g.rawg_id, cover_url: g.cover_url }; $("#sg-game").innerHTML = sgGameHTML(); return }
+  if (b = c("[data-sg-lib]")) { const g = gameById(b.dataset.sgLib); openSuggest.game = { name: g.name, rawg_id: g.rawg_id, steam_id: g.steam_id || null, cover_url: g.cover_url }; $("#sg-game").innerHTML = sgGameHTML(); return }
+  if (b = c("[data-sg-rawg]")) { const g = sgFound[+b.dataset.sgRawg]; openSuggest.game = { name: g.name, rawg_id: g.rawg_id || null, steam_id: g.steam_id || null, cover_url: g.cover_url }; $("#sg-game").innerHTML = sgGameHTML(); return }
   b = c("[data-fr]"); if (!b) return;
   const a = b.dataset.fr, id = b.dataset.id, gid = b.dataset.gid;
   if (a === "search") return frSearch();
@@ -430,3 +433,10 @@ document.addEventListener("click", async e => {
   if (a === "gdel") { if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = "Confirmar exclusão"; return } await frDo(sb.from("groups").delete().eq("id", gid), "Grupo excluído."); closeModal(); return }
 });
 document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.id === "fq") { e.preventDefault(); frSearch() } });
+
+function pushPromo() {
+  if (pushOn() || lsGet("push-promo-off") || !("Notification" in window) || Notification.permission === "denied") return "";
+  const ios = isIOS() && !standalone();
+  return `<div class="np-push">${ic("phone")}<span><b>Receber no celular</b>${ios ? "No iPhone, instale o app na tela de início para receber cutucadas e mensagens." : "Cutucadas, mensagens e sugestões chegam como notificação, mesmo com o site fechado."}</span>
+    <div class="np-push-a">${ios ? `<button class="btn sm" data-act="install">Instalar app</button>` : `<button class="btn sm" data-nt="push-on">Ativar</button>`}<button class="link" data-nt="push-no">Agora não</button></div></div>`;
+}

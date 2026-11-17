@@ -80,6 +80,9 @@
   <symbol id="i-insta" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".8"/></symbol>
   <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
   <symbol id="i-pdf" viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8l-5-5z"/><path d="M14 3v5h5"/><path d="M9 17v-4h1.5a1.3 1.3 0 0 1 0 2.6H9M14 13v4"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></symbol>
+  <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
+  <symbol id="i-mute" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="m16 9 5 6M21 9l-5 6"/></symbol>
   <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8l-5-5z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></symbol>
 </svg>
 
@@ -112,29 +115,48 @@
   </section>
 
   <section class="auth-pane">
-    <form class="auth-card" id="auth-form" autocomplete="on" novalidate>
+    <div class="auth-card">
       <span class="logo md only-sm" role="img" aria-label="Movimento Enzola"></span>
-      <h2 id="auth-title">Bem-vindo de volta</h2>
-      <p class="muted" id="auth-sub">Entre com seu usuário e senha.</p>
-      <label class="fld">Usuário
-        <span class="inp"><svg class="ic"><use href="#i-user"/></svg><input type="text" id="a-email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="seu_usuario"></span>
-        <span class="avail" id="a-avail" aria-live="polite" hidden></span>
-      </label>
-      <label class="fld">Senha
-        <span class="inp"><svg class="ic"><use href="#i-shield"/></svg><input type="password" id="a-pass" autocomplete="current-password" placeholder="mínimo de 6 caracteres"></span>
-      </label>
-      <label class="fld" id="f-pass2" hidden>Repita a senha
-        <span class="inp"><svg class="ic"><use href="#i-shield"/></svg><input type="password" id="a-pass2" autocomplete="new-password" placeholder="digite a senha de novo"></span>
-      </label>
-      <div class="auth-msg" id="auth-msg" role="status" aria-live="polite"></div>
-      <div class="auth-acts">
-        <button type="submit" class="btn" id="a-login">Entrar</button>
-        <button type="button" class="btn ghost" id="a-signup">Criar conta</button>
+      <div class="seg auth-tabs" role="tablist" aria-label="Entrar ou criar conta">
+        <button role="tab" aria-checked="true" data-auth-tab="in">Entrar</button>
+        <button role="tab" aria-checked="false" data-auth-tab="up">Criar conta</button>
       </div>
-      <button type="button" class="link forgot" id="a-forgot">Esqueci minha senha</button>
+
+      <form class="auth-form" id="auth-form" autocomplete="on" novalidate>
+        <h2>Bem-vindo de volta</h2>
+        <label class="fld">E-mail
+          <span class="inp"><svg class="ic"><use href="#i-mail"/></svg><input type="text" id="a-id" autocomplete="username" autocapitalize="none" spellcheck="false" inputmode="email" placeholder="voce@email.com"></span>
+          <span class="hint">Conta antiga, criada só com usuário? Digite o usuário aqui.</span>
+        </label>
+        <label class="fld">Senha
+          <span class="inp"><svg class="ic"><use href="#i-lock"/></svg><input type="password" id="a-pass" autocomplete="current-password" placeholder="sua senha"></span>
+        </label>
+        <div class="auth-msg" id="auth-msg" role="status" aria-live="polite"></div>
+        <button type="submit" class="btn" id="a-login">Entrar</button>
+        <button type="button" class="link forgot" id="a-forgot">Esqueci minha senha</button>
+      </form>
+
+      <form class="auth-form" id="signup-form" autocomplete="on" novalidate hidden>
+        <h2>Crie sua conta</h2>
+        <label class="fld">Seu e-mail
+          <span class="inp"><svg class="ic"><use href="#i-mail"/></svg><input type="email" id="s-email" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="voce@email.com"></span>
+          <span class="hint">Usado para entrar e para recuperar a senha. Ninguém mais vê.</span>
+        </label>
+        <label class="fld">Nome de usuário
+          <span class="inp"><svg class="ic"><use href="#i-user"/></svg><input type="text" id="s-user" autocomplete="nickname" autocapitalize="none" spellcheck="false" maxlength="30" placeholder="ex.: enzola"></span>
+          <span class="hint" id="s-user-hint">É assim que seus amigos te encontram. Letras minúsculas, números, ponto, hífen ou sublinhado.</span>
+        </label>
+        <label class="fld">Senha
+          <span class="inp"><svg class="ic"><use href="#i-lock"/></svg><input type="password" id="s-pass" autocomplete="new-password" placeholder="mínimo de 6 caracteres"></span>
+          <span class="pwmeter" id="s-meter"><i></i></span>
+        </label>
+        <div class="auth-msg" id="signup-msg" role="status" aria-live="polite"></div>
+        <button type="submit" class="btn" id="a-signup">Criar conta</button>
+      </form>
+
       <p class="fine">Cada conta tem a sua própria biblioteca. Só aparece para outras pessoas se você deixar o perfil público.</p>
       <button type="button" class="install-link" data-act="install" hidden><svg class="ic"><use href="#i-phone"/></svg>Instalar o app Jogos Enzola</button>
-    </form>
+    </div>
   </section>
 </div>
 
@@ -164,7 +186,7 @@
         <button role="tab" data-tab="resumo"><svg class="ic"><use href="#i-chart"/></svg><span>Resumo</span></button>
       </nav>
       <div class="who">
-        <button class="iconbtn light" id="search-btn" aria-label="Pesquisar jogos" title="Pesquisar jogos (/)"><svg class="ic"><use href="#i-search"/></svg></button>
+        <button class="search-pill" id="search-btn" aria-label="Pesquisar jogos" title="Pesquisar qualquer jogo (atalho: /)"><svg class="ic"><use href="#i-search"/></svg><span class="sp-t">Pesquisar jogos</span><kbd>/</kbd></button>
         <button class="iconbtn light" id="bell" aria-label="Notificações" title="Notificações" aria-expanded="false"><svg class="ic"><use href="#i-bell"/></svg><i class="nb" id="nt-badge" hidden></i></button>
         <button class="who-btn" id="who-btn" aria-label="Abrir menu da conta" aria-haspopup="menu" aria-expanded="false"><span id="who-av" class="av xs"></span><span id="who-name" class="who-n"></span><svg class="ic chev"><use href="#i-chev"/></svg></button>
       </div>
@@ -248,20 +270,21 @@
     <div class="foot-in">
       <div class="foot-brand">
         <span class="logo md" role="img" aria-label="Movimento Enzola"></span>
-        <div><b>Jogos Enzola</b><span>Criado por Enzola · 2026</span><span class="credit2">Melhorias de <a href="https://www.instagram.com/diegopntt/" target="_blank" rel="noopener"><svg class="ic"><use href="#i-insta"/></svg>Diego (@diegopntt)</a></span></div>
+        <div><b>Jogos Enzola</b><span>Criado por Enzola · 2026</span></div>
       </div>
       <div class="foot-sp">
         <span class="lbl">Patrocínio</span>
         <a class="sp" href="https://www.instagram.com/labumgg/" target="_blank" rel="noopener"><svg class="ic"><use href="#i-insta"/></svg>@labumgg</a>
         <a class="sp" href="https://www.instagram.com/movimento.enzola/" target="_blank" rel="noopener"><svg class="ic"><use href="#i-insta"/></svg>@movimento.enzola</a>
       </div>
-      <p class="foot-credit">Dados e capas de jogos: <a href="https://rawg.io" target="_blank" rel="noopener">RAWG</a>. Preços: <a href="https://www.cheapshark.com" target="_blank" rel="noopener">CheapShark</a> e <a href="https://isthereanydeal.com" target="_blank" rel="noopener">IsThereAnyDeal</a>.</p>
+      <p class="foot-credit">Dados e capas de jogos: <a href="https://rawg.io" target="_blank" rel="noopener">RAWG</a> e <a href="https://store.steampowered.com" target="_blank" rel="noopener">Steam</a>. Preços: <a href="https://www.cheapshark.com" target="_blank" rel="noopener">CheapShark</a> e <a href="https://isthereanydeal.com" target="_blank" rel="noopener">IsThereAnyDeal</a>.</p>
     </div>
   </footer>
 </div>
 
 <div id="gsearch" class="gsearch" hidden></div>
 <div id="install-bar" class="install-bar" hidden></div>
+<button class="music-btn" id="music-btn" type="button" aria-pressed="false" aria-label="Música de fundo" title="Música de fundo: A Pipa do Vovô"><svg class="ic"><use href="#i-music"/></svg><span class="mb-eq" aria-hidden="true"><i></i><i></i><i></i></span></button>
 <div id="modal"></div>
 <div id="modal2"></div>
 <div id="toast" class="toast" role="status" hidden></div>

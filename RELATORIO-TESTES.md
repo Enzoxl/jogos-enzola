@@ -1,29 +1,50 @@
-# Relatório de testes — Jogos Enzola 3.0
+# Relatório de testes — Jogos Enzola 3.2
 
-**168/168 verificações passaram** (rodada completa executada duas vezes seguidas, mesmo resultado). Erros no console: 0.
+**228/228 verificações passaram.** Erros no console: 0.
 
-Ambiente: Chrome automatizado (Playwright), no computador e no celular, com Supabase, RAWG, CheapShark, câmbio e a função do servidor simulados. Também: SQL testado em PostgreSQL 16 (regras de segurança e gatilhos) e a função do servidor testada em Node com 25 casos.
+Ambiente: Chrome automatizado (Playwright), no computador e no celular, com Supabase, RAWG, Steam, CheapShark, câmbio e a função do servidor simulados.
+Também: `migracao.sql` rodada duas vezes em PostgreSQL 16 (gatilho de notificação, segredos protegidos, regras de acesso) e a função do servidor testada em Node com 15 casos — incluindo a criptografia das notificações (RFC 8291) conferida por uma implementação independente.
 
 
-## Login, esqueci a senha, código de recuperação
+## Cadastro com e-mail, login e recuperação de senha
 
 | Verificação | Resultado |
 |---|---|
 | Logo na tela de login | ✅ |
-| Link “Esqueci minha senha” visível | ✅ |
-| Link para instalar o app no login | ✅ |
-| Conta nova recebe código de recuperação | ✅ |
-| Concluir só libera depois de confirmar que guardou | ✅ |
-| Baixar o código em arquivo | ✅ |
-| Código guardado (só o hash) no banco | ✅ |
-| Perfil novo ganhou ID de 4 dígitos | ✅ |
-| Esqueci a senha já traz o usuário digitado | ✅ |
-| Código é formatado enquanto digita | ✅ |
-| Senhas diferentes são recusadas | ✅ |
-| Código errado é recusado | ✅ |
-| Código certo troca a senha e entra | ✅ |
-| Código usado deixa de valer | ✅ |
-| Sem a função: explica e indica o Instagram do administrador | ✅ |
+| Abas Entrar / Criar conta | ✅ |
+| Login pede e-mail | ✅ |
+| Aba Criar conta mostra e-mail, usuário e senha | ✅ |
+| Cadastro: e-mail inválido é recusado | ✅ |
+| Cadastro: avisa na hora que o usuário já existe | ✅ |
+| Cadastro: usuário vira minúsculo ao digitar | ✅ |
+| Cadastro: avisa que o usuário está livre | ✅ |
+| Cadastro: e-mail já usado é recusado | ✅ |
+| Cadastro usa o e-mail digitado (em minúsculas) | ✅ |
+| Cadastro guarda o usuário escolhido | ✅ |
+| Entra direto e mostra @usuário | ✅ |
+| Perfil criado com o usuário e ID | ✅ |
+| Configurações mostram o e-mail atual (sem aviso de conta antiga) | ✅ |
+| Login: senha errada | ✅ |
+| Login com e-mail e senha | ✅ |
+| Esqueci a senha já traz o e-mail digitado | ✅ |
+| Esqueci a senha: e-mail inválido | ✅ |
+| Esqueci a senha: envia o link | ✅ |
+| Link volta para o próprio site | ✅ |
+| Mensagem não revela se o e-mail existe | ✅ |
+| Abrir o link do e-mail pede a nova senha | ✅ |
+| Nova senha: confirmação diferente | ✅ |
+| Nova senha salva | ✅ |
+| Conta antiga: dica para quem usa usuário | ✅ |
+| Conta antiga entra com o usuário | ✅ |
+| Conta antiga: aviso para cadastrar e-mail | ✅ |
+| Conta antiga: cadastra o e-mail verdadeiro | ✅ |
+| Aviso some depois de cadastrar | ✅ |
+| Usuário continua o mesmo | ✅ |
+| Depois disso entra com o e-mail novo | ✅ |
+| Com confirmação: avisa que mandou o link | ✅ |
+| Com confirmação: login antes de confirmar explica o motivo | ✅ |
+| Reenviar link de confirmação | ✅ |
+| Sem servidor de e-mail configurado: mensagem clara | ✅ |
 
 ## Perfil, banner, menu e foto da galeria
 
@@ -109,7 +130,7 @@ Ambiente: Chrome automatizado (Playwright), no computador e no celular, com Supa
 
 | Verificação | Resultado |
 |---|---|
-| Página de configurações com 7 seções | ✅ |
+| Página de configurações com 8 seções | ✅ |
 | Tema claro | ✅ |
 | Tema automático salvo | ✅ |
 | Reduzir animações | ✅ |
@@ -120,9 +141,6 @@ Ambiente: Chrome automatizado (Playwright), no computador e no celular, com Supa
 | Trocar senha: senha atual errada | ✅ |
 | Trocar senha: confirmação diferente | ✅ |
 | Trocar senha: sucesso | ✅ |
-| Avisa que ainda não tem código de recuperação | ✅ |
-| Gerar código pelas configurações | ✅ |
-| Status muda para “código ativo” | ✅ |
 | Limpar cache do aparelho | ✅ |
 
 ## Amigos: ID, página do amigo, mensagem, cutucar, sugerir, notificações
@@ -238,21 +256,70 @@ Ambiente: Chrome automatizado (Playwright), no computador e no celular, com Supa
 | Página do jogo sem a função: dados do RAWG e preço do CheapShark | ✅ |
 | Sinopse em inglês com opção de traduzir | ✅ |
 
-## Banco de dados (PostgreSQL 16)
+## Pesquisa: botão visível, relevância e Steam
 
-- Migração roda duas vezes sem erro
-- ID de 4 dígitos único, gerado sozinho e impossível de trocar pelo usuário
-- Cutucar só amigos, no máximo 1 por minuto
-- Quem desliga cutucadas, sugestões ou mensagens não recebe
-- Mensagens não podem ser editadas; só o destinatário marca como lida
-- Notificações automáticas de mensagem, pedido e aceite de amizade
-- Código de recuperação guardado só como hash; ninguém lê a tabela pelo site
-- Visitante sem login abre perfil público, mas não lê tabelas
+| Verificação | Resultado |
+|---|---|
+| Botão 'Pesquisar jogos' com texto no topo | ✅ |
+| Relevância: Hades antes da trilha sonora e de outros jogos | ✅ |
+| Busca não duplica Hades (RAWG + Steam juntos) | ✅ |
+| RAWG pedida com busca precisa | ✅ |
+| Jogo novo que só está na Steam aparece (Fart Together) | ✅ |
+| Página do jogo da Steam abre com sinopse em português | ✅ |
+| Adicionar jogo da Steam à lista de desejos guarda steam_id | ✅ |
+| RAWG fora do ar: Steam ainda responde (sem erro de conexão) | ✅ |
+| Sem resultado: oferece adicionar manualmente | ✅ |
+| Chave da RAWG recusada: mensagem explica o motivo (não fala em conexão) | ✅ |
+| Limite de pesquisas: pede para esperar | ✅ |
+| Sem internet de verdade: avisa que está sem internet | ✅ |
 
-## Função do servidor (25/25)
+## Resumo rápido ao tocar na capa
 
-- Preços em reais ordenados; sem chave cai para o CheapShark
-- Escolhe o jogo certo na Steam (Hades, não Hades II), sinopse em português sem HTML, tamanho extraído
-- Prefere gameplay de youtuber brasileiro e guarda em cache
-- Recuperação: código errado recusado, mesmo erro para usuário inexistente, código vale uma vez, bloqueio de 15 min após 5 erros
-- Excluir conta exige login e apaga todos os dados
+| Verificação | Resultado |
+|---|---|
+| Catálogo: capa abre resumo do jogo | ✅ |
+| Resumo traz sinopse em português | ✅ |
+| Botão 'Ver página completa' leva à ficha | ✅ |
+| Abre a página completa | ✅ |
+| Jogo sem ficha: botão vira pesquisa | ✅ |
+| Jogos do amigo: capa abre resumo com a nota dele | ✅ |
+| Resumo do amigo tem 'Ver página completa' | ✅ |
+| Jogo que já está nos meus desejos é avisado | ✅ |
+| Jogo que não tenho mostra 'Quero jogar' | ✅ |
+| 'Quero jogar' abre o formulário já preenchido | ✅ |
+
+## Notificações no celular
+
+| Verificação | Resultado |
+|---|---|
+| Painel de notificações convida a receber no celular | ✅ |
+| Ativar: pede a chave ao servidor e assina o aparelho | ✅ |
+| Aparelho salvo na tabela push_subscriptions | ✅ |
+| Convite some depois de ativar | ✅ |
+| Configurações mostram notificações ligadas | ✅ |
+| Desligar remove o aparelho | ✅ |
+| Sair da conta para de mandar notificações para este aparelho | ✅ |
+| Service worker mostra a notificação e abre a tela certa ao tocar | ✅ |
+
+## Música de fundo
+
+| Verificação | Resultado |
+|---|---|
+| Botão da música visível já na tela de entrada | ✅ |
+| Música começa no primeiro toque e fica em looping | ✅ |
+| Volume ambiente (nem alto nem baixo) | ✅ |
+| Arquivo de música leve (< 2,5 MB) | ✅ |
+| Botão desliga a música e lembra a escolha | ✅ |
+| Depois de recarregar continua desligada | ✅ |
+| Ligar de novo volta a tocar | ✅ |
+
+## Imagens na exportação (celular)
+
+| Verificação | Resultado |
+|---|---|
+| Capa que só libera CORS sem cache entra na imagem | ✅ |
+| Capa sem CORS usa o proxy de imagens e entra na imagem | ✅ |
+| Tier list no celular sai com as capas | ✅ |
+| PDF da lista de desejos no celular sai com as capas | ✅ |
+| Celular: botão de pesquisa e de música não ficam escondidos | ✅ |
+| Rodapé sem créditos pessoais | ✅ |

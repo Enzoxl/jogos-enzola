@@ -7,14 +7,8 @@ window.APP_CONFIG = {
   // Chave gratuita em https://rawg.io/apidocs (deixe vazio para desligar a busca de jogos)
   RAWG_KEY: "56cfadacd55a4283a45ce415e7d346ab",
 
-  // E-mail interno das contas novas. Hoje o usuário "pedro" vira "pedro@gmail.com", que é o
-  // endereço de outra pessoa. Coloque aqui um Gmail SEU, ex.: "movimento.enzola@gmail.com",
-  // e as contas novas viram "movimento.enzola+pedro@gmail.com" (qualquer e-mail cai na sua caixa).
-  // As contas antigas continuam entrando normalmente. Vazio = comportamento antigo.
-  EMAIL_BASE: "",
-
   // Função do servidor (pasta supabase/functions/enzola). Depois de publicar, escreva "enzola" aqui.
-  // Ela ativa: "Esqueci minha senha", sinopse e análises em português, preço da Steam Brasil,
+  // Ela ativa: sinopse e análises em português, preço da Steam Brasil,
   // preços em reais de lojas brasileiras (com o segredo ITAD_KEY), vídeos do YouTube (com YOUTUBE_KEY)
   // e "Excluir conta". Vazio = o site funciona, sem esses extras.
   FUNCTION: "enzola",

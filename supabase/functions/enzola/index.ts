@@ -3,8 +3,9 @@
 // O que ela faz:
 //   precos         → preços em reais nas lojas do Brasil (IsThereAnyDeal). Precisa do segredo ITAD_KEY.
 //   jogo           → dados da Steam em português: sinopse, requisitos, tamanho, preço Steam BR, avaliações de jogadores.
+//   busca          → pesquisa na loja da Steam (acha jogos novos que a RAWG ainda não tem, como "Fart Together").
 //   videos         → gameplay de youtubers brasileiros e trailer no YouTube. Precisa do segredo YOUTUBE_KEY.
-//   recuperar      → troca a senha com o código de recuperação (sem e-mail).
+//   push_key/push  → notificações no celular (cutucadas, sugestões, mensagens). As chaves são criadas sozinhas.
 //   excluir_conta  → apaga a conta e todos os dados do usuário logado.
 //
 // Como publicar: Supabase > Edge Functions > Deploy a new function > nome "enzola" > cole este arquivo > Deploy.
@@ -31,10 +32,6 @@ async function getJSON(url: string, init?: RequestInit) {
   const r = await fetch(url, init);
   if (!r.ok) throw new Error(`HTTP ${r.status} em ${new URL(url).host}`);
   return r.json();
-}
-async function sha256(s: string) {
-  const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
-  return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
 }
 
 // ---- acesso ao banco com a chave de serviço (só aqui no servidor) ----
@@ -98,6 +95,12 @@ async function jogo(b: any) {
     steam: id,
     title: d.name,
     url: `https://store.steampowered.com/app/${id}/`,
+    header: d.header_image || null,
+    capsule: `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${id}/library_600x900.jpg`,
+    background: d.background_raw || d.background || null,
+    year: ((d.release_date?.date || "").match(/\d{4}/) || [""])[0],
+    coming_soon: !!d.release_date?.coming_soon,
+    website: d.website || null,
     short: strip(d.short_description),
     about: strip(d.about_the_game).slice(0, 2500),
     release: d.release_date?.date || null,
@@ -121,6 +124,19 @@ async function jogo(b: any) {
   });
 }
 
+// ---------------- busca na Steam (complementa a RAWG com jogos novos/indie) ----------------
+async function busca(b: any) {
+  const q = String(b.q || "").trim().slice(0, 100);
+  if (q.length < 2) return json({ items: [] });
+  const s = await getJSON(`https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(q)}&l=brazilian&cc=BR`);
+  const items = (s.items || []).filter((x: any) => x.type === "app" && x.id && x.name).slice(0, 12).map((x: any) => ({
+    id: x.id, name: String(x.name), img: x.tiny_image || null,
+    metascore: parseInt(x.metascore, 10) || null,
+    price: x.price ? { currency: x.price.currency, amount: x.price.final / 100 } : null,
+  }));
+  return json({ items });
+}
+
 // ---------------- vídeos (YouTube) ----------------
 async function videos(b: any) {
   const key = env("YOUTUBE_KEY");
@@ -141,32 +157,111 @@ async function videos(b: any) {
   return json(data);
 }
 
-// ---------------- recuperar senha com código ----------------
-async function recuperar(b: any) {
-  const username = String(b.username || "").trim().toLowerCase().replace(/^@/, "");
-  const code = String(b.code || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
-  const password = String(b.password || "");
-  const bad = () => json({ error: "Usuário ou código inválido." }, 400);
-  if (!/^[a-z0-9._-]{3,30}$/.test(username) || code.length !== 16) return bad();
-  if (password.length < 6 || password.length > 72) return json({ error: "A senha precisa ter de 6 a 72 caracteres." }, 400);
-  const prof = await rest(`profiles?username=eq.${encodeURIComponent(username)}&select=user_id`).then((r) => r.json());
-  const uid = Array.isArray(prof) && prof[0]?.user_id;
-  if (!uid) return bad();
-  const rec = await rest(`account_recovery?user_id=eq.${uid}&select=*`).then((r) => r.json());
-  const row = Array.isArray(rec) ? rec[0] : null;
-  if (!row || !row.code_hash) return bad();
-  if (row.locked_until && new Date(row.locked_until) > new Date()) return json({ error: "Muitas tentativas. Tente de novo em 15 minutos." }, 429);
-  if ((await sha256(`${uid}:${code}`)) !== row.code_hash) {
-    const failed = (row.failed || 0) + 1;
-    await rest(`account_recovery?user_id=eq.${uid}`, { method: "PATCH", body: JSON.stringify({ failed: failed >= 5 ? 0 : failed, locked_until: failed >= 5 ? new Date(Date.now() + 15 * 60e3).toISOString() : null }) });
-    return bad();
+// ---------------- notificações no celular (Web Push) ----------------
+// As chaves VAPID são criadas pela própria função na primeira vez e ficam na tabela privada app_secrets
+// (sem acesso pelo site). Nada de chave secreta no GitHub.
+const b64u = (buf: ArrayBuffer | Uint8Array) => {
+  const a = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+  let s = ""; for (const c of a) s += String.fromCharCode(c);
+  return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+};
+const ub64 = (s: string) => {
+  s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "=";
+  const bin = atob(s); const a = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) a[i] = bin.charCodeAt(i); return a;
+};
+const cat = (...xs: Uint8Array[]) => { const o = new Uint8Array(xs.reduce((n, x) => n + x.length, 0)); let i = 0; for (const x of xs) { o.set(x, i); i += x.length } return o };
+const te = new TextEncoder();
+const subtle = () => (globalThis.crypto as Crypto).subtle;
+
+async function getSecret(k: string): Promise<string | null> {
+  const r = await rest(`app_secrets?k=eq.${encodeURIComponent(k)}&select=v`).then((x) => x.json()).catch(() => null);
+  return Array.isArray(r) && r[0] ? r[0].v : null;
+}
+async function setSecret(k: string, v: string, overwrite = true) {
+  await rest("app_secrets", { method: "POST", headers: { Prefer: overwrite ? "resolution=merge-duplicates" : "resolution=ignore-duplicates" }, body: JSON.stringify({ k, v }) });
+}
+export async function vapidKeys(): Promise<{ pub: string; jwk: JsonWebKey }> {
+  let raw = await getSecret("vapid");
+  if (!raw) {
+    const kp = await subtle().generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]) as CryptoKeyPair;
+    const jwk = await subtle().exportKey("jwk", kp.privateKey);
+    const pub = b64u(await subtle().exportKey("raw", kp.publicKey));
+    await setSecret("vapid", JSON.stringify({ pub, jwk }), false);   // se duas chamadas correrem juntas, vale a primeira
+    raw = await getSecret("vapid") || JSON.stringify({ pub, jwk });
   }
-  const up = await authAdmin(`users/${uid}`, { method: "PUT", body: JSON.stringify({ password }) });
-  if (!up.ok) return json({ error: "Não foi possível trocar a senha agora." }, 500);
-  const user = await up.json();
-  // o código vale uma vez só
-  await rest(`account_recovery?user_id=eq.${uid}`, { method: "PATCH", body: JSON.stringify({ code_hash: null, failed: 0, locked_until: null, updated_at: new Date().toISOString() }) });
-  return json({ ok: true, email: user.email });
+  return JSON.parse(raw);
+}
+export async function vapidAuth(endpoint: string, keys: { pub: string; jwk: JsonWebKey }, now = Date.now()) {
+  const aud = new URL(endpoint).origin;
+  const head = b64u(te.encode(JSON.stringify({ typ: "JWT", alg: "ES256" })));
+  const body = b64u(te.encode(JSON.stringify({ aud, exp: Math.floor(now / 1000) + 12 * 3600, sub: "https://jogos-enzola.vercel.app" })));
+  const key = await subtle().importKey("jwk", { ...keys.jwk, key_ops: ["sign"] }, { name: "ECDSA", namedCurve: "P-256" }, false, ["sign"]);
+  const sig = await subtle().sign({ name: "ECDSA", hash: "SHA-256" }, key, te.encode(`${head}.${body}`));
+  return `vapid t=${head}.${body}.${b64u(sig)}, k=${keys.pub}`;
+}
+async function hkdf(salt: Uint8Array, ikm: Uint8Array, info: Uint8Array, len: number) {
+  const k = await subtle().importKey("raw", ikm, "HKDF", false, ["deriveBits"]);
+  return new Uint8Array(await subtle().deriveBits({ name: "HKDF", hash: "SHA-256", salt, info }, k, len * 8));
+}
+// RFC 8291 (aes128gcm): cifra a mensagem para a assinatura do aparelho
+export async function encryptPush(payload: Uint8Array, p256dh: string, auth: string) {
+  const ua = ub64(p256dh), secret = ub64(auth);
+  const eph = await subtle().generateKey({ name: "ECDH", namedCurve: "P-256" }, true, ["deriveBits"]) as CryptoKeyPair;
+  const as = new Uint8Array(await subtle().exportKey("raw", eph.publicKey));
+  const uaKey = await subtle().importKey("raw", ua, { name: "ECDH", namedCurve: "P-256" }, false, []);
+  const shared = new Uint8Array(await subtle().deriveBits({ name: "ECDH", public: uaKey } as any, eph.privateKey, 256));
+  const ikm = await hkdf(secret, shared, cat(te.encode("WebPush: info\0"), ua, as), 32);
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const cek = await hkdf(salt, ikm, te.encode("Content-Encoding: aes128gcm\0"), 16);
+  const nonce = await hkdf(salt, ikm, te.encode("Content-Encoding: nonce\0"), 12);
+  const k = await subtle().importKey("raw", cek, "AES-GCM", false, ["encrypt"]);
+  const ct = new Uint8Array(await subtle().encrypt({ name: "AES-GCM", iv: nonce }, k, cat(payload, new Uint8Array([2]))));
+  const rs = new Uint8Array([0, 0, 16, 0]);
+  return cat(salt, rs, new Uint8Array([as.length]), as, ct);
+}
+async function sendPush(sub: any, data: unknown, keys: { pub: string; jwk: JsonWebKey }) {
+  const body = await encryptPush(te.encode(JSON.stringify(data)), sub.p256dh, sub.auth);
+  const r = await fetch(sub.endpoint, {
+    method: "POST",
+    headers: { Authorization: await vapidAuth(sub.endpoint, keys), "Content-Encoding": "aes128gcm", "Content-Type": "application/octet-stream", TTL: "86400", Urgency: "high" },
+    body,
+  });
+  if (r.status === 404 || r.status === 410) await rest(`push_subscriptions?id=eq.${sub.id}`, { method: "DELETE" });
+  return r.status;
+}
+// O site chama isto para pegar a chave pública (e a função se registra para o gatilho do banco)
+async function pushKey() {
+  if (!SB() || !KEY()) return json({ error: "sem_servidor" }, 501);
+  const keys = await vapidKeys();
+  await setSecret("function_url", `${SB()}/functions/v1/enzola`);
+  const anon = env("SUPABASE_ANON_KEY"); if (anon) await setSecret("anon_key", anon);
+  return json({ key: keys.pub });
+}
+const NAME = (p: any) => (p && (p.display_name || p.username)) || "Um amigo";
+// Chamado pelo gatilho do banco quando entra uma notificação nova
+async function push(b: any) {
+  const hook = await getSecret("push_hook");
+  if (!hook || b.hook !== hook) return json({ error: "não autorizado" }, 401);
+  const id = String(b.id || "");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return json({ error: "id" }, 400);
+  const [n] = await rest(`notifications?id=eq.${id}&select=*`).then((r) => r.json());
+  if (!n) return json({ none: true });
+  const subs = await rest(`push_subscriptions?user_id=eq.${n.user_id}&select=*`).then((r) => r.json());
+  if (!Array.isArray(subs) || !subs.length) return json({ sent: 0 });
+  const [actor] = n.actor ? await rest(`profiles?user_id=eq.${n.actor}&select=username,display_name,avatar`).then((r) => r.json()) : [null];
+  const who = NAME(actor), P = n.payload || {};
+  let title = "Jogos Enzola", body = "", url = "#perfil", tag = n.kind;
+  if (n.kind === "poke") { title = `${who} te cutucou 👉`; body = "Bora jogar alguma coisa?"; url = `#amigo/${n.actor}`; tag = `poke-${n.actor}` }
+  else if (n.kind === "suggest") { title = `${who} sugeriu um jogo`; body = `${P.name || "Um jogo"}${P.note ? ` — “${String(P.note).slice(0, 90)}”` : ""}`; url = P.rawg_id ? `#jogo/${P.rawg_id}` : P.steam_id ? `#jogo/s${P.steam_id}` : "#desejos" }
+  else if (n.kind === "message") {
+    const [m] = await rest(`messages?sender=eq.${n.actor}&recipient=eq.${n.user_id}&order=created_at.desc&limit=1&select=body`).then((r) => r.json());
+    title = `Mensagem de ${who}`; body = m ? String(m.body).slice(0, 140) : "Nova mensagem"; url = `#amigo/${n.actor}`; tag = `msg-${n.actor}`;
+  }
+  else if (n.kind === "friend_request") { title = "Novo pedido de amizade"; body = `${who} quer ser seu amigo no Jogos Enzola.`; url = "#amigos" }
+  else if (n.kind === "friend_accept") { title = "Pedido aceito"; body = `${who} aceitou sua amizade.`; url = `#amigo/${n.actor}` }
+  const keys = await vapidKeys();
+  const res = await Promise.all(subs.map((s: any) => sendPush(s, { title, body, url, tag, nid: n.id }, keys).catch(() => 0)));
+  return json({ sent: res.filter((x) => x >= 200 && x < 300).length });
 }
 
 // ---------------- excluir conta ----------------
@@ -183,7 +278,7 @@ async function excluirConta(req: Request) {
     del(`group_members?user_id=eq.${id}`),
     del(`friendships?or=(requester.eq.${id},addressee.eq.${id})`),
     del(`games?user_id=eq.${id}`),
-    del(`account_recovery?user_id=eq.${id}`),
+    del(`push_subscriptions?user_id=eq.${id}`),
   ]);
   await del(`groups?owner=eq.${id}`);
   await del(`profiles?user_id=eq.${id}`);
@@ -202,7 +297,9 @@ export async function handle(req: Request): Promise<Response> {
       case "precos": return await precos(b);
       case "jogo": return await jogo(b);
       case "videos": return await videos(b);
-      case "recuperar": return await recuperar(b);
+      case "busca": return await busca(b);
+      case "push_key": return await pushKey();
+      case "push": return await push(b);
       case "excluir_conta": return await excluirConta(req);
       case "ping": return json({ ok: true, itad: !!env("ITAD_KEY"), youtube: !!env("YOUTUBE_KEY") });
       default: return json({ error: "ação desconhecida" }, 400);

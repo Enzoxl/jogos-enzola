@@ -13,14 +13,82 @@ async function api(action, body = {}) {
   return data;
 }
 
+/* link da ficha do jogo: RAWG (#jogo/123) ou só Steam (#jogo/s123) */
+const gameHref = g => g && g.rawg_id ? `jogo/${g.rawg_id}` : g && g.steam_id ? `jogo/s${g.steam_id}` : "";
+
 /* ---------- RAWG ---------- */
 const RAWG = "https://api.rawg.io/api";
-async function rawg(path, params = {}) {
+async function rawg(path, params = {}, signal) {
   const u = new URL(RAWG + path); u.searchParams.set("key", CFG.RAWG_KEY || "");
   for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
-  const r = await fetch(u); if (!r.ok) throw new Error("rawg " + r.status); return r.json();
+  let r;
+  try { r = await fetch(u, { signal }) } catch (e) { if (e.name === "AbortError") throw e; const er = new Error("rede"); er.kind = "net"; throw er }
+  if (!r.ok) { const er = new Error("rawg " + r.status); er.kind = r.status === 401 || r.status === 403 ? "key" : r.status === 429 ? "limit" : "server"; er.status = r.status; throw er }
+  return r.json();
 }
-async function rawgSearch(q, n = 8) { const j = await rawg("/games", { search: q, page_size: n }); return j.results || [] }
+
+/* ---------- pesquisa de jogos: RAWG + Steam, com ordem de relevância ---------- */
+const STEAM_IMG = id => `https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/${id}`;
+const searchCache = new Map();
+const JUNK = /\b(soundtrack|ost|dlc|season pass|expansion pack|bundle|demo|artbook|wallpaper|costume|skin pack|upgrade|playtest)\b/i;
+function nameScore(name, q) {
+  const n = norm(name), qq = norm(q), words = qq.split(" ").filter(Boolean), nw = n.split(" ");
+  if (!qq) return 0;
+  if (n === qq) return 120;
+  if (n.replace(/ /g, "") === qq.replace(/ /g, "")) return 110;
+  if (n.startsWith(qq + " ") || n.startsWith(qq)) return 80 - Math.min(20, (n.length - qq.length) / 3);
+  if (words.every(w => nw.includes(w))) return 60 - Math.min(20, nw.length - words.length);
+  if (words.every(w => n.includes(w))) return 40;
+  return words.filter(w => n.includes(w)).length / words.length * 25;
+}
+function rankItems(items, q) {
+  return items.map(x => {
+    let sc = nameScore(x.name, q);
+    sc += Math.log10(1 + (x.pop || 0)) * 9;          // quantas pessoas têm o jogo (RAWG) ou destaque na Steam
+    if (x.mc) sc += (x.mc - 60) / 4;                  // nota da crítica
+    if (x.rating) sc += x.rating * 2;
+    if (JUNK.test(x.name) && !JUNK.test(q)) sc -= 45; // trilha sonora, DLC, demo...
+    return { ...x, score: sc };
+  }).sort((a, b) => b.score - a.score);
+}
+function fromRawg(x) {
+  const pp = parentPlats(x);
+  return { key: "r" + x.id, go: `jogo/${x.id}`, name: x.name, img: x.background_image || "", year: (x.released || "").slice(0, 4), plats: pp, mc: x.metacritic || null, rating: x.rating || 0, pop: x.added || x.ratings_count || 0,
+    draft: { name: x.name, year: (x.released || "").slice(0, 4), genre: (x.genres || []).map(g => g.name).slice(0, 2).join(", "), platform: preferredOf(pp), cover_url: x.background_image || "", rawg_id: x.id || null, metacritic: x.metacritic || null, playtime: x.playtime || null, _plats: pp.join(", ") } };
+}
+function fromSteam(x, rank) {
+  return { key: "s" + x.id, go: `jogo/s${x.id}`, name: x.name, img: x.img || `${STEAM_IMG(x.id)}/capsule_231x87.jpg`, year: "", plats: ["PC"], mc: x.metascore || null, rating: 0, pop: Math.max(0, 400 - rank * 40), steam: x.id,
+    draft: { name: x.name, year: "", genre: "", platform: "PC", cover_url: `${STEAM_IMG(x.id)}/library_600x900.jpg`, steam_id: x.id, metacritic: x.metascore || null, _plats: "PC" } };
+}
+function searchError(errs) {
+  if (navigator.onLine === false) return "Você está sem internet. Conecte-se e tente de novo.";
+  const k = errs.map(e => e && e.kind);
+  if (k.includes("limit")) return "Muitas pesquisas em pouco tempo. Espere alguns segundos e tente de novo.";
+  if (k.includes("key")) return "A base de jogos (RAWG) recusou a chave do site. Avise o administrador para trocar a RAWG_KEY no config.js.";
+  if (k.includes("server")) return "A base de jogos está instável agora. Tente de novo em instantes.";
+  return "Não foi possível pesquisar agora. Tente de novo em instantes.";
+}
+async function searchGames(q, n = 10, signal) {
+  const key = norm(q) + "|" + n; if (searchCache.has(key)) return searchCache.get(key);
+  const errs = [];
+  const [r, st] = await Promise.all([
+    CFG.RAWG_KEY ? rawg("/games", { search: q, page_size: 20, search_precise: "true" }, signal).catch(e => { if (e.name === "AbortError") throw e; errs.push(e); return null }) : null,
+    FN() ? api("busca", { q }).catch(e => { errs.push(e); return null }) : null,
+  ]);
+  if (!r && !st) { const e = new Error(searchError(errs)); e.user = true; throw e }
+  const items = ((r && r.results) || []).map(fromRawg);
+  const seen = new Map(items.map(x => [norm(x.name), x]));
+  ((st && st.items) || []).forEach((x, i) => {
+    const m = seen.get(norm(x.name));
+    if (m) { m.steam = x.id; m.pop += 50 } else { const it = fromSteam(x, i); items.push(it); seen.set(norm(x.name), it) }
+  });
+  // a base principal (RAWG) falhou e a Steam não achou nada: mostra o motivo em vez de "nenhum jogo"
+  if (!items.length && errs.length) { const e = new Error(searchError(errs)); e.user = true; throw e }
+  const out = rankItems(items, q).slice(0, n);
+  searchCache.set(key, out); if (searchCache.size > 60) searchCache.delete(searchCache.keys().next().value);
+  return out;
+}
+async function rawgSearch(q, n = 8) { return searchGames(q, n) }
 const PSLUG = { pc: "PC", playstation: "PlayStation", xbox: "Xbox", nintendo: "Switch" };
 function parentPlats(x) {
   let s = (x.parent_platforms || []).map(p => PSLUG[p.platform.slug]).filter(Boolean);
@@ -32,6 +100,7 @@ function parentPlats(x) {
 }
 const preferredOf = pp => pp.includes(setting("platform", "PC")) ? setting("platform", "PC") : pp.includes("PC") ? "PC" : pp[0] || "";
 function rawgToDraft(x) {
+  if (x.draft) return x.draft;
   const pp = parentPlats(x);
   return { name: x.name, year: (x.released || "").slice(0, 4), genre: (x.genres || []).map(g => g.name).slice(0, 2).join(", "), platform: preferredOf(pp), cover_url: x.background_image || "", rawg_id: x.id || null, metacritic: x.metacritic || null, playtime: x.playtime || null, _plats: pp.join(", ") };
 }
@@ -162,7 +231,7 @@ function priceBox(g) {
     return `<div class="pbox console"><span class="pshop">${ic("gamepad")}${esc(g.platform)}</span>
       <div class="pacts"><a class="btn sm" href="${esc(url)}" target="_blank" rel="noopener">${ic("external")}Ver preço na ${esc(store)}</a></div>
       <span class="hint">As lojas de console não liberam preços automáticos. O link abre a página oficial, com o preço em reais.</span>
-      ${g.rawg_id ? `<a class="link" href="#jogo/${g.rawg_id}">Comparar com o preço no PC</a>` : ""}</div>`;
+      ${gameHref(g) ? `<a class="link" href="#${gameHref(g)}">Comparar com o preço no PC</a>` : ""}</div>`;
   }
   const st = priceState[g.id], b = bestOf(g);
   if (st === "loading") return `<div class="pbox"><span class="sk" style="width:60%;height:20px"></span><span class="sk" style="width:40%;height:11px;margin-top:8px"></span></div>`;
@@ -193,7 +262,7 @@ function openPrices(id) {
     <div class="slinks">${links}</div>
     ${isConsole(g.platform) ? "" : `<div class="f" style="margin-top:20px"><label>Preço-alvo em reais <span class="hint">· avisamos na lista quando o menor preço ficar abaixo disso</span>
       <span class="bar" style="margin:0"><input type="number" id="tp" min="0" step="0.01" value="${g.target_price ?? ""}" placeholder="Ex.: 49,90" class="grow" inputmode="decimal"><button class="btn ghost" data-target-save="${g.id}">Salvar</button></span></label></div>`}
-    <div class="acts">${isConsole(g.platform) ? "" : `<button class="btn ghost left" data-refresh-price="${g.id}">${ic("refresh")}Atualizar agora</button>`}${g.rawg_id ? `<a class="btn ghost" href="#jogo/${g.rawg_id}" data-close>Ficha do jogo</a>` : ""}<button class="btn" data-close>Fechar</button></div>`, true);
+    <div class="acts">${isConsole(g.platform) ? "" : `<button class="btn ghost left" data-refresh-price="${g.id}">${ic("refresh")}Atualizar agora</button>`}${gameHref(g) ? `<a class="btn ghost" href="#${gameHref(g)}" data-close>Ficha do jogo</a>` : ""}<button class="btn" data-close>Fechar</button></div>`, true);
 }
 
 /* ---------- busca global (lupa no topo) ---------- */
@@ -208,16 +277,19 @@ function openGlobalSearch() {
   setTimeout(() => $("#gs-q") && $("#gs-q").focus(), 30);
 }
 function closeGlobalSearch() { const el = $("#gsearch"); el.hidden = true; el.innerHTML = ""; clearTimeout(gsTimer); document.body.classList.toggle("noscroll", !!($("#modal").innerHTML || $("#modal2").innerHTML)) }
+let gsAbort = null;
 async function runGlobalSearch(q) {
   const box = $("#gs-res"); if (!box) return;
   const mine = games.filter(g => norm(g.name).includes(norm(q))).slice(0, 3);
-  box.innerHTML = `${mine.length ? `<p class="gs-h">Na sua biblioteca</p>${mine.map(g => gsRow(g.rawg_id ? `jogo/${g.rawg_id}` : "", g.id, g.cover_url, g.name, [g.platform, g.status].filter(Boolean).join(" · "))).join("")}` : ""}<p class="gs-h">Todos os jogos</p><div class="gs-sk"><div class="it sk" style="height:56px"></div><div class="it sk" style="height:56px"></div></div>`;
+  box.innerHTML = `${mine.length ? `<p class="gs-h">Na sua biblioteca</p>${mine.map(g => gsRow(gameHref(g), g.id, g.cover_url, g.name, [g.platform, g.status].filter(Boolean).join(" · "))).join("")}` : ""}<p class="gs-h">Todos os jogos</p><div class="gs-sk"><div class="it sk" style="height:56px"></div><div class="it sk" style="height:56px"></div></div>`;
   try {
-    const r = await rawgSearch(q, 8);
+    if (gsAbort) gsAbort.abort(); gsAbort = new AbortController();
+    const r = await searchGames(q, 10, gsAbort.signal);
     if (!$("#gs-q") || $("#gs-q").value.trim() !== q) return;
-    const html = r.map(x => gsRow(`jogo/${x.id}`, "", x.background_image, x.name, [(x.released || "").slice(0, 4), parentPlats(x).join(", ")].filter(Boolean).join(" · "), x.metacritic)).join("") || `<p class="gs-tip">Nenhum jogo encontrado com esse nome.</p>`;
-    box.querySelector(".gs-sk").outerHTML = html;
-  } catch (e) { const s = box.querySelector(".gs-sk"); if (s) s.outerHTML = `<p class="gs-tip">Não foi possível pesquisar agora. Verifique sua conexão.</p>` }
+    const html = r.map(x => gsRow(x.go, "", x.img, x.name, [x.year, x.plats.join(", "), x.key[0] === "s" ? "Steam" : ""].filter(Boolean).join(" · "), x.mc)).join("")
+      || `<p class="gs-tip">Nenhum jogo encontrado com “${esc(q)}”. Confira a grafia${FN() ? "" : " ou tente o nome em inglês"}.<br><button class="btn ghost sm" data-gs-manual="${esc(q)}">${ic("plus")}Adicionar “${esc(q)}” manualmente</button></p>`;
+    const sk = box.querySelector(".gs-sk"); if (sk) sk.outerHTML = html;
+  } catch (e) { if (e.name === "AbortError") return; const s = box.querySelector(".gs-sk"); if (s) s.outerHTML = `<p class="gs-tip err">${esc(e.user ? e.message : "Não foi possível pesquisar agora. Tente de novo em instantes.")}</p>` }
   gsItems = $$("#gs-res .gs-item"); gsIdx = -1;
 }
 function gsRow(go, openId, img, name, meta, mc) {
@@ -227,7 +299,7 @@ document.addEventListener("input", e => {
   if (e.target.id !== "gs-q") return;
   clearTimeout(gsTimer); const q = e.target.value.trim();
   if (q.length < 2) { $("#gs-res").innerHTML = `<p class="gs-tip">Digite pelo menos 2 letras.</p>`; return }
-  gsTimer = setTimeout(() => runGlobalSearch(q), 300);
+  gsTimer = setTimeout(() => runGlobalSearch(q), 350);
 });
 document.addEventListener("keydown", e => {
   if ((e.key === "/" || (e.key.toLowerCase() === "k" && (e.ctrlKey || e.metaKey))) && user && $("#gsearch").hidden && !/input|textarea|select/i.test(e.target.tagName)) { e.preventDefault(); openGlobalSearch(); return }
@@ -245,13 +317,35 @@ document.addEventListener("click", e => {
   if (!$("#gsearch").hidden && (c("[data-gs-close]") || e.target.id === "gsearch")) { closeGlobalSearch(); return }
   if (b = c("[data-gs-go]")) { closeGlobalSearch(); location.hash = b.dataset.gsGo; return }
   if (b = c("[data-gs-open]")) { closeGlobalSearch(); openForm(b.dataset.gsOpen); return }
+  if (b = c("[data-gs-manual]")) { closeGlobalSearch(); openForm(null, { name: b.dataset.gsManual }); return }
 });
 
 /* ---------- página do jogo ---------- */
 let gv = null;          // dados da página aberta
 const RATING_PT = { exceptional: "Excepcional", recommended: "Recomendado", meh: "Mais ou menos", skip: "Não vale a pena" };
 const RATING_COL = { exceptional: "var(--fin)", recommended: "var(--accent)", meh: "var(--play)", skip: "var(--nobuy)" };
+function steamToD(s) {
+  return { id: null, steam_only: true, name: s.title, background_image: s.header || s.capsule || "", description_raw: "", released: s.year || "", tba: s.coming_soon, metacritic: s.metacritic,
+    genres: (s.genres || []).map(name => ({ name })), developers: (s.developers || []).map(name => ({ name })), publishers: (s.publishers || []).map(name => ({ name })),
+    platforms: [{ platform: { name: "PC", slug: "pc" } }], website: s.website || "", rating: 0, ratings: [], ratings_count: 0, playtime: null };
+}
 async function openGame(id) {
+  if (/^s\d+$/.test(id || "")) {
+    if (gv && gv.id === id && !gv.error) { renderGame(); return }
+    gv = { id, loading: true }; renderGame();
+    try {
+      const s = await api("jogo", { steam: id.slice(1) });
+      if (!gv || gv.id !== id) return;
+      if (!s || s.none) throw new Error("none");
+      const d = steamToD(s);
+      Object.assign(gv, { d, steam: s, stores: [], shots: [], movies: [], loading: false, plats: ["PC"], plat: "PC" });
+      renderGame();
+      fetchPrice(d.name).then(p => { if (gv && gv.id === id) { gv.price = p; renderGame() } }).catch(() => { if (gv && gv.id === id) { gv.price = { error: true }; renderGame() } });
+      loadVideos(id, d.name).then(v => { if (gv && gv.id === id) { gv.videos = v; renderGame() } });
+      friendsWithGame(d.name).then(f => { if (gv && gv.id === id) { gv.friends = f; renderGame() } });
+    } catch (e) { if (gv && gv.id === id) { gv.error = true; gv.loading = false; renderGame() } }
+    return;
+  }
   if (!/^\d+$/.test(id || "")) { $("#jogo").innerHTML = empty("Jogo não encontrado", "Use a busca no topo para encontrar um jogo."); return }
   if (gv && gv.id === id && !gv.error) { renderGame(); return }
   gv = { id, loading: true }; renderGame();
@@ -290,7 +384,7 @@ function renderGame() {
   if (gv.loading) { el.innerHTML = `<div class="gp-hero sk" style="height:300px;border-radius:24px"></div><div class="gp-grid"><div><div class="sk" style="height:220px;border-radius:20px"></div></div><div class="sk" style="height:320px;border-radius:20px"></div></div>`; return }
   if (gv.error) { el.innerHTML = empty("Não foi possível abrir este jogo", "Verifique sua conexão e tente de novo.", `<br><button class="btn sm" data-gp="retry">Tentar de novo</button>`); return }
   const d = gv.d, s = gv.steam || {}, plat = gv.plat;
-  const own = games.filter(g => g.rawg_id === d.id || norm(g.name) === norm(d.name));
+  const own = games.filter(g => (d.id && g.rawg_id === d.id) || (s.steam && String(g.steam_id || "") === String(s.steam)) || norm(g.name) === norm(d.name));
   const ownPlat = own.find(g => (g.platform || "") === plat);
   const pcReq = (d.platforms || []).find(p => p.platform && p.platform.slug === "pc");
   const reqMin = s.req_min || (pcReq && pcReq.requirements && (pcReq.requirements.minimum || "")) || (pcReq && pcReq.requirements_en && pcReq.requirements_en.minimum) || "";
@@ -402,7 +496,7 @@ function buyPanel(d, plat) {
 }
 async function gameAdd(kind) {
   const d = gv.d, plat = gv.plat;
-  const base = { name: d.name, platform: plat, cover_url: d.background_image || null, rawg_id: d.id, metacritic: d.metacritic || null, playtime: d.playtime || null, genre: (d.genres || []).map(g => g.name).slice(0, 2).join(", "), year: (d.released || "").slice(0, 4) };
+  const base = { name: d.name, platform: plat, cover_url: (d.steam_only && gv.steam.capsule) || d.background_image || null, rawg_id: d.id || null, steam_id: gv.steam && gv.steam.steam ? +gv.steam.steam : null, metacritic: d.metacritic || null, playtime: d.playtime || null, genre: (d.genres || []).map(g => g.name).slice(0, 2).join(", "), year: (d.released || "").slice(0, 4) };
   if (kind === "lib") { openForm(null, { ...base, status: "Não iniciado" }); return }
   const store = isConsole(plat) ? gv.stores.find(s => STORE_NAMES[s.store_id] && STORE_NAMES[s.store_id][0] === plat) : null;
   const price = isConsole(plat) ? { console: true, store: storeSearch(d.name, plat)[0], url: store ? localizeStore(store.url) : storeSearch(d.name, plat)[1], checked: new Date().toISOString() } : gv.price && !gv.price.error ? gv.price : null;
@@ -416,5 +510,70 @@ document.addEventListener("click", e => {
   if (a === "back") { if (history.length > 1) history.back(); else location.hash = "perfil" }
   else if (a === "retry") { const id = gv.id; gv = null; openGame(id) }
   else if (a === "wish" || a === "lib") gameAdd(a);
-  else if (a === "suggest") openSuggest(null, { name: gv.d.name, rawg_id: gv.d.id, cover_url: gv.d.background_image });
+  else if (a === "suggest") openSuggest(null, { name: gv.d.name, rawg_id: gv.d.id || null, steam_id: gv.steam && gv.steam.steam ? +gv.steam.steam : null, cover_url: gv.d.background_image });
 });
+
+/* ---------- resumo rápido ao tocar na capa (catálogo e jogos dos amigos) ---------- */
+const qvGames = new Map();           // "f:<id>" → { g, owner } (jogos de amigos já carregados)
+const qvInfo = new Map();            // cache de sinopse/dados por jogo
+function qvKey(g) { return g.rawg_id ? "r" + g.rawg_id : g.steam_id ? "s" + g.steam_id : "n" + norm(g.name) }
+async function qvFetch(g) {
+  const k = qvKey(g); if (qvInfo.has(k)) return qvInfo.get(k);
+  const [st, rd] = await Promise.all([
+    FN() ? api("jogo", g.steam_id ? { steam: g.steam_id } : { name: g.name }).catch(() => null) : null,
+    g.rawg_id && CFG.RAWG_KEY ? rawg(`/games/${g.rawg_id}`).catch(() => null) : null,
+  ]);
+  const s = st && !st.none ? st : null;
+  const info = {
+    syn: (s && (s.short || (s.about || "").slice(0, 420))) || "",
+    synEn: !s && rd && rd.description_raw ? rd.description_raw.slice(0, 420) + (rd.description_raw.length > 420 ? "…" : "") : "",
+    genres: (s && s.genres && s.genres.length ? s.genres : rd ? (rd.genres || []).map(x => x.name) : []).slice(0, 3).join(", "),
+    dev: (s && s.developers && s.developers.length ? s.developers : rd ? (rd.developers || []).map(x => x.name) : []).slice(0, 2).join(", "),
+    year: (rd && (rd.released || "").slice(0, 4)) || (s && s.year) || "",
+    mc: (rd && rd.metacritic) || (s && s.metacritic) || null,
+    steamPct: s && s.reviews_summary && s.reviews_summary.total ? Math.round(s.reviews_summary.positive / s.reviews_summary.total * 100) : null,
+    steamDesc: s && s.reviews_summary ? s.reviews_summary.desc : "",
+    playtime: (rd && rd.playtime) || null,
+    href: g.rawg_id ? `jogo/${g.rawg_id}` : s ? `jogo/s${s.steam}` : "",
+  };
+  qvInfo.set(k, info); return info;
+}
+function openQuick(ref) {
+  let g, owner = null, own = false;
+  if (ref.startsWith("m:")) { g = gameById(ref.slice(2)); own = true }
+  else { const x = qvGames.get(ref); if (x) { g = x.g; owner = x.owner } }
+  if (!g) return;
+  const mineToo = !own && games.find(x => (g.rawg_id && x.rawg_id === g.rawg_id) || norm(x.name) === norm(g.name));
+  const head = `<div class="qv">
+    <div class="qv-cover poster">${cover(g)}</div>
+    <div class="qv-b">
+      <h2 class="qv-t">${esc(g.name)}</h2>
+      <p class="qv-m" id="qv-m">${[g.year, g.genre, g.platform].filter(Boolean).map(esc).join(" · ")}</p>
+      <div class="qv-chips" id="qv-chips">${g.metacritic ? `<span class="chipinfo"><span class="mc sm">${g.metacritic}</span>Metacritic</span>` : ""}${g.playtime ? `<span class="chipinfo">${ic("clock")}~${g.playtime} h para zerar</span>` : ""}</div>
+      <div class="qv-who">${own ? `<b>Você:</b> ${esc(g.status)}${g.exp ? " · " + esc(g.exp) : ""}${g.rating != null ? " · nota " + rateTxt(g) : ""}${g.hours ? " · " + esc(hoursTxt(g.hours)) : ""}`
+        : `<b>${esc(owner || "Amigo")}:</b> ${esc(g.status)}${g.rating != null ? " · nota " + rateTxt(g) : ""}${g.platform ? " · " + esc(g.platform) : ""}`}</div>
+      ${g.review ? `<blockquote class="qv-rev">“${esc(g.review)}”</blockquote>` : ""}
+    </div></div>
+    <div class="qv-syn" id="qv-syn"><div class="sk" style="height:14px;border-radius:6px;margin:6px 0"></div><div class="sk" style="height:14px;width:80%;border-radius:6px;margin:6px 0"></div></div>
+    <div class="acts">
+      ${own ? `<button class="btn ghost left" data-open="${g.id}">${ic("pencil")}Editar</button>` : mineToo ? `<span class="hint left">${ic(mineToo.wishlist || mineToo.status === "Não comprado" ? "bookmark" : "check")}${mineToo.wishlist || mineToo.status === "Não comprado" ? "Já está na sua lista de desejos" : "Você também tem este jogo"}</span>` : `<button class="btn ghost left" data-qv-wish>${ic("bookmark")}Quero jogar</button>`}
+      <a class="btn" id="qv-full" ${gameHref(g) ? `href="#${gameHref(g)}"` : `href="#" data-qv-search="${esc(g.name)}"`} data-close>${ic("external")}Ver página completa</a>
+    </div>`;
+  modalShell(head);
+  openQuick.cur = g;
+  qvFetch(g).then(info => {
+    const box = $("#qv-syn"); if (!box || openQuick.cur !== g) return;
+    box.innerHTML = info.syn ? `<p>${esc(info.syn)}</p>` : info.synEn ? `<p lang="en">${esc(info.synEn)}</p><p class="hint">Resumo disponível só em inglês — a página completa tem mais detalhes.</p>` : `<p class="muted">Sem resumo disponível para este jogo.</p>`;
+    const m = $("#qv-m"); if (m && !g.genre && info.genres) m.textContent = [g.year || info.year, info.genres, g.platform].filter(Boolean).join(" · ");
+    if (info.dev && m) m.textContent += (m.textContent ? " · " : "") + info.dev;
+    const ch = $("#qv-chips");
+    if (ch) { if (!g.metacritic && info.mc) ch.insertAdjacentHTML("afterbegin", `<span class="chipinfo"><span class="mc sm">${info.mc}</span>Metacritic</span>`); if (info.steamPct != null) ch.insertAdjacentHTML("beforeend", `<span class="chipinfo" title="${esc(info.steamDesc)}">${ic("users")}${info.steamPct}% positivas na Steam</span>`) }
+    const full = $("#qv-full"); if (full && !gameHref(g) && info.href) { full.setAttribute("href", "#" + info.href); full.removeAttribute("data-qv-search") }
+  }).catch(() => { const box = $("#qv-syn"); if (box) box.innerHTML = `<p class="muted">Não foi possível carregar o resumo agora.</p>` });
+}
+document.addEventListener("click", e => {
+  const c = s => e.target.closest(s); let b;
+  if (b = c("[data-qv]")) { e.preventDefault(); e.stopPropagation(); openQuick(b.dataset.qv); return }
+  if (b = c("[data-qv-search]")) { e.preventDefault(); closeModal(); openGlobalSearch(); const i = $("#gs-q"); if (i) { i.value = b.dataset.qvSearch; i.dispatchEvent(new Event("input", { bubbles: true })) } return }
+  if (c("[data-qv-wish]")) { const g = openQuick.cur; if (!g) return; closeModal(); openForm(null, { name: g.name, cover_url: g.cover_url, rawg_id: g.rawg_id || null, steam_id: g.steam_id || null, genre: g.genre, year: g.year, metacritic: g.metacritic, playtime: g.playtime, platform: g.platform, status: "Não comprado", wishlist: true }); return }
+}, true);

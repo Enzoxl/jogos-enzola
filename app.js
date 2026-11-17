@@ -2,7 +2,7 @@
    Outros arquivos: jogo.js (busca e página do jogo, preços), social.js (amigos, mensagens, notificações),
    extras.js (configurações, senha, PDF, instalar app, recorte de imagem). */
 const CFG = window.APP_CONFIG || {};
-const VERSION = "3.0";
+const VERSION = "3.2";
 const STATUS = ["Finalizado", "Jogando", "Não iniciado", "Não comprado"];
 const EXPS = ["Perfeito", "Ótimo", "Muito bom", "Bom", "Ok", "Meh", "Chumbos"];
 const EXPCOL = { "Perfeito": "#2E8B6A", "Ótimo": "#4C9F7A", "Muito bom": "#6FA8DC", "Bom": "#4B6B9E", "Ok": "#C9A227", "Meh": "#D98A3D", "Chumbos": "#B14A47" };
@@ -10,7 +10,7 @@ const TIERS = [["S", "#F28B82"], ["A", "#F6B26B"], ["B", "#F5DC78"], ["C", "#A8D
 const PLATS = ["PC", "PlayStation", "Xbox", "Switch", "Outro"];
 const PLATCOL = { "PC": "#6C93FF", "PlayStation": "#4F8BE8", "Xbox": "#4ADE9B", "Switch": "#FF7A7A", "Outro": "#A88BFA" };
 const TABS = ["perfil", "catalogo", "galeria", "tier", "desejos", "amigos", "resumo", "config"];
-const NEW_COLS = ["hours", "metacritic", "playtime", "rawg_id", "target_price", "price", "price_checked_at"];
+const NEW_COLS = ["hours", "metacritic", "playtime", "rawg_id", "steam_id", "target_price", "price", "price_checked_at"];
 const PRICE_TTL = 12 * 3600 * 1000;
 const PRESETS = [
   { k: "p1", icon: "gamepad", bg: "linear-gradient(135deg,#2F5FA8,#14213D)" },
@@ -52,7 +52,11 @@ let found = [], busy = false, pe = null, searchTimer = null;
 const caps = { games: true, pub: true, v3: true };
 
 function toast(m) { const t = $("#toast"); t.textContent = m; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 3800) }
-const uname = () => { if (!user) return ""; const l = (user.email || "").split("@")[0]; return l.includes("+") ? l.split("+").pop() : l };
+// Nome de usuário: vem do cadastro (contas novas) ou, nas contas antigas, da parte antes do @ do e-mail interno.
+const uname = () => { if (!user) return ""; const md = user.user_metadata || {}; if (md.username) return md.username; if (profile && profile.username) return profile.username; return (user.email || "").split("@")[0] };
+// Conta antiga, criada só com usuário (e-mail interno usuario@gmail.com, que não é da pessoa).
+const isLegacy = () => !!user && !(user.user_metadata || {}).real_email && (user.email || "").toLowerCase() === uname() + "@gmail.com";
+const siteUrl = () => location.origin + location.pathname;
 const nick = () => (profile && profile.nickname) || uname();
 const myTag = () => profile && profile.tag ? "#" + profile.tag : "";
 const gameById = id => games.find(g => g.id === id);
@@ -309,8 +313,8 @@ function renderCatalog() {
       const meta = [g.platform, g.genre, g.year, hoursTxt(g.hours)].filter(Boolean).map(esc);
       if (g.notes) meta.push(esc(g.notes));
       return `<div class="row" data-id="${g.id}">
-      <span class="num">${g.n ?? ""}</span><div class="mini">${cover(g)}</div>
-      <div class="nmbox" style="min-width:0"><div class="nm">${g.rawg_id ? `<a class="glink" href="#jogo/${g.rawg_id}" title="Ver ficha do jogo">${esc(g.name)}</a>` : esc(g.name)}${favs.includes(g.id) ? ic("heart", "fill") : ""}${g.wishlist ? ic("bookmark", "w") : ""}</div>
+      <span class="num">${g.n ?? ""}</span><button class="mini qv-btn" data-qv="m:${g.id}" aria-label="Ver resumo de ${esc(g.name)}" title="Ver resumo do jogo">${cover(g)}</button>
+      <div class="nmbox" style="min-width:0"><div class="nm">${gameHref(g) ? `<a class="glink" href="#${gameHref(g)}" title="Ver ficha do jogo">${esc(g.name)}</a>` : esc(g.name)}${favs.includes(g.id) ? ic("heart", "fill") : ""}${g.wishlist ? ic("bookmark", "w") : ""}</div>
         <div class="meta">${meta.join(" · ")}</div></div>
       <div class="stbox"><select class="stsel ${stClass(g.status)}" data-f="status" aria-label="Status de ${esc(g.name)}">${STATUS.map(s => `<option${s === g.status ? " selected" : ""}>${s}</option>`).join("")}</select></div>
       <div class="exbox"><select data-f="exp" aria-label="Experiência de ${esc(g.name)}"><option value="">—</option>${EXPS.map(s => `<option${s === g.exp ? " selected" : ""}>${s}</option>`).join("")}</select></div>
@@ -380,14 +384,24 @@ function setTier(id, tier, beforeId) {
   else ord = list.length ? list[list.length - 1].tier_order + 1 : 1;
   save(id, { tier, tier_order: ord });
 }
-function loadImg(src, cors) {
+function loadImg1(src, cors) {
   return new Promise(res => {
     if (!src) return res(null);
     const im = new Image(); if (cors) im.crossOrigin = "anonymous";
-    const t = setTimeout(() => res(null), 7000);
-    im.onload = () => { clearTimeout(t); res(im) }; im.onerror = () => { clearTimeout(t); res(null) };
+    const t = setTimeout(() => res(null), 8000);
+    im.onload = () => { clearTimeout(t); res(im.naturalWidth ? im : null) }; im.onerror = () => { clearTimeout(t); res(null) };
     im.src = src;
   });
+}
+// Para desenhar capas em imagens e PDFs. No celular, a capa que já está na tela fica guardada sem a
+// permissão de uso (CORS) e o navegador recusa; por isso pedimos uma cópia separada e, se ainda falhar,
+// buscamos pelo wsrv.nl (serviço público de imagens que libera o uso).
+async function loadImg(src, cors) {
+  if (!src || !cors) return loadImg1(src, false);
+  if (/^(data|blob):/.test(src)) return loadImg1(src, true);
+  const sep = src.includes("?") ? "&" : "?";
+  return (await loadImg1(src + sep + "jecors=1", true))
+    || (await loadImg1("https://wsrv.nl/?url=" + encodeURIComponent(src.replace(/^https?:\/\//, "")) + "&w=480&output=jpg", true));
 }
 function rr(x, X, Y, W, H, R) { x.beginPath(); x.moveTo(X + R, Y); x.arcTo(X + W, Y, X + W, Y + H, R); x.arcTo(X + W, Y + H, X, Y + H, R); x.arcTo(X, Y + H, X, Y, R); x.arcTo(X, Y, X + W, Y, R); x.closePath() }
 function fallbackCover(x, g, cx, cy, CW, CH, fs = 11) {
@@ -516,12 +530,12 @@ async function runSearch() {
   const q = inp.value.trim(); if (!q) { toast("Digite o nome do jogo."); return }
   const res = $("#s-res"); res.innerHTML = `<div class="it sk" style="height:66px"></div><div class="it sk" style="height:66px"></div>`;
   try {
-    const j = await rawgSearch(q, 8);
+    const j = await searchGames(q, 8);
     if (!$("#s-res") || $("#s-q").value.trim() !== q) return;
     found = j.map(rawgToDraft);
     const have = new Set(games.map(g => norm(g.name)));
     res.innerHTML = found.map((s, i) => `<div class="it"><div class="ib"><div class="mini">${s.cover_url ? `<img class="cv" alt="" referrerpolicy="no-referrer" src="${esc(s.cover_url)}">` : ""}</div><div style="min-width:0"><div class="nm">${esc(s.name)}${s.metacritic ? `<span class="mc sm" title="Metacritic">${s.metacritic}</span>` : ""}</div><div class="meta">${esc([s.year, s.genre, s._plats].filter(Boolean).join(" · "))}${have.has(norm(s.name)) ? ` · <b class="dup">já está na sua biblioteca</b>` : ""}</div></div></div><button class="btn ghost sm" data-pick="${i}">Usar</button></div>`).join("") || `<div class="muted">Nada encontrado. Use “Adicionar manualmente”.</div>`;
-  } catch (e) { if ($("#s-res")) res.innerHTML = `<div class="muted">Não foi possível buscar agora. Você pode adicionar manualmente.</div>` }
+  } catch (e) { if ($("#s-res")) res.innerHTML = `<div class="muted">${esc(e.user ? e.message : "Não foi possível buscar agora.")} Você pode adicionar manualmente.</div>` }
 }
 
 function openForm(id, draft = {}) {
@@ -529,7 +543,7 @@ function openForm(id, draft = {}) {
   if (!g) return;
   const favs = (profile && profile.favorites) || [];
   const b = bestOf(g);
-  const info = [g.rawg_id ? `<a class="chipinfo link-like" href="#jogo/${g.rawg_id}" data-close>${ic("search")}Ficha completa do jogo</a>` : "", g.metacritic ? `<span class="chipinfo"><span class="mc sm">${g.metacritic}</span>Metacritic</span>` : "", g.playtime ? `<span class="chipinfo">${ic("clock")}Duração média ~${g.playtime} h</span>` : "", b ? `<button type="button" class="chipinfo link-like" data-prices="${g.id}">${ic("tag")}${money(brl(b), "BRL")} em ${esc(b.shop)}</button>` : ""].filter(Boolean).join("");
+  const info = [gameHref(g) ? `<a class="chipinfo link-like" href="#${gameHref(g)}" data-close>${ic("search")}Ficha completa do jogo</a>` : "", g.metacritic ? `<span class="chipinfo"><span class="mc sm">${g.metacritic}</span>Metacritic</span>` : "", g.playtime ? `<span class="chipinfo">${ic("clock")}Duração média ~${g.playtime} h</span>` : "", b ? `<button type="button" class="chipinfo link-like" data-prices="${g.id}">${ic("tag")}${money(brl(b), "BRL")} em ${esc(b.shop)}</button>` : ""].filter(Boolean).join("");
   modalShell(`<h2>${id ? "Editar jogo" : "Novo jogo"}</h2><p class="sub">${id ? esc(g.name) : "Preencha os dados do jogo."}</p>
   ${info ? `<div class="infos">${info}</div>` : ""}
   <div class="f" data-id="${id || ""}">
@@ -552,7 +566,7 @@ function openForm(id, draft = {}) {
       <label class="tg"><input type="checkbox" id="m-wish"${g.wishlist ? " checked" : ""}>${ic("bookmark")}Lista de desejos</label>
     </div></div>
   <div class="acts">${id ? `<button class="btn danger left" id="m-del">${ic("trash")}Remover jogo</button>` : ""}<button class="btn ghost" data-close>Cancelar</button><button class="btn" id="m-save">Salvar</button></div>`);
-  modalShell.draft = id ? null : { rawg_id: draft.rawg_id ?? null, metacritic: draft.metacritic ?? null, playtime: draft.playtime ?? null, price: draft.price ?? null };
+  modalShell.draft = id ? null : { rawg_id: draft.rawg_id ?? null, steam_id: draft.steam_id ?? null, metacritic: draft.metacritic ?? null, playtime: draft.playtime ?? null, price: draft.price ?? null };
   if (!matchMedia("(pointer:coarse)").matches) $("#m-name").focus();
 }
 function refreshPrev() { const g = { name: $("#m-name").value, cover_url: $("#m-cover").value.trim() }; $("#m-prev").innerHTML = cover(g) }
@@ -720,83 +734,77 @@ function showAuth(show, msg) {
   if (msg !== undefined) { const m = $("#auth-msg"); m.textContent = msg; m.className = "auth-msg" }
   updateInstallUI();
 }
-function emailFor(u) {
-  const b = String(CFG.EMAIL_BASE || "").trim();
-  if (/^[^@\s+]+@[^@\s]+\.[^@\s]+$/.test(b)) { const [l, d] = b.split("@"); return `${l}+${u}@${d}` }
-  return u + "@gmail.com";
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+function authMsg(id, text, ok) { const m = $(id); m.textContent = text; m.className = "auth-msg" + (ok ? " ok" : "") }
+function authError(e) {
+  const m = String((e && (e.code || e.message)) || "");
+  if (/not.?confirmed/i.test(m)) return "confirm";
+  if (/already|registered|exists/i.test(m)) return "Já existe uma conta com esse e-mail. Entre com ele ou use “Esqueci minha senha”.";
+  if (/not.?authorized/i.test(m)) return "O site ainda não consegue enviar e-mails. Avise o administrador (Instagram @movimento.enzola).";
+  if (/rate.?limit|too many/i.test(m)) return "Muitas tentativas agora. Espere alguns minutos e tente de novo.";
+  if (/password/i.test(m) && /weak|short|least/i.test(m)) return "Senha fraca. Use pelo menos 6 caracteres.";
+  if (/invalid.*email|email.*invalid/i.test(m)) return "Esse e-mail não parece válido. Confira e tente de novo.";
+  return null;
 }
-async function signInUser(u, pass) {
-  let r = await sb.auth.signInWithPassword({ email: emailFor(u), password: pass });
-  const legacy = u + "@gmail.com";
-  if (r.error && emailFor(u) !== legacy) r = await sb.auth.signInWithPassword({ email: legacy, password: pass });
-  return r;
-}
-let authMode = "login", authBusy = false, availT = 0;
-function setAuthMode(mode) {
-  authMode = mode === "signup" ? "signup" : "login";
-  const s = authMode === "signup";
-  $("#auth-title").textContent = s ? "Criar sua conta" : "Bem-vindo de volta";
-  $("#auth-sub").textContent = s ? "Escolha um usuário e uma senha. Leva menos de um minuto." : "Entre com seu usuário e senha.";
-  $("#a-login").textContent = s ? "Criar conta" : "Entrar";
-  $("#a-signup").textContent = s ? "Já tenho conta" : "Criar conta";
-  $("#f-pass2").hidden = !s; $("#a-forgot").hidden = s;
-  $("#a-pass").autocomplete = s ? "new-password" : "current-password";
-  $("#a-pass2").value = ""; $("#auth-msg").textContent = ""; $("#auth-msg").className = "auth-msg";
-  const av = $("#a-avail"); av.hidden = true; av.textContent = "";
-  $("#auth-form").dataset.mode = authMode;
-  if (s) checkAvail(); $("#a-email").focus({ preventScroll: true });
-}
-function checkAvail() {
-  clearTimeout(availT); const av = $("#a-avail"); if (authMode !== "signup" || !sb) return;
-  const u = $("#a-email").value.trim().toLowerCase().replace(/^@/, "");
-  if (!u) { av.hidden = true; return }
-  av.hidden = false;
-  if (!/^[a-z0-9._-]{3,30}$/.test(u)) { av.className = "avail bad"; av.textContent = "Use 3 a 30 letras minúsculas, números, ponto, hífen ou sublinhado."; return }
-  av.className = "avail"; av.textContent = "Verificando…";
-  availT = setTimeout(async () => {
-    const t = await sb.rpc("username_taken", { uname: u });
-    if ($("#a-email").value.trim().toLowerCase().replace(/^@/, "") !== u || authMode !== "signup") return;
-    if (t.error) { av.hidden = true; return }
-    av.className = "avail " + (t.data ? "bad" : "ok"); av.textContent = t.data ? `@${u} já existe. Escolha outro.` : `@${u} está disponível.`;
-  }, 400);
-}
-async function doAuth(signup) {
-  if (!sb || authBusy) return;
-  const u = $("#a-email").value.trim().toLowerCase().replace(/^@/, ""), pass = $("#a-pass").value, m = $("#auth-msg");
-  m.className = "auth-msg";
-  if (!/^[a-z0-9._-]{3,30}$/.test(u)) { m.textContent = "Usuário com 3 a 30 letras minúsculas, números, ponto, hífen ou sublinhado, sem espaços ou acentos."; return }
-  if (pass.length < 6) { m.textContent = "A senha precisa ter pelo menos 6 caracteres."; return }
-  if (signup && pass !== $("#a-pass2").value) { m.textContent = "As duas senhas não são iguais."; return }
-  authBusy = true; m.textContent = signup ? "Criando sua conta…" : "Entrando…"; for (const b of $$(".auth-acts .btn")) b.disabled = true;
+async function doLogin() {
+  if (!sb) return;
+  const id = $("#a-id").value.trim(), pass = $("#a-pass").value;
+  if (!id) return authMsg("#auth-msg", "Digite seu e-mail.");
+  if (!pass) return authMsg("#auth-msg", "Digite sua senha.");
+  const byEmail = id.includes("@");
+  if (!byEmail && !/^@?[a-z0-9._-]{3,30}$/i.test(id)) return authMsg("#auth-msg", "Confira o e-mail digitado.");
+  const email = byEmail ? id.toLowerCase() : id.toLowerCase().replace(/^@/, "") + "@gmail.com";
+  authMsg("#auth-msg", "Entrando…"); $("#a-login").disabled = true;
   try {
-    let r;
-    if (signup) {
-      const t = await sb.rpc("username_taken", { uname: u });
-      if (!t.error && t.data === true) { m.textContent = "Esse usuário já existe. Escolha outro."; return }
-      newSignup = true;
-      r = await sb.auth.signUp({ email: emailFor(u), password: pass });
-    } else r = await signInUser(u, pass);
-    if (r.error) {
-      newSignup = false;
-      if (signup) m.textContent = /registered|exists/i.test(r.error.message) ? "Esse usuário já existe. Escolha outro." : "Não foi possível criar a conta: " + r.error.message;
-      else {
-        const t = await sb.rpc("username_taken", { uname: u });
-        m.textContent = !t.error && t.data === false ? "Não encontramos esse usuário. Toque em “Criar conta” para cadastrar." : "Usuário ou senha incorretos.";
-      }
-      return;
-    }
-    if (signup && !r.data.session) m.textContent = "Conta criada, mas o Supabase ainda exige confirmação por e-mail. Desligue “Confirm email” em Authentication > Providers > Email e tente de novo.";
-    else m.textContent = "";
-  } finally { authBusy = false; for (const b of $$(".auth-acts .btn")) b.disabled = false }
+    const r = await sb.auth.signInWithPassword({ email, password: pass });
+    if (!r.error) { authMsg("#auth-msg", ""); return }
+    const k = authError(r.error);
+    if (k === "confirm") { $("#auth-msg").innerHTML = `Confirme seu e-mail pelo link que enviamos para <b>${esc(email)}</b>. <button type="button" class="link" data-resend="${esc(email)}">Reenviar link</button>`; $("#auth-msg").className = "auth-msg"; return }
+    authMsg("#auth-msg", k || (byEmail ? "E-mail ou senha incorretos." : "Usuário ou senha incorretos. Se você criou a conta com e-mail, entre com o e-mail."));
+  } finally { $("#a-login").disabled = false }
 }
-let newSignup = false;
+async function doSignup() {
+  if (!sb) return;
+  const email = $("#s-email").value.trim().toLowerCase(), u = $("#s-user").value.trim().toLowerCase().replace(/^@/, ""), pass = $("#s-pass").value;
+  if (!EMAIL_RE.test(email)) return authMsg("#signup-msg", "Digite um e-mail válido, como voce@email.com.");
+  if (!/^[a-z0-9._-]{3,30}$/.test(u)) return authMsg("#signup-msg", "O usuário precisa ter de 3 a 30 letras minúsculas, números, ponto, hífen ou sublinhado, sem espaços ou acentos.");
+  if (pass.length < 6) return authMsg("#signup-msg", "A senha precisa ter pelo menos 6 caracteres.");
+  authMsg("#signup-msg", "Criando sua conta…"); $("#a-signup").disabled = true;
+  try {
+    const t = await sb.rpc("username_taken", { uname: u });
+    if (!t.error && t.data === true) return authMsg("#signup-msg", "Esse usuário já existe. Escolha outro.");
+    const r = await sb.auth.signUp({ email, password: pass, options: { data: { username: u, real_email: true }, emailRedirectTo: siteUrl() } });
+    if (r.error) return authMsg("#signup-msg", authError(r.error) || "Não foi possível criar a conta: " + r.error.message);
+    if (!r.data.session) {
+      // Supabase com "Confirm email" ligado: a conta só entra depois do clique no link
+      $("#signup-msg").innerHTML = `Quase lá! Enviamos um link para <b>${esc(email)}</b>. Abra o e-mail, confirme e depois entre aqui. <button type="button" class="link" data-resend="${esc(email)}">Não chegou? Reenviar</button>`;
+      $("#signup-msg").className = "auth-msg ok";
+    } else authMsg("#signup-msg", "");
+  } finally { $("#a-signup").disabled = false }
+}
+let userTimer = null;
+function setAuthTab(up, focus) {
+  $$("[data-auth-tab]").forEach(b => b.setAttribute("aria-checked", String((b.dataset.authTab === "up") === up)));
+  $("#auth-form").hidden = up; $("#signup-form").hidden = !up;
+  if (focus) setTimeout(() => (up ? $("#s-email") : $("#a-id")).focus(), 30);
+}
+async function checkUsername() {
+  const u = $("#s-user").value.trim().toLowerCase(), h = $("#s-user-hint");
+  if (!u) { h.textContent = "É assim que seus amigos te encontram. Letras minúsculas, números, ponto, hífen ou sublinhado."; h.className = "hint"; return }
+  if (!/^[a-z0-9._-]{3,30}$/.test(u)) { h.textContent = "Use de 3 a 30 letras minúsculas, números, ponto, hífen ou sublinhado."; h.className = "hint bad"; return }
+  const t = await sb.rpc("username_taken", { uname: u });
+  if ($("#s-user").value.trim().toLowerCase() !== u) return;
+  if (t.error) { h.textContent = "É assim que seus amigos te encontram."; h.className = "hint"; return }
+  h.textContent = t.data ? `@${u} já existe. Escolha outro.` : `@${u} está livre.`; h.className = "hint " + (t.data ? "bad" : "good");
+}
 async function onSession(session, ev) {
   const was = user && user.id;
   user = session ? session.user : null; sessionKnown = true;
-  if (!user) { games = []; profile = null; loaded = false; socialReset(); route(); return }
+  if (user && was === user.id && tab === "config") renderConfig();
+  if (!user) { games = []; profile = null; loaded = false; socialReset(); if (was) { setAuthTab(false); $("#a-pass").value = ""; authMsg("#auth-msg", "") } route(); return }
   if (was === user.id) return;
   loaded = false; route(); await loadAll(); socialStart();
-  if (newSignup) { newSignup = false; setTimeout(() => offerRecoveryCode(true), 600) }
+  if (ev === "PASSWORD_RECOVERY") setTimeout(openNewPassword, 300);
   maybeShowInstallBar();
 }
 
@@ -844,7 +852,7 @@ document.addEventListener("click", async e => {
   if (b = c("nav.tabs button")) { location.hash = b.dataset.tab; return }
   if (c("#who-btn")) { const m = $("#menu"); m.hidden = !m.hidden; $("#who-btn").setAttribute("aria-expanded", String(!m.hidden)); return }
   if (c("#theme-btn")) { closeMenus(); setTheme(curTheme() === "light" ? "dark" : "light"); return }
-  if (c("#logout")) { closeMenus(); await sb.auth.signOut(); location.hash = ""; return }
+  if (c("#logout")) { closeMenus(); await pushLogout(); await sb.auth.signOut(); location.hash = ""; return }
   if (b = c("[data-go]")) { closeMenus(); const h = b.dataset.go; if (location.hash.slice(1) === h) route(); else location.hash = h; return }
   if (b = c("[data-prices]")) { openPrices(b.dataset.prices); return }
   if (b = c("[data-refresh-price]")) { const id = b.dataset.refreshPrice, inModal = !!c(".modal"); await refreshPrices(true, id); if (inModal && $("#modal .modal")) openPrices(id); return }
@@ -929,9 +937,21 @@ document.addEventListener("keydown", e => {
   }
   if (e.key === "Enter" && e.target.id === "s-q") { e.preventDefault(); clearTimeout(searchTimer); runSearch() }
 });
-$("#auth-form").addEventListener("submit", e => { e.preventDefault(); doAuth(authMode === "signup") });
-$("#a-signup").addEventListener("click", () => setAuthMode(authMode === "signup" ? "login" : "signup"));
-$("#a-email").addEventListener("input", checkAvail);
+$("#auth-form").addEventListener("submit", e => { e.preventDefault(); doLogin() });
+$("#signup-form").addEventListener("submit", e => { e.preventDefault(); doSignup() });
+document.addEventListener("click", async e => {
+  const t = e.target.closest("[data-auth-tab]");
+  if (t) { setAuthTab(t.dataset.authTab === "up", true); return }
+  const r = e.target.closest("[data-resend]");
+  if (r) {
+    const { error } = await sb.auth.resend({ type: "signup", email: r.dataset.resend, options: { emailRedirectTo: siteUrl() } });
+    toast(error ? (authError(error) || "Não foi possível reenviar agora.") : "Link reenviado. Confira também a caixa de spam.");
+  }
+});
+document.addEventListener("input", e => {
+  if (e.target.id === "s-user") { e.target.value = e.target.value.toLowerCase().replace(/\s/g, ""); clearTimeout(userTimer); userTimer = setTimeout(checkUsername, 400) }
+  if (e.target.id === "s-pass") $("#s-meter").className = "pwmeter s" + pwScore(e.target.value);
+});
 
 /* arrastar e soltar (tier list) */
 let dragId = null;
@@ -950,7 +970,7 @@ function boot() {
     sessionKnown = true; showAuth(true, "Configure o endereço e a chave do Supabase no arquivo config.js."); return;
   }
   sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
-  sb.auth.onAuthStateChange((ev, session) => { setTimeout(() => { if (ev === "PASSWORD_RECOVERY") toast("Defina sua nova senha em Configurações."); onSession(session, ev) }, 0) });
+  sb.auth.onAuthStateChange((ev, session) => { setTimeout(() => { if (ev === "PASSWORD_RECOVERY" && user && session && user.id === session.user.id) openNewPassword(); onSession(session, ev) }, 0) });
   sb.auth.getSession().then(({ data }) => { if (!data.session && !sessionKnown) onSession(null) });
   route();
 }

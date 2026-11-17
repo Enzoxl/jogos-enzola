@@ -1,7 +1,7 @@
-/* Jogos Enzola — service worker: abre rápido e funciona mesmo com internet ruim.
+/* Jogos Enzola — service worker: abre rápido, funciona com internet ruim e recebe notificações no celular.
    Só guarda os arquivos do próprio site; dados do Supabase e preços sempre vêm da rede. */
-const CACHE = "jogos-enzola-v3";
-const SHELL = ["./", "index.html", "styles.css", "app.js", "jogo.js", "social.js", "extras.js", "config.js", "logo.png", "manifest.webmanifest",
+const CACHE = "jogos-enzola-v3-2";
+const SHELL = ["./", "index.html", "styles.css", "app.js", "jogo.js", "social.js", "extras.js", "config.js", "logo.png", "hipopotamo.webp", "manifest.webmanifest",
   "icons/icon-192.png", "icons/icon-512.png", "icons/favicon.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())) });
 self.addEventListener("activate", e => {
@@ -10,6 +10,36 @@ self.addEventListener("activate", e => {
 self.addEventListener("fetch", e => {
   const r = e.request, u = new URL(r.url);
   if (r.method !== "GET" || u.origin !== location.origin) return;
-  e.respondWith(fetch(r).then(res => { if (res.ok) { const cp = res.clone(); caches.open(CACHE).then(c => c.put(r, cp)) } return res })
+  // música e outros arquivos de mídia: deixa o navegador cuidar (pedidos em partes / Range)
+  if (r.headers.has("range") || /\.(mp3|m4a|ogg|mp4|webm)$/i.test(u.pathname)) return;
+  e.respondWith(fetch(r).then(res => { if (res.ok && res.status === 200) { const cp = res.clone(); caches.open(CACHE).then(c => c.put(r, cp)) } return res })
     .catch(() => caches.match(r).then(m => m || caches.match("index.html"))));
+});
+
+/* ---------- notificações no celular ---------- */
+self.addEventListener("push", e => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {} } catch (er) { d = { title: "Jogos Enzola", body: e.data ? e.data.text() : "" } }
+  e.waitUntil((async () => {
+    // se o site estiver aberto e na tela, o aviso já aparece lá dentro
+    const cs = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    if (cs.some(c => c.visibilityState === "visible" && c.focused)) return;
+    await self.registration.showNotification(d.title || "Jogos Enzola", {
+      body: d.body || "", icon: "icons/icon-192.png", badge: "icons/favicon.png",
+      tag: d.tag || "enzola", renotify: true, data: { url: d.url || "#perfil" }, vibrate: [90, 60, 90],
+    });
+  })());
+});
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  const target = new URL("./" + ((e.notification.data && e.notification.data.url) || ""), self.registration.scope).href;
+  e.waitUntil((async () => {
+    const cs = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    const c = cs.find(x => x.url.startsWith(self.registration.scope));
+    if (c) { await c.focus(); try { await c.navigate(target) } catch (er) { c.postMessage({ go: target }) } return }
+    await self.clients.openWindow(target);
+  })());
+});
+self.addEventListener("pushsubscriptionchange", e => {
+  // o navegador trocou a assinatura: o site refaz o cadastro na próxima vez que abrir (pushSync)
 });

@@ -10,6 +10,7 @@ alter table public.games
   add column if not exists metacritic       integer,      -- nota do Metacritic (RAWG)
   add column if not exists playtime         integer,      -- duração média em horas (RAWG)
   add column if not exists rawg_id          integer,      -- id do jogo no RAWG
+  add column if not exists steam_id         integer,      -- id do jogo na Steam (jogos que a RAWG não tem)
   add column if not exists target_price     numeric,      -- preço-alvo da lista de desejos
   add column if not exists price            jsonb,        -- último preço encontrado (melhor oferta + lojas)
   add column if not exists price_checked_at timestamptz;  -- quando o preço foi conferido
@@ -54,7 +55,8 @@ $$;
 revoke all on function public.public_profile(text) from public;
 grant execute on function public.public_profile(text) to anon, authenticated;
 
--- 3) Cadastro: checa se o usuário já existe (formato antigo e novo de e-mail)
+-- 3) Cadastro com e-mail de verdade -------------------------------------
+-- O nome de usuário é escolhido no cadastro e não pode repetir.
 create or replace function public.username_taken(uname text)
 returns boolean
 language sql
@@ -63,15 +65,35 @@ security definer
 set search_path = public, auth
 as $$
   select exists (select 1 from public.profiles where username = lower(uname))
-      or exists (
-        select 1 from auth.users
-        where lower(split_part(email, '@', 1)) = lower(uname)
-           or lower(split_part(split_part(email, '@', 1), '+', 2)) = lower(uname)
-      );
+      or exists (select 1 from auth.users
+                 where lower(raw_user_meta_data ->> 'username') = lower(uname)
+                    or lower(email) = lower(uname) || '@gmail.com');   -- contas antigas
 $$;
 revoke all on function public.username_taken(text) from public;
 grant execute on function public.username_taken(text) to anon, authenticated;
 
+-- Cria o perfil assim que a conta nasce (antes mesmo de confirmar o e-mail),
+-- reservando o nome de usuário escolhido.
+create or replace function public.handle_new_user()
+returns trigger language plpgsql security definer set search_path = public as $$
+declare u text := lower(new.raw_user_meta_data ->> 'username');
+begin
+  if u ~ '^[a-z0-9._-]{3,30}$' and not exists (select 1 from public.profiles where username = u) then
+    insert into public.profiles (user_id, username, nickname, favorites)
+    values (new.id, u, u, '[]') on conflict (user_id) do nothing;
+  end if;
+  return new;
+end $$;
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- Nome de usuário único (se já houver repetidos antigos, avisa e segue)
+do $$ begin
+  create unique index if not exists profiles_username_key on public.profiles (username);
+exception when unique_violation then
+  raise notice 'Há nomes de usuário repetidos; o índice único não foi criado.';
+end $$;
 
 -- 4) ID próprio de 4 dígitos (#0427) ----------------------------------
 create or replace function public.new_tag()
@@ -246,37 +268,7 @@ end $$;
 drop trigger if exists notify_friendship on public.friendships;
 create trigger notify_friendship after insert or update on public.friendships for each row execute function public.notify_friendship();
 
--- 8) Código de recuperação de senha ---------------------------------------
--- Guarda só o "hash" do código. Ninguém lê esta tabela pelo site; só a função do servidor.
-create table if not exists public.account_recovery (
-  user_id      uuid primary key references auth.users(id) on delete cascade,
-  code_hash    text,
-  failed       int not null default 0,
-  locked_until timestamptz,
-  updated_at   timestamptz not null default now()
-);
-alter table public.account_recovery enable row level security;
-
-create or replace function public.set_recovery_hash(h text)
-returns void language plpgsql security definer set search_path = public as $$
-begin
-  if auth.uid() is null then raise exception 'Faça login primeiro'; end if;
-  if h !~ '^[0-9a-f]{64}$' then raise exception 'Código inválido'; end if;
-  insert into public.account_recovery (user_id, code_hash, failed, locked_until, updated_at)
-  values (auth.uid(), h, 0, null, now())
-  on conflict (user_id) do update set code_hash = excluded.code_hash, failed = 0, locked_until = null, updated_at = now();
-end $$;
-revoke all on function public.set_recovery_hash(text) from public;
-grant execute on function public.set_recovery_hash(text) to authenticated;
-
-create or replace function public.has_recovery()
-returns boolean language sql stable security definer set search_path = public as $$
-  select exists (select 1 from public.account_recovery where user_id = auth.uid() and code_hash is not null);
-$$;
-revoke all on function public.has_recovery() from public;
-grant execute on function public.has_recovery() to authenticated;
-
--- 9) Cache de vídeos do YouTube (escrito só pela função do servidor) -----
+-- 8) Cache de vídeos do YouTube (escrito só pela função do servidor) -----
 create table if not exists public.video_cache (
   rawg_id    int primary key,
   data       jsonb not null,
@@ -286,7 +278,7 @@ alter table public.video_cache enable row level security;
 drop policy if exists "videos: leitura" on public.video_cache;
 create policy "videos: leitura" on public.video_cache for select to authenticated, anon using (true);
 
--- 10) Tempo real: pedidos de amizade, notificações e mensagens ------------
+-- 9) Tempo real: pedidos de amizade, notificações e mensagens ------------
 do $$
 declare t text;
 begin
@@ -299,3 +291,53 @@ begin
     end loop;
   end if;
 end $$;
+
+-- 10) Notificações no celular (Web Push) --------------------------------
+-- Cada aparelho que ativar as notificações fica registrado aqui.
+create table if not exists public.push_subscriptions (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  endpoint   text not null unique,
+  p256dh     text not null,
+  auth       text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists push_subscriptions_user_idx on public.push_subscriptions (user_id);
+alter table public.push_subscriptions enable row level security;
+drop policy if exists "push: dono" on public.push_subscriptions;
+create policy "push: dono" on public.push_subscriptions for all to authenticated
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- Segredos internos (só a função do servidor lê; o site não tem acesso nenhum).
+create table if not exists public.app_secrets (
+  k text primary key,
+  v text not null
+);
+alter table public.app_secrets enable row level security;   -- sem políticas = ninguém do site lê
+revoke all on public.app_secrets from anon, authenticated;
+insert into public.app_secrets (k, v) values ('push_hook', replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', ''))
+  on conflict (k) do nothing;
+
+-- Quando entra uma notificação (cutucada, sugestão, mensagem, amizade), avisa a função "enzola",
+-- que manda o push para o celular. Se algo falhar aqui, a notificação no site continua funcionando.
+create extension if not exists pg_net with schema extensions;
+create or replace function public.push_notification()
+returns trigger language plpgsql security definer set search_path = public, extensions as $$
+declare u text; a text; h text;
+begin
+  select v into u from public.app_secrets where k = 'function_url';
+  select v into a from public.app_secrets where k = 'anon_key';
+  select v into h from public.app_secrets where k = 'push_hook';
+  if u is null or h is null then return new; end if;
+  if not exists (select 1 from public.push_subscriptions where user_id = new.user_id) then return new; end if;
+  perform net.http_post(
+    url := u,
+    body := jsonb_build_object('action', 'push', 'hook', h, 'id', new.id),
+    headers := jsonb_build_object('Content-Type', 'application/json', 'Authorization', 'Bearer ' || coalesce(a, ''), 'apikey', coalesce(a, ''))
+  );
+  return new;
+exception when others then
+  return new;
+end $$;
+drop trigger if exists push_notification on public.notifications;
+create trigger push_notification after insert on public.notifications for each row execute function public.push_notification();
