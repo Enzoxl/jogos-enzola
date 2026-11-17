@@ -115,48 +115,29 @@
   </section>
 
   <section class="auth-pane">
-    <div class="auth-card">
+    <form class="auth-card" id="auth-form" autocomplete="on" novalidate>
       <span class="logo md only-sm" role="img" aria-label="Movimento Enzola"></span>
-      <div class="seg auth-tabs" role="tablist" aria-label="Entrar ou criar conta">
-        <button role="tab" aria-checked="true" data-auth-tab="in">Entrar</button>
-        <button role="tab" aria-checked="false" data-auth-tab="up">Criar conta</button>
-      </div>
-
-      <form class="auth-form" id="auth-form" autocomplete="on" novalidate>
-        <h2>Bem-vindo de volta</h2>
-        <label class="fld">E-mail
-          <span class="inp"><svg class="ic"><use href="#i-mail"/></svg><input type="text" id="a-id" autocomplete="username" autocapitalize="none" spellcheck="false" inputmode="email" placeholder="voce@email.com"></span>
-          <span class="hint">Conta antiga, criada só com usuário? Digite o usuário aqui.</span>
-        </label>
-        <label class="fld">Senha
-          <span class="inp"><svg class="ic"><use href="#i-lock"/></svg><input type="password" id="a-pass" autocomplete="current-password" placeholder="sua senha"></span>
-        </label>
-        <div class="auth-msg" id="auth-msg" role="status" aria-live="polite"></div>
+      <h2 id="auth-title">Bem-vindo de volta</h2>
+      <p class="muted" id="auth-sub">Entre com seu usuário e senha.</p>
+      <label class="fld">Usuário
+        <span class="inp"><svg class="ic"><use href="#i-user"/></svg><input type="text" id="a-email" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="seu_usuario"></span>
+        <span class="avail" id="a-avail" aria-live="polite" hidden></span>
+      </label>
+      <label class="fld">Senha
+        <span class="inp"><svg class="ic"><use href="#i-shield"/></svg><input type="password" id="a-pass" autocomplete="current-password" placeholder="mínimo de 6 caracteres"></span>
+      </label>
+      <label class="fld" id="f-pass2" hidden>Repita a senha
+        <span class="inp"><svg class="ic"><use href="#i-shield"/></svg><input type="password" id="a-pass2" autocomplete="new-password" placeholder="digite a senha de novo"></span>
+      </label>
+      <div class="auth-msg" id="auth-msg" role="status" aria-live="polite"></div>
+      <div class="auth-acts">
         <button type="submit" class="btn" id="a-login">Entrar</button>
-        <button type="button" class="link forgot" id="a-forgot">Esqueci minha senha</button>
-      </form>
-
-      <form class="auth-form" id="signup-form" autocomplete="on" novalidate hidden>
-        <h2>Crie sua conta</h2>
-        <label class="fld">Seu e-mail
-          <span class="inp"><svg class="ic"><use href="#i-mail"/></svg><input type="email" id="s-email" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="voce@email.com"></span>
-          <span class="hint">Usado para entrar e para recuperar a senha. Ninguém mais vê.</span>
-        </label>
-        <label class="fld">Nome de usuário
-          <span class="inp"><svg class="ic"><use href="#i-user"/></svg><input type="text" id="s-user" autocomplete="nickname" autocapitalize="none" spellcheck="false" maxlength="30" placeholder="ex.: enzola"></span>
-          <span class="hint" id="s-user-hint">É assim que seus amigos te encontram. Letras minúsculas, números, ponto, hífen ou sublinhado.</span>
-        </label>
-        <label class="fld">Senha
-          <span class="inp"><svg class="ic"><use href="#i-lock"/></svg><input type="password" id="s-pass" autocomplete="new-password" placeholder="mínimo de 6 caracteres"></span>
-          <span class="pwmeter" id="s-meter"><i></i></span>
-        </label>
-        <div class="auth-msg" id="signup-msg" role="status" aria-live="polite"></div>
-        <button type="submit" class="btn" id="a-signup">Criar conta</button>
-      </form>
-
+        <button type="button" class="btn ghost" id="a-signup">Criar conta</button>
+      </div>
+      <button type="button" class="link forgot" id="a-forgot">Esqueci minha senha</button>
       <p class="fine">Cada conta tem a sua própria biblioteca. Só aparece para outras pessoas se você deixar o perfil público.</p>
       <button type="button" class="install-link" data-act="install" hidden><svg class="ic"><use href="#i-phone"/></svg>Instalar o app Jogos Enzola</button>
-    </div>
+    </form>
   </section>
 </div>
 

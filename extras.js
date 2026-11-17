@@ -15,6 +15,7 @@ const curTheme = () => document.documentElement.dataset.theme === "light" ? "lig
 matchMedia("(prefers-color-scheme: light)").addEventListener?.("change", () => { if (themePref() === "auto") applyLocalPrefs() });
 
 /* ---------- configurações ---------- */
+let cfgRecovery = null;
 async function saveSettings(patch) {
   const settings = { ...((profile && profile.settings) || {}), ...patch };
   if (!caps.v3) { profile.settings = settings; render(); toast("Salvo só neste aparelho. Rode a migracao.sql para guardar na conta."); return }
@@ -26,24 +27,22 @@ function renderConfig() {
   const el = $("#config"); if (!el || tab !== "config") return;
   if (!loaded) { el.innerHTML = `<div class="sk" style="height:400px;border-radius:20px"></div>`; return }
   const p = profile || {}, t = themePref(), v3 = caps.v3;
+  if (v3 && cfgRecovery === null) { cfgRecovery = "…"; sb.rpc("has_recovery").then(r => { cfgRecovery = r.error ? "?" : !!r.data; renderConfig() }) }
   const standaloneNow = standalone();
-  const keep = ["pw-cur", "pw-new", "pw-new2", "em-new"].map(id => [id, $("#" + id) ? $("#" + id).value : ""]), act = document.activeElement && document.activeElement.id;
+  const keep = ["pw-cur", "pw-new", "pw-new2"].map(id => [id, $("#" + id) ? $("#" + id).value : ""]), act = document.activeElement && document.activeElement.id;
   el.innerHTML = `<div class="sec-head"><div><h2 class="h">Configurações</h2><p class="muted">Conta, aparência, privacidade e dados.</p></div></div>
   <div class="cfg">
     <nav class="cfg-nav" aria-label="Seções das configurações">${[["conta", "user", "Conta e segurança"], ["convite", "userplus", "Convidar amigos"], ["aparencia", "sun", "Aparência"], ["privacidade", "shield", "Privacidade"], ["notificacoes", "bell", "Notificações"], ["precos", "tag", "Preços e lojas"], ["dados", "file", "Seus dados"], ["app", "phone", "App"]].map(([id, i, l]) => `<a href="#config" data-cfg-jump="${id}">${ic(i)}${l}</a>`).join("")}</nav>
     <div class="cfg-body">
     <section class="panel cfg-sec" id="cfg-conta"><h3>${ic("user")}Conta e segurança</h3>
       ${row("Seu usuário", "Seus amigos podem te achar pelo usuário ou pelo ID.", `<span class="idtag big">@${esc(uname())}${p.tag ? " #" + esc(p.tag) : ""}</span>${p.tag ? `<button class="btn ghost sm" data-act="copy-id">Copiar</button>` : ""}`)}
-      <form class="cfg-pw" id="em-form" novalidate><b>E-mail da conta</b>
-        ${isLegacy() ? `<p class="cfg-warn">${ic("shield")}<span>Sua conta foi criada só com usuário e ainda não tem e-mail. Cadastre um para entrar com ele e conseguir recuperar a senha se esquecer.</span></p>` : `<span class="hint">Atual: <b>${esc(user.email)}</b>${user.new_email ? ` · aguardando confirmação de <b>${esc(user.new_email)}</b>` : ""}</span>`}
-        <div class="f2"><label>${isLegacy() ? "Seu e-mail" : "Novo e-mail"}<span class="inp">${ic("mail")}<input type="email" id="em-new" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="voce@email.com"></span></label><span></span></div>
-        <div><button class="btn${isLegacy() ? "" : " ghost"}" id="em-save">Salvar e-mail</button></div></form>
       <form class="cfg-pw" id="pw-form" autocomplete="on"><b>Alterar senha</b>
-        <input type="text" autocomplete="username" value="${esc(user.email)}" hidden>
+        <input type="text" autocomplete="username" value="${esc(uname())}" hidden>
         <div class="f2"><label>Senha atual<span class="inp">${ic("lock")}<input type="password" id="pw-cur" autocomplete="current-password"></span></label><span></span></div>
         <div class="f2"><label>Nova senha<span class="inp">${ic("key")}<input type="password" id="pw-new" autocomplete="new-password" minlength="6"></span><span class="pwmeter" id="pw-meter"><i></i></span><span class="hint" id="pw-hint">Use 8 ou mais caracteres, misturando letras e números.</span></label>
           <label>Repita a nova senha<span class="inp">${ic("key")}<input type="password" id="pw-new2" autocomplete="new-password"></span></label></div>
         <div><button class="btn" id="pw-save">Salvar nova senha</button></div></form>
+      ${v3 ? row("Código de recuperação", cfgRecovery === true ? "Você tem um código ativo. Ele serve para trocar a senha se você esquecer." : cfgRecovery === false ? "<b class='warn-t'>Você ainda não tem um código.</b> Sem ele, para recuperar a senha você vai precisar pedir ao administrador." : "Serve para trocar a senha se você esquecer.", `<button class="btn ${cfgRecovery === false ? "" : "ghost "}sm" data-cfg-act="recovery">${ic("key")}${cfgRecovery === true ? "Gerar novo código" : "Gerar código"}</button>`) : ""}
       ${row("Sair de todos os aparelhos", "Encerra a sessão no celular, no computador e onde mais você tiver entrado.", `<button class="btn ghost sm" data-cfg-act="logout-all">${ic("logout")}Sair de todos</button>`)}
       ${FN() ? row("Excluir conta", "Apaga para sempre sua biblioteca, amigos, mensagens e o seu usuário.", `<button class="btn danger sm" data-cfg-act="delete">${ic("trash")}Excluir minha conta</button>`) : ""}
     </section>
@@ -85,8 +84,7 @@ function renderConfig() {
     </div>
   </div>`;
   for (const [id, v] of keep) if (v && $("#" + id)) $("#" + id).value = v;
-  if ($("#pw-new") && $("#pw-new").value) $("#pw-meter").className = "pwmeter s" + pwScore($("#pw-new").value);
-  if (act && $("#" + act) && /^(pw|em)-/.test(act)) $("#" + act).focus();
+  if (act && $("#" + act) && /^pw-/.test(act)) $("#" + act).focus();
 }
 function pwScore(s) { let n = 0; if (s.length >= 8) n++; if (s.length >= 12) n++; if (/[a-z]/.test(s) && /[A-Z]/.test(s)) n++; if (/\d/.test(s)) n++; if (/[^A-Za-z0-9]/.test(s)) n++; return Math.min(4, n) }
 async function changePassword() {
@@ -105,73 +103,63 @@ async function changePassword() {
   } finally { b.disabled = false; b.textContent = "Salvar nova senha" }
 }
 
-/* ---------- e-mail da conta, esqueci a senha e nova senha ---------- */
+/* ---------- código de recuperação ---------- */
+const RC_ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+function genCode() { const a = new Uint32Array(16); crypto.getRandomValues(a); return [...a].map(x => RC_ALPHA[x % 32]).join("") }
+const fmtCode = c => c.match(/.{4}/g).join("-");
+async function sha256hex(s) { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join("") }
+async function offerRecoveryCode(isNew) {
+  if (!caps.v3) { if (!isNew) toast("Rode a migracao.sql para usar o código de recuperação."); return }
+  if (!(window.crypto && crypto.subtle)) { toast("Abra o site com https para gerar o código."); return }
+  const code = genCode();
+  const { error } = await sb.rpc("set_recovery_hash", { h: await sha256hex(`${user.id}:${code}`) });
+  if (error) { if (!isNew) toast("Não foi possível gerar o código agora."); return }
+  cfgRecovery = true;
+  const txt = `Jogos Enzola — código de recuperação\nUsuário: ${uname()}\nCódigo: ${fmtCode(code)}\n\nGuarde em um lugar seguro. Use em "Esqueci minha senha". Cada código funciona uma vez.`;
+  modal2(`<h2>${isNew ? "Conta criada! Guarde seu código" : "Seu novo código de recuperação"}</h2>
+    <p class="sub">Se você esquecer a senha, é com este código que você entra de novo. Ele aparece só agora.</p>
+    <div class="rcode" aria-label="Código de recuperação">${fmtCode(code)}</div>
+    <div class="rc-acts"><button class="btn ghost sm" data-rc="copy">${ic("file")}Copiar</button><button class="btn ghost sm" data-rc="save">${ic("download")}Salvar arquivo</button></div>
+    <p class="hint">Dica: tire um print ou guarde no seu gerenciador de senhas. ${isNew ? "" : "O código anterior deixou de funcionar."}</p>
+    <label class="tg" style="margin-top:12px"><input type="checkbox" id="rc-ok">Guardei meu código</label>
+    <div class="acts"><button class="btn" id="rc-done" disabled>Concluir</button></div>`);
+  modal2.txt = txt; modal2.code = fmtCode(code);
+  if (tab === "config") renderConfig();
+}
 function openForgot() {
-  const v = $("#a-id") ? $("#a-id").value.trim() : "";
-  modalShell(`<h2>Esqueci minha senha</h2>
-    <p class="sub">Digite o e-mail da sua conta. Vamos mandar um link para você criar uma senha nova.</p>
-    <form class="f" id="fg-form" novalidate>
-      <label>E-mail<span class="inp">${ic("mail")}<input type="email" id="fg-email" value="${esc(v.includes("@") ? v : "")}" autocomplete="email" autocapitalize="none" spellcheck="false" placeholder="voce@email.com"></span></label>
+  const u = $("#a-email").value.trim();
+  modalShell(`<h2>Recuperar acesso</h2>
+    ${FN() ? `<p class="sub">Use o código de recuperação que você guardou ao criar a conta (ou que gerou em Configurações).</p>
+    <form class="f" id="fg-form">
+      <label>Usuário<span class="inp">${ic("user")}<input type="text" id="fg-user" value="${esc(u)}" autocomplete="username" autocapitalize="none" spellcheck="false"></span></label>
+      <label>Código de recuperação<span class="inp">${ic("key")}<input type="text" id="fg-code" placeholder="XXXX-XXXX-XXXX-XXXX" autocapitalize="characters" autocomplete="off" spellcheck="false" maxlength="19"></span></label>
+      <div class="f2"><label>Nova senha<span class="inp">${ic("lock")}<input type="password" id="fg-pass" autocomplete="new-password"></span></label>
+        <label>Repita a nova senha<span class="inp">${ic("lock")}<input type="password" id="fg-pass2" autocomplete="new-password"></span></label></div>
       <div class="auth-msg" id="fg-msg" role="status" aria-live="polite"></div>
-      <div class="acts" style="margin-top:4px"><button type="button" class="btn ghost" data-close>Cancelar</button><button class="btn" id="fg-go">${ic("send")}Enviar link</button></div>
-    </form>
-    <div class="fg-help">${ic("insta")}<p><b>Sua conta é antiga e não tem e-mail?</b> Mande uma mensagem para <a href="https://www.instagram.com/movimento.enzola/" target="_blank" rel="noopener">@movimento.enzola</a> no Instagram com o seu usuário para redefinir a senha. Depois, cadastre seu e-mail em Configurações.</p></div>`);
-  setTimeout(() => $("#fg-email") && $("#fg-email").focus(), 50);
+      <div class="acts" style="margin-top:4px"><button type="button" class="btn ghost" data-close>Cancelar</button><button class="btn" id="fg-go">Trocar senha e entrar</button></div>
+    </form>` : `<p class="sub">A recuperação automática ainda não foi ativada neste site.</p>`}
+    <div class="fg-help">${ic("insta")}<p><b>Não tem o código?</b> Mande uma mensagem para <a href="https://www.instagram.com/movimento.enzola/" target="_blank" rel="noopener">@movimento.enzola</a> no Instagram com o seu usuário. O administrador redefine sua senha pelo painel do Supabase.</p></div>`);
+  setTimeout(() => { const i = $(u ? "#fg-code" : "#fg-user"); if (i) i.focus() }, 50);
 }
 async function doForgot() {
-  const email = $("#fg-email").value.trim().toLowerCase(), m = $("#fg-msg");
-  if (!EMAIL_RE.test(email)) { m.className = "auth-msg"; m.textContent = "Digite o e-mail da sua conta, como voce@email.com."; return }
-  const b = $("#fg-go"); b.disabled = true; m.className = "auth-msg"; m.textContent = "Enviando…";
+  const u = $("#fg-user").value.trim().toLowerCase().replace(/^@/, ""), code = $("#fg-code").value, p1 = $("#fg-pass").value, p2 = $("#fg-pass2").value, m = $("#fg-msg");
+  if (!/^[a-z0-9._-]{3,30}$/.test(u)) return m.textContent = "Confira o usuário.";
+  if (code.replace(/[^A-Za-z0-9]/g, "").length !== 16) return m.textContent = "O código tem 16 letras e números (ex.: ABCD-2345-EFGH-6789).";
+  if (p1.length < 6) return m.textContent = "A nova senha precisa ter pelo menos 6 caracteres.";
+  if (p1 !== p2) return m.textContent = "As duas senhas não são iguais.";
+  const b = $("#fg-go"); b.disabled = true; m.className = "auth-msg"; m.textContent = "Verificando…";
   try {
-    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: siteUrl() });
-    if (error) { m.textContent = authError(error) || "Não foi possível enviar agora. Tente de novo em alguns minutos."; return }
-    m.className = "auth-msg ok"; m.innerHTML = `Pronto! Se existir uma conta com <b>${esc(email)}</b>, o link chega em alguns minutos. Confira também a caixa de spam.`;
-    b.hidden = true;
-  } finally { b.disabled = false }
+    const r = await api("recuperar", { username: u, code, password: p1 });
+    if (!r || !r.ok) throw new Error("Usuário ou código inválido.");
+    m.className = "auth-msg ok"; m.textContent = "Senha trocada! Entrando…";
+    const s = await sb.auth.signInWithPassword({ email: r.email, password: p1 });
+    if (s.error) { m.textContent = "Senha trocada. Entre com a nova senha."; return }
+    closeModal(); afterRecovery = true;
+  } catch (e) { m.className = "auth-msg"; m.textContent = /tentativas/.test(e.message) ? e.message : /inválid/.test(e.message) ? "Usuário ou código inválido." : "Não foi possível trocar a senha agora. Tente de novo." }
+  finally { b.disabled = false }
 }
-function openNewPassword() {
-  modal2(`<h2>Crie uma nova senha</h2><p class="sub">Você entrou pelo link de recuperação. Escolha a senha nova da sua conta.</p>
-    <form class="f" id="np-form" novalidate>
-      <input type="text" autocomplete="username" value="${esc(user ? user.email : "")}" hidden>
-      <label>Nova senha<span class="inp">${ic("lock")}<input type="password" id="np-pass" autocomplete="new-password"></span><span class="pwmeter" id="np-meter"><i></i></span></label>
-      <label>Repita a nova senha<span class="inp">${ic("lock")}<input type="password" id="np-pass2" autocomplete="new-password"></span></label>
-      <div class="auth-msg" id="np-msg" role="status" aria-live="polite"></div>
-      <div class="acts"><button class="btn" id="np-go">Salvar nova senha</button></div>
-    </form>`);
-  setTimeout(() => $("#np-pass") && $("#np-pass").focus(), 50);
-}
-async function doNewPassword() {
-  const a = $("#np-pass").value, b2 = $("#np-pass2").value, m = $("#np-msg");
-  if (a.length < 6) return m.textContent = "A senha precisa ter pelo menos 6 caracteres.";
-  if (a !== b2) return m.textContent = "As duas senhas não são iguais.";
-  const b = $("#np-go"); b.disabled = true;
-  const r = await sb.auth.updateUser({ password: a }); b.disabled = false;
-  if (r.error) { m.textContent = authError(r.error) || "Não foi possível salvar: " + r.error.message; return }
-  closeModal2(); history.replaceState(null, "", siteUrl() + "#perfil"); toast("Senha nova salva. Pronto!");
-}
-async function changeEmail() {
-  const email = $("#em-new").value.trim().toLowerCase();
-  if (!EMAIL_RE.test(email)) return toast("Digite um e-mail válido, como voce@email.com.");
-  if (email === (user.email || "").toLowerCase()) return toast("Esse já é o e-mail da sua conta.");
-  const b = $("#em-save"); b.disabled = true; b.textContent = "Salvando…";
-  try {
-    const r = await sb.auth.updateUser({ email, data: { username: uname() } }, { emailRedirectTo: siteUrl() + "#config" });
-    if (r.error) return toast(authError(r.error) || "Não foi possível trocar o e-mail: " + r.error.message);
-    const u = r.data && r.data.user;
-    if (u && (u.email || "").toLowerCase() === email) {
-      await sb.auth.updateUser({ data: { real_email: true, username: uname() } });
-      user = { ...user, ...u, user_metadata: { ...(u.user_metadata || {}), real_email: true, username: uname() } };
-      toast("E-mail salvo. Agora você entra com ele e pode recuperar a senha.");
-    } else toast(`Enviamos um link de confirmação para ${email}. A troca vale depois do clique.`);
-    renderConfig();
-  } finally { const b2 = $("#em-save"); if (b2) { b2.disabled = false; b2.textContent = "Salvar e-mail" } }
-}
-document.addEventListener("submit", e => {
-  if (e.target.id === "fg-form") { e.preventDefault(); doForgot() }
-  if (e.target.id === "np-form") { e.preventDefault(); doNewPassword() }
-  if (e.target.id === "pw-form") { e.preventDefault(); changePassword() }
-  if (e.target.id === "em-form") { e.preventDefault(); changeEmail() }
-});
+let afterRecovery = false;
+document.addEventListener("submit", e => { if (e.target.id === "fg-form") { e.preventDefault(); doForgot() } if (e.target.id === "pw-form") { e.preventDefault(); changePassword() } });
 
 /* ---------- instalar o app ---------- */
 let deferredPrompt = null;
@@ -385,6 +373,8 @@ document.addEventListener("click", async e => {
   if (c("[data-close2]")) { closeModal2(); return }
   if (b = c("[data-inst]")) { $$("[data-inst]").forEach(x => x.setAttribute("aria-checked", x === b)); $$("[data-inst-panel]").forEach(p => p.hidden = p.dataset.instPanel !== b.dataset.inst); return }
   if (c("[data-ib='close']")) { $("#install-bar").hidden = true; lsSet("install-dismissed", true); return }
+  if (b = c("[data-rc]")) { if (b.dataset.rc === "copy") copyText(modal2.code, "Código copiado."); else { const bl = new Blob([modal2.txt], { type: "text/plain;charset=utf-8" }); shareOrDownload(bl, "codigo-recuperacao-jogos-enzola.txt", "Código de recuperação") } return }
+  if (c("#rc-done")) { closeModal2(); if (afterRecovery) afterRecovery = false; return }
   if (b = c("[data-cfg-act=inv-copy]")) { copyText(inviteUrl(uname()), "Link de convite copiado."); return }
   if (b = c("[data-cfg-act=inv-share]")) { const url = inviteUrl(uname()), text = "Vem pro Jogos Enzola! Monte seu catálogo de jogos e me adicione como amigo.";
     if (navigator.share) { try { await navigator.share({ title: "Jogos Enzola", text, url }) } catch (er) { if (er.name !== "AbortError") copyText(url, "Link de convite copiado.") } } else copyText(url, "Link de convite copiado."); return }
@@ -392,7 +382,8 @@ document.addEventListener("click", async e => {
   if (b = c("[data-cfg-theme]")) { setTheme(b.dataset.cfgTheme); return }
   if (b = c("[data-cfg-act]")) {
     const a = b.dataset.cfgAct;
-    if (a === "logout-all") { if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = "Confirmar"; return } await sb.auth.signOut({ scope: "global" }); location.hash = "" }
+    if (a === "recovery") offerRecoveryCode(false);
+    else if (a === "logout-all") { if (!b.dataset.sure) { b.dataset.sure = 1; b.textContent = "Confirmar"; return } await sb.auth.signOut({ scope: "global" }); location.hash = "" }
     else if (a === "csv-out") exportCSV();
     else if (a === "csv-in") $("#csv-file").click();
     else if (a === "pdf") exportWishlistPDF();
@@ -401,11 +392,11 @@ document.addEventListener("click", async e => {
     return;
   }
   if (c("#pw-save")) { e.preventDefault(); changePassword(); return }
-  if (c("#em-save")) { e.preventDefault(); changeEmail(); return }
   if (c("#del-go")) { doDeleteAccount(); return }
 });
 document.addEventListener("change", async e => {
   const t = e.target;
+  if (t.id === "rc-ok") { $("#rc-done").disabled = !t.checked; return }
   if (t.dataset.cfg) return saveSettings({ [t.dataset.cfg]: t.checked });
   if (t.dataset.cfgSelect) return saveSettings({ [t.dataset.cfgSelect]: t.value });
   if (t.dataset.cfgLocal === "pref-music") { musicToggle(t.checked); const v = $("#music-vol"); if (v) v.disabled = !t.checked; return }
@@ -419,7 +410,7 @@ document.addEventListener("change", async e => {
 });
 document.addEventListener("input", e => {
   if (e.target.id === "pw-new") { const s = pwScore(e.target.value); $("#pw-meter").className = "pwmeter s" + s; $("#pw-hint").textContent = ["Muito fraca", "Fraca", "Razoável", "Boa", "Forte"][s] + (s < 3 ? ". Use 8 ou mais caracteres, misturando letras e números." : ".") }
-  if (e.target.id === "np-pass") $("#np-meter").className = "pwmeter s" + pwScore(e.target.value);
+  if (e.target.id === "fg-code") { const v = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 16); e.target.value = v.match(/.{1,4}/g)?.join("-") || "" }
 });
 function openDeleteAccount() {
   modalShell(`<h2>Excluir conta</h2><p class="sub">Isso apaga para sempre sua biblioteca, tier list, lista de desejos, amigos, grupos e mensagens. Não dá para desfazer.</p>
@@ -441,14 +432,14 @@ const inviteUrl = u => location.origin + location.pathname + "?convite=" + encod
     const q = new URLSearchParams(location.search), u = (q.get("convite") || "").trim().toLowerCase().replace(/^@/, "");
     if (!/^[a-z0-9._-]{3,30}$/.test(u)) return;
     lsSet("invite", u);
-    if (typeof setAuthTab === "function") setAuthTab(true);
+    if (typeof setAuthMode === "function") setAuthMode("signup");
     q.delete("convite"); const rest = q.toString();
     history.replaceState(null, "", location.pathname + (rest ? "?" + rest : "") + location.hash);
-    const tabs = document.querySelector(".auth-tabs");
-    if (tabs && !document.getElementById("invite-note")) {
+    const msg = document.getElementById("auth-msg");
+    if (msg && !document.getElementById("invite-note")) {
       const n = document.createElement("div"); n.id = "invite-note"; n.className = "invite-note";
-      n.innerHTML = `<b>Você foi convidado por @${esc(u)}</b><span>Crie sua conta ou entre. O pedido de amizade é enviado sozinho.</span>`;
-      tabs.after(n);
+      n.innerHTML = `<b>Você foi convidado por @${esc(u)}</b><span>Crie sua conta ou entre. Vocês viram amigos assim que a pessoa aceitar.</span>`;
+      msg.parentNode.insertBefore(n, msg);
     }
   } catch (er) { }
 })();
