@@ -36,6 +36,38 @@ async function hmUpload(blob) {
 const hmPath = url => { const i = String(url || "").indexOf("/social/"); return i < 0 ? null : decodeURIComponent(url.slice(i + 8).split("?")[0]) };
 async function hmRemoveFile(url) { const p = hmPath(url); if (p && p.startsWith(user.id + "/")) { try { await sb.storage.from("social").remove([p]) } catch (e) { } } }
 
+/* ---------- @menções ---------- */
+const hmUsers = () => { const m = {}; [...Object.values(fr.profs), { user_id: user.id, username: uname() }].forEach(p => { if (p && p.username) m[p.username.toLowerCase()] = p.user_id }); return m };
+function hmRich(t) {
+  const m = hmUsers();
+  return esc(t).replace(/@([\w.\-]+)/g, (all, u) => { const id = m[u.toLowerCase().replace(/[.\-]+$/, "")]; if (!id) return all; const tail = u.length - u.replace(/[.\-]+$/, "").length; return `<a class="hm-at" href="${isFriend(id) ? "#amigo/" + id : "#inicio"}">@${esc(u.slice(0, u.length - tail))}</a>${u.slice(u.length - tail)}` });
+}
+const hmMentioned = t => { const m = hmUsers(), ids = new Set(); (String(t).match(/@[\w.\-]+/g) || []).forEach(x => { const id = m[x.slice(1).toLowerCase().replace(/[.\-]+$/, "")]; if (id && id !== user.id) ids.add(id) }); return ids };
+let hmMn = null;
+function hmMnClose() { const b = $("#hm-mn"); if (b) b.remove(); hmMn = null }
+function hmMnCheck(el) {
+  const v = el.value, c = el.selectionStart, m = /(^|\s)@([\w.\-]{0,30})$/.exec(v.slice(0, c)); if (!m) return hmMnClose();
+  const q = m[2].toLowerCase(), list = frAccepted().map(f => pOf(other(f))).filter(p => p.username && ((p.username || "").toLowerCase().includes(q) || (p.nickname || "").toLowerCase().includes(q))).slice(0, 6);
+  if (!list.length) return hmMnClose();
+  hmMnClose(); const par = el.parentElement; par.classList.add("hm-rel");
+  const b = document.createElement("div"); b.id = "hm-mn"; b.className = "hm-mn"; b.setAttribute("role", "listbox");
+  b.style.cssText = `left:${el.offsetLeft}px;width:${Math.max(el.offsetWidth, 200)}px;top:${el.offsetTop + el.offsetHeight + 4}px`;
+  b.innerHTML = list.map((p, i) => `<button type="button" role="option" class="hm-mo${i ? "" : " on"}" data-u="${esc(p.username)}">${hmAv(p.user_id, "xs")}<span><b>${esc(pName(p))}</b><i>@${esc(p.username)}</i></span></button>`).join("");
+  par.append(b); hmMn = { el, at: m.index + m[1].length };
+}
+function hmMnPick(u) {
+  if (!hmMn) return; const { el, at } = hmMn, v = el.value, c = el.selectionStart, ins = "@" + u + " ";
+  el.value = v.slice(0, at) + ins + v.slice(c); const pos = at + ins.length; el.focus(); el.setSelectionRange(pos, pos); hmMnClose();
+}
+document.addEventListener("input", e => { if (user && e.target.matches && e.target.matches("#hm-text,.hm-cf input")) hmMnCheck(e.target) });
+document.addEventListener("pointerdown", e => { const o = e.target.closest && e.target.closest(".hm-mo"); if (o) { e.preventDefault(); hmMnPick(o.dataset.u) } else if (hmMn && !e.target.closest("#hm-mn")) hmMnClose() });
+document.addEventListener("keydown", e => {
+  if (!hmMn || !$("#hm-mn")) return; const os = [...document.querySelectorAll(".hm-mo")], i = os.findIndex(o => o.classList.contains("on"));
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); os[i].classList.remove("on"); os[(i + (e.key === "ArrowDown" ? 1 : os.length - 1)) % os.length].classList.add("on") }
+  else if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); e.stopImmediatePropagation(); hmMnPick(os[Math.max(i, 0)].dataset.u) }
+  else if (e.key === "Escape") { e.stopImmediatePropagation(); hmMnClose() }
+}, true);
+
 /* ---------- carregar ---------- */
 async function hmLoad(force) {
   if (!sb || !user || hm.loading) return;
@@ -81,12 +113,13 @@ function hmStoryBar() {
     ${order.map(id => bub(id, pName(hmWho(id)))).join("")}</div>`;
 }
 function hmPostHTML(p) {
+  const ment = hmMentioned(p.body), tg = (p.tags || []).filter(t => !ment.has(t));
   const w = hmWho(p.user_id), likes = hm.likes[p.id] || [], cm = hm.comments[p.id] || [], liked = likes.includes(user.id), open = hm.open.has(p.id);
   const name = isFriend(p.user_id) ? `<a class="hm-nm" href="#amigo/${p.user_id}">${esc(pName(w))}</a>` : `<span class="hm-nm">${esc(pName(w))}</span>`;
-  const comments = open ? `<div class="hm-cl">${cm.map(c => `<div class="hm-c">${hmAv(c.user_id, "xs")}<div class="hm-cb"><b>${esc(pName(hmWho(c.user_id)))}</b> ${esc(c.body)}<span class="muted"> · ${rel(c.created_at)}</span></div>${c.user_id === user.id || p.user_id === user.id ? `<button class="iconbtn sm" data-hm="delc" data-id="${c.id}" data-p="${p.id}" aria-label="Apagar comentário">${ic("x")}</button>` : ""}</div>`).join("") || `<p class="muted hm-nc">Seja o primeiro a comentar.</p>`}
+  const comments = open ? `<div class="hm-cl">${cm.map(c => `<div class="hm-c">${hmAv(c.user_id, "xs")}<div class="hm-cb"><b>${esc(pName(hmWho(c.user_id)))}</b> ${hmRich(c.body)}<span class="muted"> · ${rel(c.created_at)}</span></div>${c.user_id === user.id || p.user_id === user.id ? `<button class="iconbtn sm" data-hm="delc" data-id="${c.id}" data-p="${p.id}" aria-label="Apagar comentário">${ic("x")}</button>` : ""}</div>`).join("") || `<p class="muted hm-nc">Seja o primeiro a comentar.</p>`}
     <form class="hm-cf" data-hm-form="${p.id}"><input type="text" maxlength="500" placeholder="Escreva um comentário…" aria-label="Comentário" autocomplete="off"><button class="btn sm" type="submit">${ic("send")}</button></form></div>` : "";
   return `<article class="hm-post panel" data-pid="${p.id}"><header class="hm-ph">${hmAv(p.user_id, "md")}<div class="hm-pn">${name}<span class="muted">${rel(p.created_at)}</span></div>${p.user_id === user.id ? `<button class="iconbtn" data-hm="delp" data-id="${p.id}" aria-label="Apagar publicação">${ic("trash")}</button>` : ""}</header>
-    ${(p.tags || []).length ? `<p class="hm-tags">${ic("users")}com ${p.tags.map(t => `<a href="${isFriend(t) ? "#amigo/" + t : "#inicio"}">${esc(pName(hmWho(t)))}</a>`).join(", ")}</p>` : ""}${p.body ? `<p class="hm-body">${esc(p.body)}</p>` : ""}${p.image ? `<img class="hm-img" src="${esc(p.image)}" alt="Foto da publicação" loading="lazy" data-hm="zoom" data-src="${esc(p.image)}">` : ""}
+    ${tg.length ? `<p class="hm-tags">${ic("users")}com ${tg.map(t => `<a href="${isFriend(t) ? "#amigo/" + t : "#inicio"}">${esc(pName(hmWho(t)))}</a>`).join(", ")}</p>` : ""}${p.body ? `<p class="hm-body">${hmRich(p.body)}</p>` : ""}${p.image ? `<img class="hm-img" src="${esc(p.image)}" alt="Foto da publicação" loading="lazy" data-hm="zoom" data-src="${esc(p.image)}">` : ""}
     <div class="hm-acts"><button class="hm-act${liked ? " on" : ""}" data-hm="like" data-id="${p.id}" aria-pressed="${liked}" aria-label="Curtir">${ic("heart")}<span>${likes.length || ""}</span></button>
       <button class="hm-act" data-hm="cm" data-id="${p.id}" aria-expanded="${open}" aria-label="Comentários">${ic("message")}<span>${cm.length || ""}</span></button></div>${comments}</article>`;
 }
@@ -114,7 +147,7 @@ async function hmPost() {
   hm.busy = true; renderHome();
   try {
     const image = hm.img ? await hmUpload(hm.img) : null;
-    const { data, error } = await sb.from("posts").insert({ body: t.trim(), image, tags: hm.tags }).select().single();
+    const { data, error } = await sb.from("posts").insert({ body: t.trim(), image, tags: [...new Set([...hm.tags, ...hmMentioned(t)])] }).select().single();
     if (error) throw error;
     hm.posts.unshift(data); hm.img = null; hm.imgUrl = ""; hm.tags = []; hm.tagOpen = false; toast("Publicado!");
   } catch (e) { toast("Não foi possível publicar agora.") }
