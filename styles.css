@@ -1397,3 +1397,7 @@ a.spn:hover .sp-logo,a.spn:focus-visible .sp-logo{opacity:1;transform:translateY
 @keyframes shshine{to{transform:translateX(120%)}}
 @keyframes shbanner{from{clip-path:inset(0 100% 0 0);opacity:0}to{clip-path:inset(0);opacity:1}}
 @media (prefers-reduced-motion:reduce){.sh-rays,.sh-host img,.sh-medal,.sh-medal::after{animation:none!important}.sh-curt{display:none}}
+.sh-end.lose{animation:shpop .5s both}
+.sh-sad{font-size:72px;margin-top:24px;animation:shbob 1.2s ease-in-out infinite alternate}
+.sh-wrongq{background:rgba(0,0,0,.3);border-radius:14px;padding:12px 14px;display:grid;gap:6px;width:100%;text-align:left}
+.sh-wrongq b{color:#58CC02}

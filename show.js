@@ -244,13 +244,25 @@ function shAnswer(i) {
   if (ok) s.right++; else s.wrong++;
   s.log.push(ok);
   shStop(s.snd); s.snd = [];
-  shSnd(ok ? "certa.resposta.mp3" : "vcerrou.mp3", { fb: () => shBeep(ok ? "ok" : "bad") });
+  if (!ok) return shLose(q, i);
+  shSnd("certa.resposta.mp3", { fb: () => shBeep("ok") });
   document.querySelectorAll(".sh-opt").forEach((b, j) => { b.disabled = true; b.classList.remove("sel"); if (q.answers.includes(q.options[j])) b.classList.add("right"); else if (j === i) b.classList.add("wrong") });
   $("#sh-fb").innerHTML = ok ? `<b>Certa resposta!</b>` : `<b>${i < 0 ? "O tempo acabou." : "Você errou!"}</b><span>Resposta: ${q.answers.map(esc).join(" ou ")}</span>`;
   $("#sh-fb").className = "sh-fb " + (ok ? "ok" : "bad");
   const dots = document.querySelectorAll(".sh-dots i"); if (dots[s.i]) dots[s.i].className = ok ? "ok" : "bad";
   const okb = $("#sh-ok"); if (okb) okb.hidden = true;
   const n = $("#sh-next"); n.hidden = false; n.textContent = s.i + 1 >= s.qs.length ? "Ver resultado" : "Próxima"; n.focus({ preventScroll: true });
+}
+/* errou: acabou o show. Tela própria, áudio e botão de reiniciar */
+function shLose(q, i) {
+  const s = sh; clearInterval(s.timer); shStopAll();
+  shSnd("vcerrou.mp3", { fb: () => shBeep("bad") });
+  try { if (profile && user) { const old = (profile.settings && profile.settings.show) || {}, show = { best: Math.max(old.best || 0, s.right), plays: (old.plays || 0) + 1 }; saveProfile({ settings: { ...(profile.settings || {}), show } }) } } catch (e) { }
+  shBox().innerHTML = `<div class="sh-end lose"><div class="sh-sad" aria-hidden="true">😢</div><h2>Que pena, você errou!</h2>
+    <p>${i < 0 ? "O tempo acabou na pergunta " : "Você caiu na pergunta "}${s.i + 1} de ${s.qs.length}.</p>
+    <div class="sh-wrongq"><span>${esc(q.q)}</span><b>Resposta: ${q.answers.map(esc).join(" ou ")}</b></div>
+    <div class="sh-score"><b>${s.right}</b><span>acertos</span></div>
+    <div class="sh-acts"><button class="btn sh-go" data-sh-start>Reiniciar</button><button class="btn ghost" data-sh-close>Voltar ao Enzolingo</button></div></div>`;
 }
 async function shEnd() {
   const s = sh; clearInterval(s.timer); shStopAll();
