@@ -218,8 +218,8 @@ async function markAllRead() {
 }
 async function sysNotify(title, body) {
   if (lsGet("pref-push") || !lsGet("pref-sysnotif") || !("Notification" in window) || Notification.permission !== "granted" || !document.hidden) return;
-  try { const r = await navigator.serviceWorker.ready; r.showNotification(title, { body, icon: "icons/icon-192.png", badge: "icons/favicon.png", tag: "enzola" }) }
-  catch (e) { try { new Notification(title, { body, icon: "icons/icon-192.png" }) } catch (e2) { } }
+  try { const r = await navigator.serviceWorker.ready; r.showNotification(title, { body, icon: "icons/notif.png", badge: "icons/badge.png", tag: "enzola" }) }
+  catch (e) { try { new Notification(title, { body, icon: "icons/notif.png" }) } catch (e2) { } }
 }
 async function onNotif(n) {
   if (fr.notifs.some(x => x.id === n.id)) return;

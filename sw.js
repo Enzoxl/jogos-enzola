@@ -1,8 +1,8 @@
 /* Jogos Enzola — service worker: abre rápido, funciona com internet ruim e recebe notificações no celular.
    Só guarda os arquivos do próprio site; dados do Supabase e preços sempre vêm da rede. */
-const CACHE = "jogos-enzola-v3-3";
+const CACHE = "jogos-enzola-v3-5";
 const SHELL = ["./", "index.html", "styles.css", "app.js", "jogo.js", "social.js", "extras.js", "config.js", "logo.png", "hipopotamo.webp", "manifest.webmanifest",
-  "icons/icon-192.png", "icons/icon-512.png", "icons/favicon.png"];
+  "icons/icon-192.png", "icons/icon-512.png", "icons/favicon.png", "icons/notif.png", "icons/badge.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())) });
 self.addEventListener("activate", e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
@@ -25,7 +25,7 @@ self.addEventListener("push", e => {
     const cs = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
     if (cs.some(c => c.visibilityState === "visible" && c.focused)) return;
     await self.registration.showNotification(d.title || "Jogos Enzola", {
-      body: d.body || "", icon: "icons/icon-192.png", badge: "icons/favicon.png",
+      body: d.body || "", icon: "icons/notif.png", badge: "icons/badge.png",
       tag: d.tag || "enzola", renotify: true, data: { url: d.url || "#perfil" }, vibrate: [90, 60, 90],
     });
   })());
