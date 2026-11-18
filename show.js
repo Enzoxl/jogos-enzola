@@ -172,6 +172,15 @@ function shSnd(name, o = {}) {
 }
 let shLoose = null;
 function shStop(list) { (list || []).forEach(a => { try { a.pause(); a.currentTime = 0 } catch (e) { } }) }
+/* música de fundo: começa ao abrir o show e só para ao sair */
+let shBg = null;
+function shMusic(vol) {
+  try {
+    if (!shBg) { shBg = new Audio(SH_AUDIO + "fundo.mp3"); shBg.loop = true; shBg.volume = vol; const p = shBg.play(); if (p && p.catch) p.catch(() => { }); return }
+    shBg.volume = vol; if (shBg.paused) { const p = shBg.play(); if (p && p.catch) p.catch(() => { }) }
+  } catch (e) { }
+}
+function shMusicOff() { if (shBg) { try { shBg.pause() } catch (e) { } shBg = null } }
 function shStopAll() { if (sh) { shStop(sh.snd); sh.snd = [] } shStop(shLoose); shLoose = [] }
 function shBeep(k) { if (typeof lgBeep === "function") { try { lg = lg || lgLoad(); lgBeep(k) } catch (e) { } } }
 
@@ -179,7 +188,7 @@ function shBeep(k) { if (typeof lgBeep === "function") { try { lg = lg || lgLoad
 let sh = null;
 const shLabel = (q, i) => String((q.labels || ["A", "B", "C", "D"])[i]).toUpperCase();
 function shBox() { let b = $("#sh-ovl"); if (!b) { b = document.createElement("div"); b.id = "sh-ovl"; b.className = "sh-ovl"; b.setAttribute("role", "dialog"); b.setAttribute("aria-modal", "true"); b.setAttribute("aria-label", "Show do Enzolão"); document.body.append(b); document.documentElement.classList.add("lg-open") } return b }
-function shClose() { if (sh) { if (sh.timer) clearInterval(sh.timer); if (sh.introT) clearTimeout(sh.introT) } shStopAll(); sh = null; const b = $("#sh-ovl"); if (b) b.remove(); document.documentElement.classList.remove("lg-open"); if (tab === "idiomas") renderLingo() }
+function shClose() { if (sh) { if (sh.timer) clearInterval(sh.timer); if (sh.introT) clearTimeout(sh.introT) } shStopAll(); shMusicOff(); sh = null; const b = $("#sh-ovl"); if (b) b.remove(); document.documentElement.classList.remove("lg-open"); if (tab === "idiomas") renderLingo() }
 function shIntro() {
   const R = REWARDS.silvio, has = rewardsHas("silvio");
   shBox().innerHTML = `<div class="sh-in"><button class="iconbtn sh-x" data-sh-close aria-label="Fechar">${ic("x")}</button>
@@ -198,7 +207,7 @@ function shStart() {
 }
 /* entrada do hipopótamo apresentador, com a música ao fundo, antes das perguntas */
 function shEntrance() {
-  const s = sh, box = shBox();
+  const s = sh, box = shBox(); shMusic(.06);
   box.innerHTML = `<div class="sh-stage"><button class="btn ghost sm sh-skip" data-sh-skip>Pular</button>
     <div class="sh-rays" aria-hidden="true"></div><div class="sh-curt l" aria-hidden="true"></div><div class="sh-curt r" aria-hidden="true"></div>
     <div class="sh-host"><img src="premios/apresentador.webp" alt="Hipopótamo apresentador" width="420" height="492"></div>
@@ -211,7 +220,7 @@ function shEntrance() {
 }
 function shQ() {
   const s = sh, q = s.qs[s.i], box = shBox(); if (!q) return shEnd();
-  shStopAll();
+  shStopAll(); shMusic(.22);
   s.answered = false; s.sel = null; s.end = Date.now() + SH_TIME * 1000;
   clearInterval(s.timer); s.timer = setInterval(shTick, 100);
   box.innerHTML = `<div class="sh-q"><div class="sh-top"><button class="iconbtn sh-x" data-sh-close aria-label="Sair">${ic("x")}</button>
@@ -256,7 +265,7 @@ function shAnswer(i) {
 /* errou: acabou o show. Tela própria, áudio e botão de reiniciar */
 function shLose(q, i) {
   const s = sh; clearInterval(s.timer); shStopAll();
-  shSnd("vcerrou.mp3", { fb: () => shBeep("bad") });
+  shMusic(.1); shSnd("vcerrou.mp3", { fb: () => shBeep("bad") });
   try { if (profile && user) { const old = (profile.settings && profile.settings.show) || {}, show = { best: Math.max(old.best || 0, s.right), plays: (old.plays || 0) + 1 }; saveProfile({ settings: { ...(profile.settings || {}), show } }) } } catch (e) { }
   shBox().innerHTML = `<div class="sh-end lose"><div class="sh-sad" aria-hidden="true">😢</div><h2>Que pena, você errou!</h2>
     <p>${i < 0 ? "O tempo acabou na pergunta " : "Você caiu na pergunta "}${s.i + 1} de ${s.qs.length}.</p>
@@ -267,6 +276,7 @@ function shLose(q, i) {
 async function shEnd() {
   const s = sh; clearInterval(s.timer); shStopAll();
   const total = s.qs.length, perfect = s.right === total, first = perfect && !rewardsHas("silvio"), R = REWARDS.silvio;
+  shMusic(.12);
   if (perfect) { shSnd("maoe.mp3", { fb: () => shBeep("ok") }); await rewardsGive("silvio") }
   try { if (profile && user) { const old = (profile.settings && profile.settings.show) || {}, show = { best: Math.max(old.best || 0, s.right), plays: (old.plays || 0) + 1 }; if (!perfect) saveProfile({ settings: { ...(profile.settings || {}), show } }); else saveProfile({ settings: { ...(profile.settings || {}), rewards: { ...shReward(), silvio: true }, show } }) } } catch (e) { }
   const msg = perfect ? (first ? "Você acertou TUDO! O prêmio é seu." : "Gabaritou de novo! Que show.") : s.right >= total - 3 ? "Passou raspando! Tente de novo para levar o prêmio." : s.right >= total / 2 ? "Foi bem! Falta pouco para o prêmio." : "O hipopótamo apresentador acredita em você. Tente de novo!";
@@ -285,7 +295,7 @@ async function shEquip(which) {
 }
 document.addEventListener("click", e => {
   const c = s => e.target.closest(s); let b;
-  if (c("[data-show-open]")) { if (!user || !loaded) return; shIntro(); return }
+  if (c("[data-show-open]")) { if (!user || !loaded) return; shIntro(); shMusic(.3); return }
   if (c("[data-sh-close]")) { shClose(); return }
   if (c("[data-sh-start]")) { shStart(); return }
   if (b = c("[data-sh-equip]")) { shEquip(b.dataset.shEquip); return }
