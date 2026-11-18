@@ -6,12 +6,12 @@
 const HM_IG = "https://www.instagram.com/movimento.enzola";
 const HM_BG = ["linear-gradient(160deg,#6C93FF,#A88BFA)", "linear-gradient(160deg,#ff9a3c,#e8505b)", "linear-gradient(160deg,#13895D,#0b4f6c)", "linear-gradient(160deg,#f5c542,#e0742a)", "linear-gradient(160deg,#2B7DE9,#0B1129)", "linear-gradient(160deg,#c04fd8,#4b2a9c)"];
 const HM_STORY_MS = 5500;
-const hm = { loaded: false, loading: false, posts: [], likes: {}, comments: {}, stories: [], open: new Set(), img: null, imgUrl: "", busy: false, sc: null, sv: null };
+const hm = { loaded: false, loading: false, posts: [], likes: {}, comments: {}, stories: [], open: new Set(), img: null, imgUrl: "", tags: [], tagOpen: false, busy: false, sc: null, sv: null };
 const hmSeen = () => { try { return new Set(JSON.parse(localStorage.getItem("seen:" + user.id) || "[]")) } catch (e) { return new Set() } };
 const hmMarkSeen = id => { try { const s = hmSeen(); s.add(id); localStorage.setItem("seen:" + user.id, JSON.stringify([...s].slice(-300))) } catch (e) { } };
 const hmWho = id => id === user.id ? { user_id: user.id, nickname: nick(), username: uname(), avatar: profile && profile.avatar } : pOf(id);
 
-function hmReset() { hm.loaded = false; hm.posts = []; hm.likes = {}; hm.comments = {}; hm.stories = []; hm.open = new Set(); hm.img = null; hm.imgUrl = "" }
+function hmReset() { hm.loaded = false; hm.posts = []; hm.likes = {}; hm.comments = {}; hm.stories = []; hm.open = new Set(); hm.img = null; hm.imgUrl = ""; hm.tags = []; hm.tagOpen = false }
 
 /* ---------- imagens ---------- */
 function hmResize(file, max = 1080) {
@@ -59,7 +59,7 @@ async function hmLoad(force) {
       (l.data || []).forEach(x => (hm.likes[x.post_id] = hm.likes[x.post_id] || []).push(x.user_id));
       (c.data || []).forEach(x => (hm.comments[x.post_id] = hm.comments[x.post_id] || []).push(x));
     }
-    await loadProfiles([...hm.posts.map(x => x.user_id), ...hm.stories.map(x => x.user_id), ...Object.values(hm.comments).flat().map(x => x.user_id)]);
+    await loadProfiles([...hm.posts.flatMap(x => x.tags || []), ...hm.posts.map(x => x.user_id), ...hm.stories.map(x => x.user_id), ...Object.values(hm.comments).flat().map(x => x.user_id)]);
     hm.loaded = true;
   } catch (e) { toast("Não foi possível carregar o feed.") }
   hm.loading = false; if (tab === "inicio") renderHome();
@@ -86,7 +86,7 @@ function hmPostHTML(p) {
   const comments = open ? `<div class="hm-cl">${cm.map(c => `<div class="hm-c">${hmAv(c.user_id, "xs")}<div class="hm-cb"><b>${esc(pName(hmWho(c.user_id)))}</b> ${esc(c.body)}<span class="muted"> · ${rel(c.created_at)}</span></div>${c.user_id === user.id || p.user_id === user.id ? `<button class="iconbtn sm" data-hm="delc" data-id="${c.id}" data-p="${p.id}" aria-label="Apagar comentário">${ic("x")}</button>` : ""}</div>`).join("") || `<p class="muted hm-nc">Seja o primeiro a comentar.</p>`}
     <form class="hm-cf" data-hm-form="${p.id}"><input type="text" maxlength="500" placeholder="Escreva um comentário…" aria-label="Comentário" autocomplete="off"><button class="btn sm" type="submit">${ic("send")}</button></form></div>` : "";
   return `<article class="hm-post panel" data-pid="${p.id}"><header class="hm-ph">${hmAv(p.user_id, "md")}<div class="hm-pn">${name}<span class="muted">${rel(p.created_at)}</span></div>${p.user_id === user.id ? `<button class="iconbtn" data-hm="delp" data-id="${p.id}" aria-label="Apagar publicação">${ic("trash")}</button>` : ""}</header>
-    ${p.body ? `<p class="hm-body">${esc(p.body)}</p>` : ""}${p.image ? `<img class="hm-img" src="${esc(p.image)}" alt="Foto da publicação" loading="lazy" data-hm="zoom" data-src="${esc(p.image)}">` : ""}
+    ${(p.tags || []).length ? `<p class="hm-tags">${ic("users")}com ${p.tags.map(t => `<a href="${isFriend(t) ? "#amigo/" + t : "#inicio"}">${esc(pName(hmWho(t)))}</a>`).join(", ")}</p>` : ""}${p.body ? `<p class="hm-body">${esc(p.body)}</p>` : ""}${p.image ? `<img class="hm-img" src="${esc(p.image)}" alt="Foto da publicação" loading="lazy" data-hm="zoom" data-src="${esc(p.image)}">` : ""}
     <div class="hm-acts"><button class="hm-act${liked ? " on" : ""}" data-hm="like" data-id="${p.id}" aria-pressed="${liked}" aria-label="Curtir">${ic("heart")}<span>${likes.length || ""}</span></button>
       <button class="hm-act" data-hm="cm" data-id="${p.id}" aria-expanded="${open}" aria-label="Comentários">${ic("message")}<span>${cm.length || ""}</span></button></div>${comments}</article>`;
 }
@@ -98,7 +98,9 @@ function renderHome() {
   el.innerHTML = `${hmPromo()}${hmStoryBar()}
     <div class="hm-compose panel"><div class="hm-cr">${hmAv(user.id, "md")}<textarea id="hm-text" rows="2" maxlength="2000" placeholder="O que você está jogando ou pensando, ${esc(nick())}?" aria-label="Nova publicação"></textarea></div>
       ${hm.imgUrl ? `<div class="hm-prev"><img src="${hm.imgUrl}" alt="Prévia"><button class="iconbtn" data-hm="rmimg" aria-label="Remover foto">${ic("x")}</button></div>` : ""}
-      <div class="hm-cb2"><label class="btn ghost sm hm-file">${ic("image")}Foto<input type="file" id="hm-file" accept="image/*" hidden></label><button class="btn sm" data-hm="post"${hm.busy ? " disabled" : ""}>${ic("send")}Publicar</button></div></div>
+      ${hm.tags.length ? `<div class="hm-chips">${hm.tags.map(t => `<button class="hm-chip" data-hm="tag" data-id="${t}" aria-label="Remover marcação">${esc(pName(hmWho(t)))} ${ic("x")}</button>`).join("")}</div>` : ""}
+      ${hm.tagOpen ? `<div class="hm-pick" role="group" aria-label="Marcar amigos">${frAccepted().length ? frAccepted().map(f => { const id = other(f), on = hm.tags.includes(id); return `<button class="hm-pk${on ? " on" : ""}" data-hm="tag" data-id="${id}" aria-pressed="${on}">${hmAv(id, "xs")}<span>${esc(pName(pOf(id)))}</span>${on ? ic("check") : ""}</button>` }).join("") : `<span class="muted">Adicione amigos para poder marcá-los.</span>`}</div>` : ""}
+      <div class="hm-cb2"><div class="hm-l"><label class="btn ghost sm hm-file">${ic("image")}Foto<input type="file" id="hm-file" accept="image/*" hidden></label><button class="btn ghost sm" data-hm="tagtoggle" aria-expanded="${hm.tagOpen}">${ic("userplus")}Marcar</button></div><button class="btn sm" data-hm="post"${hm.busy ? " disabled" : ""}>${ic("send")}Publicar</button></div></div>
     <div class="hm-feed">${hm.posts.length ? hm.posts.map(hmPostHTML).join("") : `<div class="panel empty"><b>Nada por aqui ainda</b>Publique algo ou adicione amigos para ver as novidades deles.<br><a class="btn sm" href="#amigos">Encontrar amigos</a></div>`}</div>`;
 }
 function hmPromo() {
@@ -112,9 +114,9 @@ async function hmPost() {
   hm.busy = true; renderHome();
   try {
     const image = hm.img ? await hmUpload(hm.img) : null;
-    const { data, error } = await sb.from("posts").insert({ body: t.trim(), image }).select().single();
+    const { data, error } = await sb.from("posts").insert({ body: t.trim(), image, tags: hm.tags }).select().single();
     if (error) throw error;
-    hm.posts.unshift(data); hm.img = null; hm.imgUrl = ""; toast("Publicado!");
+    hm.posts.unshift(data); hm.img = null; hm.imgUrl = ""; hm.tags = []; hm.tagOpen = false; toast("Publicado!");
   } catch (e) { toast("Não foi possível publicar agora.") }
   hm.busy = false; renderHome();
 }
@@ -212,11 +214,16 @@ function hmIgZoom(n) {
   hmOvl().innerHTML = `<div class="hm-zoom"><button class="iconbtn hm-x" data-hm="close" aria-label="Fechar">${ic("x")}</button><img src="movimento/p${n}.webp" alt="Publicação do Movimento Enzola"><a class="btn" href="${HM_IG}" target="_blank" rel="noopener">${ic("insta")}Ver no Instagram</a></div>`;
 }
 
+let hmTxt = "";
+function hmKeepText() { hmTxt = ($("#hm-text") || {}).value || "" }
+function hmRestoreText() { const t = $("#hm-text"); if (t && hmTxt) t.value = hmTxt }
 /* ---------- eventos ---------- */
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-hm]"); if (!b || !user) return;
   const a = b.dataset.hm, id = b.dataset.id;
-  if (a === "like") hmLike(id); else if (a === "cm") { hm.open.has(id) ? hm.open.delete(id) : hm.open.add(id); renderHome() }
+  if (a === "tagtoggle") { hmKeepText(); hm.tagOpen = !hm.tagOpen; renderHome(); hmRestoreText() }
+  else if (a === "tag") { hmKeepText(); hm.tags = hm.tags.includes(id) ? hm.tags.filter(x => x !== id) : hm.tags.length < 10 ? [...hm.tags, id] : hm.tags; renderHome(); hmRestoreText() }
+  else if (a === "like") hmLike(id); else if (a === "cm") { hm.open.has(id) ? hm.open.delete(id) : hm.open.add(id); renderHome() }
   else if (a === "post") hmPost(); else if (a === "delp") hmDelPost(id); else if (a === "delc") hmDelComment(id, b.dataset.p);
   else if (a === "rmimg") { hm.img = null; hm.imgUrl = ""; renderHome() }
   else if (a === "newstory") hmNewStory(); else if (a === "story") hmOpenStory(b.dataset.u);

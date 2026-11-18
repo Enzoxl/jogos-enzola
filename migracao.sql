@@ -423,3 +423,13 @@ values ('social', 'social', true, 5242880, array['image/jpeg','image/png','image
 on conflict (id) do update set file_size_limit = 5242880, allowed_mime_types = array['image/jpeg','image/png','image/webp'];
 create policy social_insert on storage.objects for insert to authenticated with check (bucket_id = 'social' and (storage.foldername(name))[1] = auth.uid()::text);
 create policy social_delete on storage.objects for delete to authenticated using (bucket_id = 'social' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- marcar amigos nos posts
+alter table public.posts add column if not exists tags uuid[] not null default '{}' check (cardinality(tags) <= 10);
+create or replace function public.posts_clean_tags() returns trigger language plpgsql security invoker set search_path = public as $$
+begin
+  new.tags := coalesce((select array_agg(distinct t) from unnest(new.tags) t where t <> new.user_id and public.is_friend(new.user_id, t)), '{}');
+  return new;
+end $$;
+drop trigger if exists posts_clean_tags on public.posts;
+create trigger posts_clean_tags before insert on public.posts for each row execute function public.posts_clean_tags();
