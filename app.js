@@ -29,7 +29,9 @@ const $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 // links e imagens vindos de fora (APIs, perfis): só http(s); bloqueia "javascript:" e quebra de CSS
 const hrefOk = u => esc(/^(https?:\/\/|#|mailto:)/i.test(String(u || "")) ? u : "#");
-const cssUrl = u => /^(https?:\/\/|data:image\/|blob:)/i.test(String(u || "")) ? String(u).replace(/['"()\\\s<>]/g, c => "%" + c.charCodeAt(0).toString(16).padStart(2, "0")) : "";
+const REWARDS = { silvio: { name: "Hipopótamo apresentador", avatar: "premios/silvio-avatar.webp", banner: "premios/silvio-banner.webp" } };
+const rewardOf = v => { const m = /^reward:([a-z0-9_-]+)$/.exec(String(v || "")); return m && REWARDS[m[1]] ? REWARDS[m[1]] : null };
+const cssUrl = u => rewardOf(u) ? rewardOf(u).banner : /^(https?:\/\/|data:image\/|blob:)/i.test(String(u || "")) ? String(u).replace(/['"()\\\s<>]/g, c => "%" + c.charCodeAt(0).toString(16).padStart(2, "0")) : "";
 const ic = (n, cls = "") => `<svg class="ic ${cls}"><use href="#i-${n}"/></svg>`;
 const sk = s => s.replace("ã", "a").replace(/ /g, "-");
 const stClass = s => "st-" + sk(s || "Não iniciado");
@@ -77,6 +79,7 @@ function cover(g) {
   return `<div class="cvf" style="background:linear-gradient(160deg,hsl(${h} 45% 38%),hsl(${(h + 40) % 360} 50% 20%))">${esc(g.name)}</div>`;
 }
 function avatar(a) {
+  if (rewardOf(a)) return `<img alt="" src="${rewardOf(a).avatar}">`;
   if (a && /^https?:/.test(a)) return `<img alt="" src="${esc(a)}">`;
   const k = a && a.startsWith("preset:") ? a.slice(7) : "p1";
   const p = PRESETS.find(x => x.k === k) || PRESETS[0];
@@ -609,6 +612,7 @@ function openProfileEditor() {
     <div class="pe-av"><button type="button" class="av md av-edit" id="pe-av" aria-label="Escolher foto">${avatar(pe.avatar)}<span class="av-cam">${ic("camera")}</span></button>
       <div style="display:grid;gap:8px"><button class="btn ghost sm" id="pe-up">${ic("image")}Escolher foto da galeria</button><span class="hint">Você pode recortar e ajustar antes de salvar. Ou escolha um avatar:</span></div></div>
     <div class="presets" id="pe-presets">${PRESETS.map(x => `<button type="button" data-preset="${x.k}" aria-label="Avatar ${x.k}" aria-pressed="${pe.avatar === "preset:" + x.k}"><div class="av-preset" style="background:${x.bg}">${ic(x.icon)}</div></button>`).join("")}</div>
+    ${typeof rewardsHTML === "function" ? rewardsHTML() : ""}
     <div><div class="fld" style="margin-bottom:6px">Banner <span class="hint">· sem banner, usamos a capa do jogo do momento</span></div><div class="pe-ban" id="pe-ban" style="${pe.banner ? `background-image:url('${cssUrl(pe.banner)}')` : ""}"></div>
       <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn ghost sm" id="pe-bup">${ic("image")}Escolher banner da galeria</button><button class="btn ghost sm" id="pe-brm">${ic("trash")}Remover</button></div></div>
     <div class="f2"><label>Nickname<input type="text" id="pe-nick" maxlength="30" value="${esc(p.nickname || "")}" placeholder="${esc(uname())}"></label>
@@ -911,6 +915,10 @@ document.addEventListener("click", async e => {
   if (c("#m-rm")) { $("#m-cover").value = ""; refreshPrev(); return }
   if (c("#m-del")) { const d = c("#m-del"); if (!d.dataset.sure) { d.dataset.sure = 1; d.textContent = "Confirmar remoção"; return } await removeGame($("#modal .f").dataset.id); closeModal(); return }
   if (b = c("[data-preset]")) { pe.avatar = "preset:" + b.dataset.preset; $("#pe-av").innerHTML = avatar(pe.avatar) + `<span class="av-cam">${ic("camera")}</span>`; for (const x of $$("#pe-presets button")) x.setAttribute("aria-pressed", x === b); return }
+  if (b = c("[data-equip]")) { const [kind, k] = b.dataset.equip.split(":"); if (!pe || !rewardsHas(k)) return;
+    if (kind === "avatar") { pe.avatar = "reward:" + k; $("#pe-av").innerHTML = avatar(pe.avatar) + `<span class="av-cam">${ic("camera")}</span>`; for (const x of $$("#pe-presets button")) x.setAttribute("aria-pressed", "false") }
+    else { pe.banner = "reward:" + k; $("#pe-ban").style.backgroundImage = `url('${cssUrl(pe.banner)}')` }
+    toast("Equipado. Clique em Salvar perfil."); return }
   if (c("#pe-up") || c("#pe-av")) { peImage("avatar"); return }
   if (c("#pe-bup") || c("#pe-ban")) { peImage("banner"); return }
   if (c("#pe-brm")) { pe.banner = ""; $("#pe-ban").style.backgroundImage = ""; return }

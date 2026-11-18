@@ -57,9 +57,57 @@ const LG_UNITS = [
     ],
     words: [["rio", "river", "río"], ["grande", "big", "grande"], ["pequeno", "small", "pequeño"], ["feliz", "happy", "feliz"], ["nadar", "to swim", "nadar"], ["comer", "to eat", "comer"], ["dormir", "to sleep", "dormir"], ["boca", "mouth", "boca"]],
   },
+  {
+    title: "Viagem", desc: "Hotel, transporte e imprevistos", color: "#E8505B",
+    items: [
+      ["Eu gostaria de reservar um quarto.", "I would like to book a room.", "Me gustaría reservar una habitación."], ["A que horas sai o próximo trem?", "What time does the next train leave?", "¿A qué hora sale el próximo tren?"],
+      ["Perdi minha mala no aeroporto.", "I lost my suitcase at the airport.", "Perdí mi maleta en el aeropuerto."], ["Você pode me ajudar, por favor?", "Could you help me, please?", "¿Podría ayudarme, por favor?"],
+      ["Onde fica o ponto de ônibus mais próximo?", "Where is the nearest bus stop?", "¿Dónde está la parada de autobús más cercana?"], ["Eu estou procurando um bom restaurante.", "I am looking for a good restaurant.", "Estoy buscando un buen restaurante."],
+      ["Vamos chegar atrasados se não corrermos.", "We will be late if we don't hurry.", "Vamos a llegar tarde si no nos damos prisa."], ["A conta, por favor.", "The check, please.", "La cuenta, por favor."],
+      ["Eu nunca visitei essa cidade antes.", "I have never visited this city before.", "Nunca he visitado esta ciudad antes."], ["Posso pagar com cartão?", "Can I pay by card?", "¿Puedo pagar con tarjeta?"],
+      ["O voo foi cancelado por causa do tempo.", "The flight was canceled because of the weather.", "El vuelo fue cancelado por el mal tiempo."], ["Quanto tempo leva para chegar lá?", "How long does it take to get there?", "¿Cuánto tiempo se tarda en llegar allí?"],
+    ],
+    words: [["passaporte", "passport", "pasaporte"], ["bilhete", "ticket", "billete"], ["mala", "suitcase", "maleta"], ["mapa", "map", "mapa"], ["estrada", "road", "carretera"], ["praia", "beach", "playa"], ["ponte", "bridge", "puente"], ["fronteira", "border", "frontera"]],
+  },
+  {
+    title: "Trabalho e estudo", desc: "Reuniões, provas e prazos", color: "#2B7DE9",
+    items: [
+      ["Eu tenho uma reunião às três horas.", "I have a meeting at three o'clock.", "Tengo una reunión a las tres."], ["Preciso entregar o trabalho até sexta.", "I need to turn in the assignment by Friday.", "Necesito entregar el trabajo para el viernes."],
+      ["Ela trabalha como engenheira.", "She works as an engineer.", "Ella trabaja como ingeniera."], ["Estou aprendendo a programar.", "I am learning to code.", "Estoy aprendiendo a programar."],
+      ["Você pode repetir mais devagar?", "Can you repeat that more slowly?", "¿Puedes repetir más despacio?"], ["A prova foi mais difícil do que eu esperava.", "The test was harder than I expected.", "El examen fue más difícil de lo que esperaba."],
+      ["Eu estudo inglês há dois anos.", "I have been studying English for two years.", "Llevo dos años estudiando inglés."], ["Ele sempre chega antes de todo mundo.", "He always arrives before everyone else.", "Siempre llega antes que todos."],
+      ["Se eu tivesse mais tempo, eu estudaria mais.", "If I had more time, I would study more.", "Si tuviera más tiempo, estudiaría más."], ["Qual é a sua opinião sobre o projeto?", "What is your opinion about the project?", "¿Cuál es tu opinión sobre el proyecto?"],
+      ["Eu me esqueci de enviar o e-mail.", "I forgot to send the email.", "Me olvidé de enviar el correo."], ["Estamos esperando a resposta deles.", "We are waiting for their answer.", "Estamos esperando su respuesta."],
+    ],
+    words: [["empresa", "company", "empresa"], ["prova", "test", "examen"], ["nota", "grade", "nota"], ["mesa", "desk", "escritorio"], ["prazo", "deadline", "plazo"], ["salário", "salary", "salario"], ["tarefa", "task", "tarea"], ["reunião", "meeting", "reunión"]],
+  },
+  {
+    title: "Opiniões e sentimentos", desc: "Concordar, discordar e se expressar", color: "#14A38B",
+    items: [
+      ["Eu acho que você tem razão.", "I think you are right.", "Creo que tienes razón."], ["Não concordo com isso.", "I don't agree with that.", "No estoy de acuerdo con eso."],
+      ["Estou muito animado para o fim de semana.", "I am very excited about the weekend.", "Estoy muy emocionado por el fin de semana."], ["Ele ficou chateado porque perdeu o jogo.", "He got upset because he lost the game.", "Se enojó porque perdió el partido."],
+      ["Eu prefiro ficar em casa do que sair.", "I prefer staying home to going out.", "Prefiero quedarme en casa que salir."], ["Isso me deixa nervoso.", "That makes me nervous.", "Eso me pone nervioso."],
+      ["Apesar de estar cansado, ele continuou jogando.", "Although he was tired, he kept playing.", "Aunque estaba cansado, siguió jugando."], ["Eu me sinto orgulhoso do que conquistei.", "I feel proud of what I have achieved.", "Me siento orgulloso de lo que he logrado."],
+      ["Nunca é tarde para recomeçar.", "It is never too late to start over.", "Nunca es tarde para empezar de nuevo."], ["Ela parece estar preocupada.", "She seems to be worried.", "Ella parece estar preocupada."],
+      ["Fico feliz que você tenha vindo.", "I am glad that you came.", "Me alegra que hayas venido."], ["Você não deveria desistir agora.", "You shouldn't give up now.", "No deberías rendirte ahora."],
+    ],
+    words: [["raiva", "anger", "rabia"], ["medo", "fear", "miedo"], ["alegria", "joy", "alegría"], ["orgulho", "pride", "orgullo"], ["dúvida", "doubt", "duda"], ["esperança", "hope", "esperanza"], ["coragem", "courage", "valentía"], ["tristeza", "sadness", "tristeza"]],
+  },
+  {
+    title: "Tempos verbais", desc: "Passado, presente e futuro", color: "#8A4FFF",
+    items: [
+      ["Ontem eu joguei até tarde.", "Yesterday I played until late.", "Ayer jugué hasta tarde."], ["Amanhã vou terminar esse jogo.", "Tomorrow I am going to finish this game.", "Mañana voy a terminar este juego."],
+      ["Quando eu era criança, eu morava no interior.", "When I was a kid, I lived in the countryside.", "Cuando era niño, vivía en el campo."], ["Eu já terminei a lição de casa.", "I have already finished my homework.", "Ya terminé la tarea."],
+      ["Ela estava dormindo quando o telefone tocou.", "She was sleeping when the phone rang.", "Ella estaba durmiendo cuando sonó el teléfono."], ["Eu vou te ligar quando chegar.", "I will call you when I arrive.", "Te llamaré cuando llegue."],
+      ["Nós nos conhecemos há cinco anos.", "We met five years ago.", "Nos conocimos hace cinco años."], ["Se chover, ficaremos em casa.", "If it rains, we will stay home.", "Si llueve, nos quedaremos en casa."],
+      ["Eu nunca tinha visto algo assim.", "I had never seen anything like this.", "Nunca había visto algo así."], ["Ele disse que viria mais tarde.", "He said he would come later.", "Dijo que vendría más tarde."],
+      ["O jogo foi lançado no ano passado.", "The game was released last year.", "El juego fue lanzado el año pasado."], ["Estarei jogando às oito da noite.", "I will be playing at eight p.m.", "Estaré jugando a las ocho de la noche."],
+    ],
+    words: [["ontem", "yesterday", "ayer"], ["amanhã", "tomorrow", "mañana"], ["sempre", "always", "siempre"], ["nunca", "never", "nunca"], ["já", "already", "ya"], ["ainda", "still", "todavía"], ["agora", "now", "ahora"], ["depois", "later", "después"]],
+  },
 ];
-const LG_LESSONS = 3;          // lições por unidade
-const LG_Q = 8;                // perguntas por lição
+const LG_LESSONS = 4;          // lições por unidade
+const LG_Q = 10;               // perguntas por lição
 const LG_LIVES = 3;
 const LG_GOAL = 30;            // meta diária de XP
 const LG_CHEERS = ["Mandou bem!", "Isso aí!", "Perfeito!", "Boa!", "Show!", "Arrasou!"];
@@ -141,6 +189,15 @@ function lgMakeQ(type, item, pool, wordsPool) {
     const extra = lgShuffle(lgTokens(others.slice(0, 3).map(o => o[t]).join(" ")).filter(w => !words.map(lgNorm).includes(lgNorm(w)))).slice(0, Math.min(3, Math.max(2, 7 - words.length)));
     return { type, prompt: "Monte a tradução", show: item[0], answer: item[t], target: words, bank: lgShuffle([...words, ...extra]).map((w, i) => ({ w, i })), speak: item[t] };
   }
+  if (type === "fill") {
+    const parts = item[t].split(" "), okIdx = parts.map((w, i) => [w.replace(/[.,!?¡¿]/g, ""), i]).filter(([w, i]) => i > 0 && lgNorm(w).length >= 3);
+    const [w, wi] = okIdx.length ? okIdx[Math.floor(Math.random() * okIdx.length)] : [parts[parts.length - 1].replace(/[.,!?¡¿]/g, ""), parts.length - 1];
+    const blanked = parts.map((p, i) => i === wi ? p.replace(w, "_____") : p).join(" ");
+    const pool2 = [...new Set(pool.filter(x => x !== item).flatMap(x => lgTokens(x[t])).filter(x => lgNorm(x).length >= 3 && lgNorm(x) !== lgNorm(w)).map(x => x.toLowerCase()))];
+    const wrong = lgShuffle(pool2).slice(0, 2);
+    return { type: "mc", prompt: "Complete a frase", show: blanked, sub: item[0], answer: w, options: lgShuffle([w, ...wrong]), speak: item[t] };
+  }
+  if (type === "type") return { type, prompt: `Escreva em ${LG_LANGS[lg.lang].name.toLowerCase()}`, show: item[0], answer: item[t], speak: item[t] };
   if (type === "match") {
     const pairs = lgShuffle(wordsPool).slice(0, 4);
     return { type, prompt: "Toque nos pares", pairs, left: lgShuffle(pairs.map((p, i) => ({ i, w: p[t] }))), right: lgShuffle(pairs.map((p, i) => ({ i, w: p[0] }))), answer: pairs.map(p => `${p[t]} = ${p[0]}`).join(" · ") };
@@ -151,7 +208,10 @@ function lgLesson(u, l) {
   const start = Math.min(n - size, Math.floor(l * (n - size) / Math.max(1, LG_LESSONS - 1)));
   const focus = lgShuffle(items.slice(Math.max(0, start), Math.max(0, start) + size));
   const pool = items;
-  const types = lgShuffle(["mc", "mc", "mcr", "build", "build", "build", lgCanSpeak() ? "listen" : "build"]);
+  const listen = lgCanSpeak() ? "listen" : "build";
+  const types = lgShuffle(u >= 4 ? ["fill", "fill", "type", "type", "build", "build", "mcr", listen, "type"]
+    : u >= 2 ? ["mc", "mcr", "fill", "fill", "build", "build", "type", listen, "build"]
+    : ["mc", "mc", "mcr", "fill", "build", "build", "build", listen, "type"]);
   const qs = types.map((ty, i) => lgMakeQ(ty, focus[i % focus.length], pool, LG_UNITS[u].words));
   qs.splice(2 + Math.floor(Math.random() * 4), 0, lgMakeQ("match", null, pool, LG_UNITS[u].words));
   return qs.slice(0, LG_Q);
@@ -190,6 +250,7 @@ function renderLingo() {
       </div>
       <div class="lg-quick">
         ${cur ? `<button class="btn lg-go" data-lg-start="${cur[0]}-${cur[1]}">${ic("play")}Continuar: ${esc(LG_UNITS[cur[0]].title)} · lição ${cur[1] + 1}</button>` : ""}
+        <button class="btn sh-btn" data-show-open>🎤 Show do Enzolão</button>
         <button class="btn ghost" data-lg-rush>⏱️ Desafio de 60 segundos${best ? ` · recorde ${best}` : ""}</button>
         <button class="link lg-sfx" data-lg-sfx aria-pressed="${lg.sfx}">${lg.sfx ? "🔊 Sons ligados" : "🔇 Sons desligados"}</button>
       </div>
@@ -228,10 +289,12 @@ function lgRenderQ() {
   const s = lgS, q = s.qs[s.i], box = $("#lg-lesson"); if (!q || !box) return;
   s.answered = false; s.pick = null; s.built = []; s.matched = new Set(); s.sel = null;
   let body = "";
-  const say = q.show ? `<div class="lg-q-say"><span>${esc(q.show)}</span>${q.speakFirst ? `<button class="lg-spk" data-lg-say aria-label="Ouvir">🔊</button>` : ""}</div>` : "";
+  const say = q.show ? `<div class="lg-q-say"><span>${esc(q.show)}</span>${q.speakFirst ? `<button class="lg-spk" data-lg-say aria-label="Ouvir">🔊</button>` : ""}</div>${q.sub ? `<div class="lg-sub">${esc(q.sub)}</div>` : ""}` : "";
   if (q.type === "mc" || q.type === "listen") {
     body = `${q.type === "listen" ? `<div class="lg-listen"><button class="lg-spk big" data-lg-say aria-label="Ouvir de novo">🔊</button><button class="lg-spk slow" data-lg-say="slow" aria-label="Ouvir devagar">🐢</button></div>` : ""}
       <div class="lg-opts">${q.options.map((o, i) => `<button class="lg-opt" data-lg-opt="${i}"><kbd>${i + 1}</kbd><span>${esc(o)}</span></button>`).join("")}</div>`;
+  } else if (q.type === "type") {
+    body = `<input type="text" id="lg-in" class="lg-input" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Digite a tradução aqui" aria-label="Sua resposta">`;
   } else if (q.type === "build") {
     body = `<div class="lg-line" id="lg-line" aria-label="Sua resposta"></div><div class="lg-bank" id="lg-bank">${q.bank.map(b => `<button class="lg-tile" data-lg-tile="${b.i}">${esc(b.w)}</button>`).join("")}</div>`;
   } else if (q.type === "match") {
@@ -243,13 +306,14 @@ function lgRenderQ() {
       ${body}</div>
     <div class="lg-foot${s.meta.rush ? " rush" : ""}" id="lg-foot"><div class="lg-fb" id="lg-fb">${s.meta.rush ? "<span>Toque na resposta certa. Vale tudo em 60 segundos!</span>" : ""}</div><button class="btn lg-check" id="lg-check" disabled${s.meta.rush ? " hidden" : ""}>${q.type === "match" ? "Ligue os pares" : "Verificar"}</button></div>`;
   if (q.type === "listen" || q.speakFirst) setTimeout(() => lgSpeak(q.speak), 250);
-  const first = box.querySelector(".lg-opt, .lg-tile"); if (first) first.focus({ preventScroll: true });
+  const first = box.querySelector(".lg-opt, .lg-tile, .lg-input"); if (first) first.focus({ preventScroll: true });
 }
-function lgReady() { const b = $("#lg-check"); if (b) b.disabled = !(lgS.pick != null || (lgS.built.length && lgS.qs[lgS.i].type === "build")) }
+function lgReady() { const b = $("#lg-check"); if (b) b.disabled = !(lgS.pick != null || (lgS.built.length && lgS.qs[lgS.i].type === "build") || (lgS.qs[lgS.i].type === "type" && $("#lg-in") && $("#lg-in").value.trim())) }
 function lgCheck() {
   const s = lgS, q = s.qs[s.i]; if (!q || s.answered) return;
   let ok;
   if (q.type === "build") ok = lgNorm(s.built.map(i => q.bank.find(b => b.i === i).w).join(" ")) === lgNorm(q.target.join(" "));
+  else if (q.type === "type") { const inp = $("#lg-in"); ok = lgNorm(inp.value) === lgNorm(q.answer); inp.disabled = true; inp.classList.add(ok ? "ok" : "bad") }
   else if (q.type === "match") ok = true;
   else ok = lgNorm(q.options[s.pick]) === lgNorm(q.answer);
   lgResult(ok);
@@ -317,7 +381,7 @@ function lgFinish(failed) {
 function lgRushBatch() {
   const units = LG_UNITS.map((_, u) => u).filter(u => lgUnlocked(u, 0));
   const pool = lgPool(units.length ? units : [0]);
-  return lgShuffle(pool).slice(0, 10).map((it, i) => lgMakeQ(i % 3 === 2 ? "mcr" : "mc", it, pool, []));
+  return lgShuffle(pool).slice(0, 10).map((it, i) => lgMakeQ(i % 4 === 3 ? "fill" : i % 3 === 2 ? "mcr" : "mc", it, pool, []));
 }
 
 /* ---------- toques e teclado ---------- */
@@ -367,3 +431,5 @@ document.addEventListener("keydown", e => {
   if (/^[1-3]$/.test(e.key) && !lgS.answered) { const o = document.querySelector(`[data-lg-opt="${+e.key - 1}"]`); if (o) { e.preventDefault(); o.click() } }
 });
 if (lgCanSpeak()) { try { speechSynthesis.getVoices(); speechSynthesis.addEventListener("voiceschanged", () => { }) } catch (e) { } }
+
+document.addEventListener("input", e => { if (lgS && e.target.id === "lg-in") lgReady() });
