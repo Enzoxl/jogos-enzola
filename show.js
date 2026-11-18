@@ -122,10 +122,14 @@ function shGameQs() {
   for (const g of fin) out.push(shMC(cat, "Qual destes jogos você já zerou?", g.name, shPick(famous, 3), { k: "fin:" + g.id }));
   const plats = new Set(fin.map(g => g.platform).filter(Boolean));
   for (const g of fin) {
-    if (g.platform && plats.size >= 2) out.push(shMC(cat, `Em qual plataforma você jogou ${g.name}?`, g.platform, shPick(PLATS.filter(p => p !== g.platform), 3), { k: "plat:" + g.id }));
+    if (g.platform) out.push(shMC(cat, `Em qual plataforma você jogou ${g.name}?`, g.platform, shPick(PLATS.filter(p => p !== g.platform), 3), { k: "plat:" + g.id }));
     if (g.exp) out.push(shMC(cat, `Que nota de experiência você deu para ${g.name}?`, g.exp, shPick(EXPS.filter(x => x !== g.exp), 3), { k: "exp:" + g.id }));
     const gens = String(g.genre || "").split(",").map(x => x.trim()).filter(Boolean);
     if (gens.length) { const c = gens[Math.floor(Math.random() * gens.length)], lab = x => SH_GENRE_PT[x] || x; out.push(shMC(cat, `Qual destes é um gênero de ${g.name}?`, lab(c), shPick(SH_GENRES_ALL.filter(x => !gens.includes(x)), 3).map(lab), { k: "gen:" + g.id })) }
+    out.push(shMC(cat, `Qual é o seu status em ${g.name}?`, "Finalizado", shPick(STATUS.filter(x => x !== "Finalizado"), 3), { k: "st:" + g.id }));
+    if (g.rating != null && g.rating !== "" && !isNaN(g.rating)) { const r = Number(g.rating), v = new Set([r]); for (const d of shShuffle([-3, -2, -1, 1, 2, 3])) if (v.size < 4 && r + d >= 0 && r + d <= 10) v.add(r + d); out.push(shMC(cat, `Que nota você deu para ${g.name}?`, rateTxt(g), [...v].filter(x => x !== r).map(x => String(x).replace(".", ",")), { k: "rate:" + g.id })) }
+    const hh = Math.round(Number(g.hours));
+    if (hh > 0) { const v = new Set([hh]); for (const m of shShuffle([.5, .7, 1.4, 1.8, 2.5])) { const x = Math.max(1, Math.round(hh * m)); if (v.size < 4) v.add(x) } if (v.size >= 3) out.push(shMC(cat, `Quantas horas, aproximadamente, você tem em ${g.name}?`, `${hh} h`, [...v].filter(x => x !== hh).map(x => `${x} h`), { k: "hrs:" + g.id })) }
     const y = parseInt(g.year, 10);
     if (y > 1970) { const ys = new Set([y]); for (const d of shShuffle([-3, -2, -1, 1, 2, 3, 4])) { if (ys.size < 4 && y + d <= new Date().getFullYear()) ys.add(y + d) } out.push(shMC(cat, `Em que ano ${g.name} foi lançado?`, String(y), [...ys].filter(v => v !== y).map(String), { k: "year:" + g.id })) }
   }
@@ -141,9 +145,13 @@ function shGameQs() {
     const top = a.metacritic > b.metacritic ? a : b, low = top === a ? b : a;
     out.push(shMC(cat, "Qual destes tem a nota mais alta no Metacritic?", top.name, [low.name], { k: `mc:${a.id}:${b.id}` }));
   }
-  // só uma pergunta de cada tipo+jogo, e no máximo 2 do mesmo tipo
-  const seen = new Set(), kinds = {}, res = [];
-  for (const q of shShuffle(out)) { const kind = q.k.split(":")[0]; if (seen.has(q.k) || (kinds[kind] || 0) >= 2) continue; seen.add(q.k); kinds[kind] = (kinds[kind] || 0) + 1; res.push(q) }
+  { const n = fin.length, v = new Set([n]); for (const d of shShuffle([-3, -2, -1, 1, 2, 3, 4])) if (v.size < 4 && n + d >= 0) v.add(n + d); out.push(shMC(cat, "Quantos jogos você já finalizou na sua conta?", String(n), [...v].filter(x => x !== n).map(String), { k: "count:all" })) }
+  // extras que só dependem dos jogos finalizados (garantem as 5 mesmo com poucos jogos)
+  if (fin.length >= 3 && famous.length) out.push(shMC(cat, "Qual destes jogos você NÃO marcou como Finalizado?", shPick(famous, 1)[0], shPick(fin, 3).map(g => g.name), { k: "notfin" }));
+  // só uma pergunta de cada tipo+jogo; primeiro no máximo 2 do mesmo tipo, depois completa sem esse limite
+  const seen = new Set(), kinds = {}, res = [], rest = [];
+  for (const q of shShuffle(out)) { const kind = q.k.split(":")[0]; if (seen.has(q.k)) continue; seen.add(q.k); if ((kinds[kind] || 0) >= 2) { rest.push(q); continue } kinds[kind] = (kinds[kind] || 0) + 1; res.push(q) }
+  res.push(...rest);
   return res;
 }
 function shLangQs() {
