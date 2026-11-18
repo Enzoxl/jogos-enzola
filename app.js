@@ -968,7 +968,11 @@ window.addEventListener("hashchange", route);
 /* ---------- início (depois que todos os arquivos carregaram) ---------- */
 function boot() {
   applyLocalPrefs();
-  if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(() => { });
+  if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(r => {
+    // procura versão nova do site ao abrir e ao voltar para o app (ícones, notificações e correções chegam mais rápido)
+    r.update().catch(() => { });
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) r.update().catch(() => { }) });
+  }).catch(() => { });
   if (!window.supabase || !CFG.SUPABASE_URL || CFG.SUPABASE_URL.includes("COLE_AQUI")) {
     sessionKnown = true; showAuth(true, "Configure o endereço e a chave do Supabase no arquivo config.js."); return;
   }
