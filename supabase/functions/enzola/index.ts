@@ -299,6 +299,53 @@ async function recuperar(b: any) {
   return json({ ok: true, email: user.email });
 }
 
+// ---------------- administrador (oculto) ----------------
+async function adminId(req: Request): Promise<string | null> {
+  const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+  const me = await fetch(`${SB()}/auth/v1/user`, { headers: { apikey: KEY(), Authorization: `Bearer ${token}` } });
+  if (!me.ok) return null;
+  const { id } = await me.json();
+  if (!id) return null;
+  const r = await rest(`admins?user_id=eq.${id}&select=user_id`).then((x) => x.json()).catch(() => []);
+  return Array.isArray(r) && r[0] ? id : null;
+}
+async function admin(req: Request, b: any) {
+  const me = await adminId(req);
+  if (b.action === "admin_me") return json({ admin: !!me });
+  if (!me) return json({ error: "não autorizado" }, 403);
+  if (b.action === "admin_list") {
+    const [profs, bans, adms, au] = await Promise.all([
+      rest("profiles?select=user_id,username,tag,nickname&order=username").then((r) => r.json()),
+      rest("bans?select=user_id,reason,created_at").then((r) => r.json()),
+      rest("admins?select=user_id").then((r) => r.json()),
+      authAdmin("users?per_page=1000").then((r) => r.json()).catch(() => ({})),
+    ]);
+    const meta: Record<string, any> = {};
+    for (const u of (au.users || [])) meta[u.id] = { created: u.created_at, last: u.last_sign_in_at };
+    const bm: Record<string, any> = {}; for (const x of (Array.isArray(bans) ? bans : [])) bm[x.user_id] = x;
+    const am = new Set((Array.isArray(adms) ? adms : []).map((x: any) => x.user_id));
+    return json({ users: (Array.isArray(profs) ? profs : []).map((p: any) => ({ ...p, ...(meta[p.user_id] || {}), banned: !!bm[p.user_id], reason: bm[p.user_id]?.reason || null, admin: am.has(p.user_id) })), me });
+  }
+  const uid = String(b.user_id || "");
+  if (!/^[0-9a-f-]{36}$/i.test(uid)) return json({ error: "id inválido" }, 400);
+  if (b.action === "admin_ban") {
+    if (uid === me) return json({ error: "Você não pode banir a si mesmo." }, 400);
+    const isAdm = await rest(`admins?user_id=eq.${uid}&select=user_id`).then((r) => r.json());
+    if (Array.isArray(isAdm) && isAdm[0]) return json({ error: "Não dá para banir um administrador." }, 400);
+    await rest("bans", { method: "POST", headers: { Prefer: "resolution=merge-duplicates" }, body: JSON.stringify({ user_id: uid, reason: String(b.reason || "").slice(0, 200) || null, banned_by: me }) });
+    const r = await authAdmin(`users/${uid}`, { method: "PUT", body: JSON.stringify({ ban_duration: "876000h" }) });
+    if (!r.ok) return json({ error: "Não foi possível bloquear o login agora." }, 500);
+    return json({ ok: true });
+  }
+  if (b.action === "admin_unban") {
+    await rest(`bans?user_id=eq.${uid}`, { method: "DELETE" });
+    const r = await authAdmin(`users/${uid}`, { method: "PUT", body: JSON.stringify({ ban_duration: "none" }) });
+    if (!r.ok) return json({ error: "Não foi possível liberar o login agora." }, 500);
+    return json({ ok: true });
+  }
+  return json({ error: "ação desconhecida" }, 400);
+}
+
 // ---------------- excluir conta ----------------
 async function excluirConta(req: Request) {
   const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
@@ -336,6 +383,7 @@ export async function handle(req: Request): Promise<Response> {
       case "push_key": return await pushKey();
       case "push": return await push(b);
       case "recuperar": return await recuperar(b);
+      case "admin_me": case "admin_list": case "admin_ban": case "admin_unban": return await admin(req, b);
       case "excluir_conta": return await excluirConta(req);
       case "ping": return json({ ok: true, itad: !!env("ITAD_KEY"), youtube: !!env("YOUTUBE_KEY") });
       default: return json({ error: "ação desconhecida" }, 400);

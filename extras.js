@@ -794,3 +794,41 @@ if ("serviceWorker" in navigator) navigator.serviceWorker.addEventListener("mess
 if (!/[?&]n=1/.test(location.search)) { if (!window.__noSplash) showSplash() }   // quem toca numa notificação vai direto para a tela certa
 else history.replaceState(null, "", location.pathname + location.hash);
 musicUI(); musicPlay();
+
+
+/* ---------- painel do administrador (oculto: toque no nome "Enzola" nos créditos) ---------- */
+const admFmt = d => d ? new Date(d).toLocaleDateString("pt-BR") : "—";
+async function openAdmin() {
+  if (!user || !FN()) return;
+  try { const me = await api("admin_me"); if (!me || !me.admin) return } catch (e) { return }
+  modalShell(`<h2>Administração</h2><p class="sub">Contas do site. Banir bloqueia o login; os jogos da pessoa ficam guardados e dá para desbanir.</p>
+    <label class="fld"><span class="inp">${ic("search")}<input type="text" id="adm-q" placeholder="Buscar usuário" autocapitalize="none" spellcheck="false"></span></label>
+    <div id="adm-list" class="adm-list"><div class="sk" style="height:120px;border-radius:14px"></div></div>`, true);
+  admLoad();
+}
+let admUsers = [];
+async function admLoad() {
+  try { const r = await api("admin_list"); admUsers = r.users || [] } catch (e) { const l = $("#adm-list"); if (l) l.innerHTML = `<p class="muted">Não foi possível carregar agora.</p>`; return }
+  admRender();
+}
+function admRender() {
+  const l = $("#adm-list"); if (!l) return;
+  const q = (($("#adm-q") || {}).value || "").trim().toLowerCase();
+  const us = admUsers.filter(u => !q || (u.username || "").includes(q) || (u.nickname || "").toLowerCase().includes(q));
+  l.innerHTML = us.length ? us.map(u => `<div class="adm-row${u.banned ? " banned" : ""}">
+    <div class="adm-i"><b>@${esc(u.username)}${u.tag ? " #" + esc(u.tag) : ""}</b>${u.admin ? ` <span class="chipinfo">admin</span>` : ""}${u.banned ? ` <span class="chipinfo bad">banido</span>` : ""}
+      <small class="muted">Criada em ${admFmt(u.created)} · último acesso ${admFmt(u.last)}${u.reason ? " · " + esc(u.reason) : ""}</small></div>
+    ${u.admin || u.user_id === user.id ? "" : u.banned
+      ? `<button class="btn ghost sm" data-adm="unban" data-id="${u.user_id}">Desbanir</button>`
+      : `<button class="btn danger sm" data-adm="ban" data-id="${u.user_id}">Banir</button>`}</div>`).join("") : `<p class="muted">Nenhuma conta encontrada.</p>`;
+}
+document.addEventListener("click", async e => {
+  if (e.target.closest("#adm-key")) { openAdmin(); return }
+  const b = e.target.closest("[data-adm]"); if (!b) return;
+  const id = b.dataset.id, u = admUsers.find(x => x.user_id === id); if (!u) return;
+  if (b.dataset.adm === "ban" && !b.dataset.sure) { b.dataset.sure = 1; b.textContent = "Confirmar banimento"; setTimeout(() => { if (b.isConnected) { delete b.dataset.sure; b.textContent = "Banir" } }, 4000); return }
+  b.disabled = true;
+  try { await api(b.dataset.adm === "ban" ? "admin_ban" : "admin_unban", { user_id: id }); toast(b.dataset.adm === "ban" ? `@${u.username} foi banido.` : `@${u.username} foi liberado.`); await admLoad() }
+  catch (er) { toast(er.message || "Não deu certo."); b.disabled = false }
+});
+document.addEventListener("input", e => { if (e.target.id === "adm-q") admRender() });

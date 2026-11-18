@@ -1299,3 +1299,11 @@ a.spn:hover .sp-logo,a.spn:focus-visible .sp-logo{opacity:1;transform:translateY
 .list .hload,.grid .hload,.wgrid .hload{grid-column:1/-1}
 .lg-path{padding-top:46px}
 .lg-end-a .btn:not(.ghost){background:#58CC02;color:#fff;box-shadow:0 4px 0 #46A302}
+
+/* administração (oculta) */
+.adm-key{cursor:default}
+.adm-list{display:grid;gap:8px;margin-top:12px;max-height:55vh;overflow:auto}
+.adm-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--tile)}
+.adm-row.banned{opacity:.7}
+.adm-i{min-width:0;display:grid;gap:2px}.adm-i small{font-size:12px}
+.chipinfo.bad{color:var(--nobuy)}

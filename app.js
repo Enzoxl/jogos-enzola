@@ -128,6 +128,7 @@ async function loadAll() {
     checkSchema(),
   ]);
   if (g.error) { toast("Não foi possível carregar os jogos."); return }
+  sb.from("bans").select("user_id").eq("user_id", user.id).maybeSingle().then(async r => { if (r.data) { await sb.auth.signOut(); toast("Esta conta foi suspensa."); showAuth(true, "Esta conta foi suspensa pelo administrador.") } });
   games = g.data; profile = p.data || null; loaded = true; applyLocalPrefs(); render();
   if (!profile || profile.username !== uname() || (caps.v3 && !profile.tag)) await saveProfile({});
   if (tab === "desejos") refreshPrices(false);
