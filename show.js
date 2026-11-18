@@ -188,7 +188,7 @@ function shBeep(k) { if (typeof lgBeep === "function") { try { lg = lg || lgLoad
 let sh = null;
 const shLabel = (q, i) => String((q.labels || ["A", "B", "C", "D"])[i]).toUpperCase();
 function shBox() { let b = $("#sh-ovl"); if (!b) { b = document.createElement("div"); b.id = "sh-ovl"; b.className = "sh-ovl"; b.setAttribute("role", "dialog"); b.setAttribute("aria-modal", "true"); b.setAttribute("aria-label", "Show do Enzolão"); document.body.append(b); document.documentElement.classList.add("lg-open") } return b }
-function shClose() { if (sh) { if (sh.timer) clearInterval(sh.timer); if (sh.introT) clearTimeout(sh.introT) } shStopAll(); shMusicOff(); sh = null; const b = $("#sh-ovl"); if (b) b.remove(); document.documentElement.classList.remove("lg-open"); if (tab === "idiomas") renderLingo() }
+function shClose() { if (sh) { if (sh.timer) clearInterval(sh.timer); if (sh.introT) clearTimeout(sh.introT) } shStopAll(); shMusicOff(); sh = null; const b = $("#sh-ovl"); if (b) b.remove(); document.documentElement.classList.remove("lg-open"); try { if (bgm.started && !bgm.userPaused) musicPlay() } catch (e) { } if (tab === "idiomas") renderLingo() }
 function shIntro() {
   const R = REWARDS.silvio, has = rewardsHas("silvio");
   shBox().innerHTML = `<div class="sh-in"><button class="iconbtn sh-x" data-sh-close aria-label="Fechar">${ic("x")}</button>
@@ -295,7 +295,7 @@ async function shEquip(which) {
 }
 document.addEventListener("click", e => {
   const c = s => e.target.closest(s); let b;
-  if (c("[data-show-open]")) { if (!user || !loaded) return; shIntro(); shMusic(.3); return }
+  if (c("[data-show-open]")) { if (!user || !loaded) return; shIntro(); try { musicPause(false) } catch (e) { } shMusic(.3); return }
   if (c("[data-sh-close]")) { shClose(); return }
   if (c("[data-sh-start]")) { shStart(); return }
   if (b = c("[data-sh-equip]")) { shEquip(b.dataset.shEquip); return }

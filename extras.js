@@ -596,7 +596,7 @@ function bgmInit() {
   ["playing", "pause"].forEach(ev => a.addEventListener(ev, musicUI));
   return a;
 }
-function blocked() { return !musicOn() || document.hidden || bgm.videoPaused || splashOpen() }
+function blocked() { return !musicOn() || document.hidden || bgm.videoPaused || splashOpen() || !!document.getElementById("sh-ovl") }
 async function musicPlay() {
   if (blocked()) return;
   const a = bgmInit();
