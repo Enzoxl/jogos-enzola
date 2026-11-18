@@ -82,7 +82,7 @@ const SH_HIPPO = [
   ["Em qual país vive uma população de hipopótamos descendentes dos trazidos por Pablo Escobar?", "Colômbia", ["México", "Peru", "Argentina"]],
 ];
 const SH_MOV = [
-  ["Em que data foi criado o Movimento Enzola?", "13 de setembro de 2026", ["13 de setembro de 2025", "7 de setembro de 2026", "31 de outubro de 2026"]],
+  ["Em que data foi criado o Movimento Enzola?", "13 de setembro de 2023", ["13 de setembro de 2026", "13 de setembro de 2025", "7 de setembro de 2023"]],
   ["Qual é o foco do Movimento Enzola?", "valorização dos hipopótamos", ["valorização das girafas", "preservação das capivaras", "campeonatos de games"]],
   ["Quem criou o Movimento Enzola?", "Enzola, o gênio contemporâneo", ["Silvio Santos", "Datena", "Neymar"]],
 ];

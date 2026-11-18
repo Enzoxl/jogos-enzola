@@ -201,7 +201,7 @@ const HM_TILES = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 function renderMovimento() {
   const el = $("#movimento"); if (!el) return;
   el.innerHTML = `<div class="ig"><div class="ig-top"><a class="iconbtn light" href="#inicio" aria-label="Voltar">${ic("back")}</a><b>movimento.enzola</b><a class="iconbtn light" href="${HM_IG}" target="_blank" rel="noopener" aria-label="Abrir no Instagram">${ic("external")}</a></div>
-    <div class="ig-head"><img class="ig-pic" src="movimento/h1.webp" alt="Logo do Movimento Enzola" width="86" height="86"><div class="ig-info"><b>Movimento Enzola</b><span>Valorização dos hipopótamos desde 13 de setembro de 2026.<br>“This is Enzola, Gênio Contemporâneo”</span></div></div>
+    <div class="ig-head"><img class="ig-pic" src="movimento/h1.webp" alt="Logo do Movimento Enzola" width="86" height="86"><div class="ig-info"><b>Movimento Enzola</b><span>Valorização dos hipopótamos desde 13 de setembro de 2023.<br>“This is Enzola, Gênio Contemporâneo”</span></div></div>
     <div class="ig-btns"><a class="btn ig-go" href="${HM_IG}" target="_blank" rel="noopener">${ic("insta")}Seguir no Instagram</a><a class="btn ghost" href="${HM_IG}" target="_blank" rel="noopener">Abrir perfil</a></div>
     <div class="ig-hl"><a href="${HM_IG}" target="_blank" rel="noopener"><span><img src="movimento/h1.webp" alt=""></span>Redes Sociais</a><a href="${HM_IG}" target="_blank" rel="noopener"><span><img src="movimento/h2.webp" alt=""></span>Enzola</a></div>
     <div class="ig-tabs" role="tablist"><span class="on" aria-label="Publicações">${ic("grid")}</span><a href="${HM_IG}/reels/" target="_blank" rel="noopener" aria-label="Reels">${ic("play")}</a><a href="${HM_IG}/tagged/" target="_blank" rel="noopener" aria-label="Marcações">${ic("user")}</a></div>
