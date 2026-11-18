@@ -433,3 +433,8 @@ begin
 end $$;
 drop trigger if exists posts_clean_tags on public.posts;
 create trigger posts_clean_tags before insert on public.posts for each row execute function public.posts_clean_tags();
+
+-- notificações do feed: marcação, curtida e comentário (gatilhos; o aviso no celular sai pela função "enzola")
+alter table public.notifications drop constraint if exists notifications_kind_check;
+alter table public.notifications add constraint notifications_kind_check check (kind in ('poke','suggest','message','friend_request','friend_accept','tag','like','comment'));
+-- (funções notify_post_tags / notify_post_like / notify_post_comment e seus gatilhos: ver migração "notify_feed" no Supabase)

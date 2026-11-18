@@ -179,8 +179,11 @@ const NTXT = {
   message: n => `<b>${esc(pName(pOf(n.actor)))}</b> mandou uma mensagem`,
   friend_request: n => `<b>${esc(pName(pOf(n.actor)))}</b> quer ser seu amigo`,
   friend_accept: n => `<b>${esc(pName(pOf(n.actor)))}</b> aceitou seu pedido de amizade`,
+  tag: n => `<b>${esc(pName(pOf(n.actor)))}</b> marcou você ${n.payload.in === "comment" ? "num comentário" : "numa publicação"}${n.payload.text ? `<span class="nnote">“${esc(n.payload.text)}”</span>` : ""}`,
+  like: n => `<b>${esc(pName(pOf(n.actor)))}</b> curtiu sua publicação`,
+  comment: n => `<b>${esc(pName(pOf(n.actor)))}</b> comentou na sua publicação${n.payload.text ? `<span class="nnote">“${esc(n.payload.text)}”</span>` : ""}`,
 };
-const NICON = { poke: "hand", suggest: "gift", message: "message", friend_request: "userplus", friend_accept: "users" };
+const NICON = { poke: "hand", suggest: "gift", message: "message", friend_request: "userplus", friend_accept: "users", tag: "userplus", like: "heart", comment: "message" };
 function nActions(n) {
   const a = n.actor;
   if (n.kind === "poke") return `<button class="btn ghost sm" data-fr="poke" data-id="${a}">${ic("hand")}Cutucar de volta</button>`;
@@ -188,6 +191,7 @@ function nActions(n) {
   if (n.kind === "suggest") return `${gameHref(n.payload) ? `<a class="btn ghost sm" href="#${gameHref(n.payload)}">Ver jogo</a>` : ""}<button class="btn ghost sm" data-nt="addwish" data-id="${n.id}">${ic("bookmark")}Quero</button>`;
   if (n.kind === "friend_request") { const r = fr.rows.find(f => f.requester === a && f.addressee === user.id && f.status === "pending"); return r ? `<button class="btn sm" data-fr="accept" data-id="${r.id}">${ic("check")}Aceitar</button>` : `<a class="btn ghost sm" href="#amigos">Ver amigos</a>` }
   if (n.kind === "friend_accept") return `<a class="btn ghost sm" href="#amigo/${a}">Ver perfil</a>`;
+  if (n.kind === "tag" || n.kind === "like" || n.kind === "comment") return `<button class="btn ghost sm" data-go="inicio">Ver no feed</button>`;
   return "";
 }
 async function loadNotifs() {
@@ -226,7 +230,7 @@ async function onNotif(n) {
   await loadProfiles([n.actor]);
   fr.notifs.unshift({ ...n, payload: n.payload || {} }); updateBell();
   const who = pName(pOf(n.actor));
-  const txt = { poke: `${who} cutucou você! 👉`, suggest: `${who} sugeriu ${n.payload && n.payload.name || "um jogo"} para você`, message: `Nova mensagem de ${who}`, friend_request: `${who} quer ser seu amigo`, friend_accept: `${who} aceitou seu pedido de amizade` }[n.kind];
+  const txt = { poke: `${who} cutucou você! 👉`, suggest: `${who} sugeriu ${n.payload && n.payload.name || "um jogo"} para você`, message: `Nova mensagem de ${who}`, friend_request: `${who} quer ser seu amigo`, friend_accept: `${who} aceitou seu pedido de amizade`, tag: `${who} marcou você`, like: `${who} curtiu sua publicação`, comment: `${who} comentou na sua publicação` }[n.kind];
   if (n.kind === "message" && chat && chat.uid === n.actor && $("#chat-list")) return;
   if (txt) { toast(txt); sysNotify("Jogos Enzola", txt) }
   if (n.kind === "poke") { const b = $("#bell"); b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake"); if (lsGet("pref-vibrate") !== false && navigator.vibrate) navigator.vibrate([90, 60, 90]) }
