@@ -261,7 +261,7 @@ function subscribeRT() {
 }
 function unsubRT() { for (const c of rtChans) { try { sb.removeChannel(c) } catch (e) { } } rtChans = [] }
 async function socialStart() { await loadFriends(); await applyInvite(); await loadNotifs(); subscribeRT(); pushSync() }
-function socialReset() { unsubRT(); fr = newFr(); fpv = null; chat = null; updateBadge(); updateBell() }
+function socialReset() { if (typeof hmReset === "function") hmReset(); unsubRT(); fr = newFr(); fpv = null; chat = null; updateBadge(); updateBell() }
 
 /* ---------- jogos dos amigos (para "amigos que têm") ---------- */
 async function friendsWithGame(name) {

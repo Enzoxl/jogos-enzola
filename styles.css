@@ -1401,3 +1401,74 @@ a.spn:hover .sp-logo,a.spn:focus-visible .sp-logo{opacity:1;transform:translateY
 .sh-sad{font-size:72px;margin-top:24px;animation:shbob 1.2s ease-in-out infinite alternate}
 .sh-wrongq{background:rgba(0,0,0,.3);border-radius:14px;padding:12px 14px;display:grid;gap:6px;width:100%;text-align:left}
 .sh-wrongq b{color:#58CC02}
+
+/* ===== Tela inicial: feed, stories e Instagram do Movimento ===== */
+#inicio,#movimento{max-width:640px;margin:0 auto}
+.hm-promo{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:18px;text-decoration:none;color:#fff;margin-bottom:14px;background:linear-gradient(120deg,#0B1129 0%,#2a1a5e 45%,#b5367a 80%,#f08a3c 100%);box-shadow:0 10px 28px -14px rgba(181,54,122,.8);transition:transform .15s}
+.hm-promo:hover{transform:translateY(-2px)}
+.hm-pl{flex:none;width:52px;height:52px;border-radius:50%;overflow:hidden;background:#000;box-shadow:0 0 0 2px rgba(255,255,255,.85)}.hm-pl img{display:block;width:100%;height:100%;object-fit:cover}
+.hm-pt{display:grid;gap:3px;min-width:0;flex:1}.hm-pt b{font:800 17px var(--f-head)}.hm-pt span{display:flex;align-items:center;gap:6px;font-size:13px;opacity:.92}.hm-pt .ic{width:1.1em;height:1.1em}
+.hm-go{flex:none;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.2)}
+.hm-stories{display:flex;gap:14px;overflow-x:auto;padding:4px 2px 12px;margin-bottom:6px;scrollbar-width:none}.hm-stories::-webkit-scrollbar{display:none}
+.hm-st{flex:none;display:grid;justify-items:center;gap:6px;width:74px;background:none;border:0;color:var(--fg);cursor:pointer;position:relative;padding:0}
+.hm-ring{display:grid;place-items:center;width:68px;height:68px;border-radius:50%;padding:3px;background:conic-gradient(#f5c542,#e8505b,#c04fd8,#6C93FF,#f5c542);border:0;cursor:pointer}
+.hm-ring .av{border:3px solid var(--bg);width:62px;height:62px;box-sizing:border-box}
+.hm-st.seen .hm-ring{background:var(--line-2)}
+.hm-st.me .hm-ring:not(.has){background:var(--line-2)}
+.hm-plus{position:absolute;right:4px;top:44px;width:22px;height:22px;border-radius:50%;border:2px solid var(--bg);background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;padding:0;cursor:pointer}.hm-plus .ic{width:12px;height:12px}
+.hm-sn{font-size:12px;max-width:74px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
+.hm-compose{padding:12px;margin-bottom:14px;display:grid;gap:10px}
+.hm-cr{display:flex;gap:10px;align-items:flex-start}.hm-cr textarea{flex:1;resize:vertical;min-height:52px}
+.hm-cb2{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.hm-file{cursor:pointer}
+.hm-prev{position:relative}.hm-prev img{display:block;width:100%;max-height:300px;object-fit:cover;border-radius:12px}.hm-prev .iconbtn{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);color:#fff}
+.hm-feed{display:grid;gap:14px}
+.hm-post{padding:12px 14px 10px}
+.hm-ph{display:flex;align-items:center;gap:10px}.hm-pn{display:grid;flex:1;min-width:0;font-size:12.5px}.hm-nm{font-weight:700;font-size:14.5px;color:var(--fg);text-decoration:none;overflow:hidden;text-overflow:ellipsis}
+.hm-body{margin:10px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.45}
+.hm-img{display:block;width:100%;max-height:520px;object-fit:cover;border-radius:12px;margin-top:10px;cursor:zoom-in;background:var(--soft)}
+.hm-acts{display:flex;gap:6px;margin-top:8px}
+.hm-act{display:inline-flex;align-items:center;gap:6px;background:none;border:0;color:var(--muted);font:600 13.5px var(--f-body);padding:7px 10px;border-radius:10px;cursor:pointer}
+.hm-act:hover{background:var(--tile)}.hm-act.on{color:#ff4d6d}.hm-act.on .ic{fill:currentColor}
+.hm-cl{display:grid;gap:8px;border-top:1px solid var(--line);margin-top:6px;padding-top:10px}
+.hm-c{display:flex;gap:8px;align-items:flex-start}.hm-cb{flex:1;min-width:0;font-size:13.5px;overflow-wrap:anywhere;background:var(--tile);border-radius:12px;padding:7px 11px}.hm-cb .muted{font-size:11.5px}
+.hm-nc{margin:0;font-size:13px}
+.hm-cf{display:flex;gap:8px}.hm-cf input{flex:1}
+.iconbtn.sm{width:28px;height:28px}
+.hm-ovl{position:fixed;inset:0;z-index:300;background:rgba(5,8,20,.94);display:grid;place-items:center;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+.hm-x{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:10px;z-index:5;color:#fff}
+.hm-sc{width:min(420px,100%);max-height:100%;overflow:auto;padding:18px 16px;display:grid;gap:12px;color:#fff;position:relative}.hm-sc h3{margin:0;font:800 20px var(--f-head)}.hm-sc p{margin:0}
+.hm-scv{aspect-ratio:9/14;border-radius:18px;display:grid;place-items:center;padding:20px;overflow:hidden}
+.hm-scv textarea{width:100%;background:transparent!important;border:0!important;box-shadow:none!important;color:#fff;text-align:center;font:800 24px/1.25 var(--f-head);resize:none}
+.hm-scv textarea::placeholder{color:rgba(255,255,255,.7)}
+.hm-bgs{display:flex;gap:8px;justify-content:center}.hm-bg{width:30px;height:30px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}.hm-bg.on{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.4)}
+.hm-sv{position:relative;width:min(440px,100%);height:min(100%,calc(100vw * 1.7));max-height:100dvh;display:grid;grid-template-rows:auto auto 1fr;color:#fff;background:#000;overflow:hidden}
+@media(min-width:600px){.hm-sv{height:min(92vh,800px);border-radius:16px}}
+.hm-bars{display:flex;gap:4px;padding:10px 10px 6px;position:relative;z-index:3}.hm-bars i{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.3);overflow:hidden}.hm-bars i b{display:block;height:100%;width:0;background:#fff}.hm-bars i.done b{width:100%}.hm-bars i.run b{animation:hmbar linear forwards}
+@keyframes hmbar{to{width:100%}}
+.hm-svh{display:flex;align-items:center;gap:10px;padding:4px 10px 8px;position:relative;z-index:3}.hm-svh div{display:grid;font-size:13px}.hm-svh span{opacity:.75;font-size:11.5px}.hm-svh .iconbtn{color:#fff}.hm-svh .grow{flex:1}
+.hm-svb{position:absolute;inset:0;display:grid;place-items:center;overflow:hidden}.hm-svb img{width:100%;height:100%;object-fit:contain}
+.hm-svb .txt{margin:0;padding:0 28px;font:800 28px/1.25 var(--f-head);text-align:center;text-wrap:balance;overflow-wrap:anywhere}
+.hm-svb .cap{position:absolute;left:0;right:0;bottom:0;margin:0;padding:40px 18px 24px;background:linear-gradient(transparent,rgba(0,0,0,.75));text-align:center;font-size:16px;overflow-wrap:anywhere}
+.hm-prevz,.hm-nextz{position:absolute;top:70px;bottom:0;width:38%;background:none;border:0;z-index:2;cursor:pointer}.hm-prevz{left:0}.hm-nextz{right:0;width:62%}
+.hm-zoom{display:grid;gap:14px;justify-items:center;max-width:100%;padding:16px}.hm-zoom img{max-width:100%;max-height:80vh;border-radius:12px;object-fit:contain}
+/* perfil do Movimento Enzola (layout do Instagram) */
+.ig{background:#0b0d12;color:#f5f5f5;border-radius:18px;overflow:hidden;border:1px solid var(--line-2)}
+.ig-top{display:flex;align-items:center;justify-content:space-between;padding:10px 12px}.ig-top b{font:700 17px var(--f-body)}.ig-top .iconbtn{color:#fff}
+.ig-head{display:flex;align-items:center;gap:16px;padding:6px 16px 10px}.ig-pic{border-radius:50%;object-fit:cover;flex:none;box-shadow:0 0 0 2px #333}
+.ig-info{display:grid;gap:4px;font-size:13.5px;line-height:1.35;color:#d7d7d7}.ig-info b{color:#fff;font-size:15px}
+.ig-btns{display:flex;gap:8px;padding:6px 16px 14px}.ig-btns .btn{flex:1}.ig-btns .ig-go{background:linear-gradient(120deg,#6c3bd1,#c13584,#f08a3c)}
+.ig-btns .btn.ghost{background:#262626;color:#fff;box-shadow:none}
+.ig-hl{display:flex;gap:18px;padding:4px 16px 16px;overflow-x:auto}.ig-hl a{display:grid;justify-items:center;gap:6px;width:76px;font-size:12.5px;color:#ddd;text-decoration:none}
+.ig-hl a span{width:68px;height:68px;border-radius:50%;padding:3px;border:1px solid #555;display:block;overflow:hidden}.ig-hl img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block}
+.ig-tabs{display:flex;border-top:1px solid #262626;border-bottom:1px solid #262626}.ig-tabs>*{flex:1;display:grid;place-items:center;padding:12px;color:#8e8e8e;border-bottom:2px solid transparent;margin-bottom:-1px}.ig-tabs .on{color:#fff;border-color:#fff}.ig-tabs .ic{width:24px;height:24px}
+.ig-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:#0b0d12}
+.ig-t{padding:0;border:0;background:#111;aspect-ratio:3/4;overflow:hidden;cursor:pointer;display:block}.ig-t img{width:100%;height:100%;object-fit:cover;display:block;transition:opacity .15s}.ig-t:hover img{opacity:.85}
+.ig-foot{margin:0;padding:12px 16px 16px;font-size:12.5px;text-align:center}
+@media (prefers-reduced-motion:reduce){.hm-bars i.run b{animation-duration:.01ms!important}.hm-promo{transition:none}}
+.av.sm{width:40px;height:40px}
+.hm-go .ic{transform:rotate(-90deg)}
+.hm-ovl{background:#05070f}
+.ig-t img{background:#111}
+.hm-sv{height:100dvh}
+@media(min-width:600px){.hm-sv{height:min(92vh,800px)}}

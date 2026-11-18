@@ -350,3 +350,76 @@ exception when others then
 end $$;
 drop trigger if exists push_notification on public.notifications;
 create trigger push_notification after insert on public.notifications for each row execute function public.push_notification();
+-- ============ Feed, comentários, curtidas e stories (v8) ============
+create or replace function public.is_friend(a uuid, b uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select a = b or exists (select 1 from public.friendships f where f.status = 'accepted'
+    and ((f.requester = a and f.addressee = b) or (f.requester = b and f.addressee = a)));
+$$;
+revoke all on function public.is_friend(uuid, uuid) from public, anon;
+grant execute on function public.is_friend(uuid, uuid) to authenticated;
+
+create table if not exists public.posts (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  body text not null default '' check (char_length(body) <= 2000),
+  image text check (image is null or char_length(image) <= 500),
+  created_at timestamptz not null default now(),
+  check (char_length(body) > 0 or image is not null)
+);
+create index if not exists posts_user_created on public.posts (user_id, created_at desc);
+create table if not exists public.post_likes (
+  post_id uuid not null references public.posts(id) on delete cascade,
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key (post_id, user_id)
+);
+create table if not exists public.post_comments (
+  id uuid primary key default gen_random_uuid(),
+  post_id uuid not null references public.posts(id) on delete cascade,
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  body text not null check (char_length(body) between 1 and 500),
+  created_at timestamptz not null default now()
+);
+create index if not exists post_comments_post on public.post_comments (post_id, created_at);
+create table if not exists public.stories (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  image text check (image is null or char_length(image) <= 500),
+  caption text not null default '' check (char_length(caption) <= 300),
+  bg smallint not null default 0,
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null default now() + interval '24 hours',
+  check (image is not null or char_length(caption) > 0)
+);
+create index if not exists stories_user_created on public.stories (user_id, created_at desc);
+
+alter table public.posts enable row level security;
+alter table public.post_likes enable row level security;
+alter table public.post_comments enable row level security;
+alter table public.stories enable row level security;
+
+create policy posts_select on public.posts for select to authenticated using (public.is_friend(auth.uid(), user_id));
+create policy posts_insert on public.posts for insert to authenticated with check (user_id = auth.uid());
+create policy posts_delete on public.posts for delete to authenticated using (user_id = auth.uid());
+
+create policy likes_select on public.post_likes for select to authenticated using (exists (select 1 from public.posts p where p.id = post_id));
+create policy likes_insert on public.post_likes for insert to authenticated with check (user_id = auth.uid() and exists (select 1 from public.posts p where p.id = post_id));
+create policy likes_delete on public.post_likes for delete to authenticated using (user_id = auth.uid());
+
+create policy comments_select on public.post_comments for select to authenticated using (exists (select 1 from public.posts p where p.id = post_id));
+create policy comments_insert on public.post_comments for insert to authenticated with check (user_id = auth.uid() and exists (select 1 from public.posts p where p.id = post_id));
+create policy comments_delete on public.post_comments for delete to authenticated using (user_id = auth.uid() or exists (select 1 from public.posts p where p.id = post_id and p.user_id = auth.uid()));
+
+create policy stories_select on public.stories for select to authenticated using (user_id = auth.uid() or (expires_at > now() and public.is_friend(auth.uid(), user_id)));
+create policy stories_insert on public.stories for insert to authenticated with check (user_id = auth.uid());
+create policy stories_delete on public.stories for delete to authenticated using (user_id = auth.uid());
+
+revoke all on public.posts, public.post_likes, public.post_comments, public.stories from anon;
+
+-- fotos: bucket público de leitura (nomes impossíveis de adivinhar), cada um escreve só na própria pasta
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('social', 'social', true, 5242880, array['image/jpeg','image/png','image/webp'])
+on conflict (id) do update set file_size_limit = 5242880, allowed_mime_types = array['image/jpeg','image/png','image/webp'];
+create policy social_insert on storage.objects for insert to authenticated with check (bucket_id = 'social' and (storage.foldername(name))[1] = auth.uid()::text);
+create policy social_delete on storage.objects for delete to authenticated using (bucket_id = 'social' and (storage.foldername(name))[1] = auth.uid()::text);

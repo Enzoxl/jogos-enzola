@@ -9,7 +9,7 @@ const EXPCOL = { "Perfeito": "#2E8B6A", "Ótimo": "#4C9F7A", "Muito bom": "#6FA8
 const TIERS = [["S", "#F28B82"], ["A", "#F6B26B"], ["B", "#F5DC78"], ["C", "#A8D5A2"], ["D", "#9CC0F5"]];
 const PLATS = ["PC", "PlayStation", "Xbox", "Switch", "Outro"];
 const PLATCOL = { "PC": "#6C93FF", "PlayStation": "#4F8BE8", "Xbox": "#4ADE9B", "Switch": "#FF7A7A", "Outro": "#A88BFA" };
-const TABS = ["perfil", "catalogo", "galeria", "tier", "desejos", "amigos", "resumo", "idiomas", "config"];
+const TABS = ["inicio", "movimento", "perfil", "catalogo", "galeria", "tier", "desejos", "amigos", "resumo", "idiomas", "config"];
 const CAT_SUBS = ["catalogo", "desejos", "resumo"];   // Lista de desejos e Resumo agora ficam dentro do Catálogo
 const NEW_COLS = ["hours", "metacritic", "playtime", "rawg_id", "steam_id", "target_price", "price", "price_checked_at"];
 const PRICE_TTL = 12 * 3600 * 1000;
@@ -836,8 +836,8 @@ function route() {
 function show(h) {
   const [t, ...rest] = h.split("/"); routeArg = rest.join("/");
   const prev = tab;
-  tab = (t === "jogo" && routeArg) || (t === "amigo" && routeArg) ? t : TABS.includes(t) ? t : "perfil";
-  const hl = tab === "amigo" ? "amigos" : CAT_SUBS.includes(tab) ? "catalogo" : tab;
+  tab = (t === "jogo" && routeArg) || (t === "amigo" && routeArg) ? t : TABS.includes(t) ? t : "inicio";
+  const hl = tab === "movimento" ? "inicio" : tab === "amigo" ? "amigos" : CAT_SUBS.includes(tab) ? "catalogo" : tab;
   const cn = $("#cat-nav"); cn.hidden = !CAT_SUBS.includes(tab);
   for (const b of cn.querySelectorAll("[data-sub]")) { const on = b.dataset.sub === tab; b.classList.toggle("on", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current") }
   for (const b of $$("nav.tabs button")) b.setAttribute("aria-selected", b.dataset.tab === hl);
@@ -849,6 +849,7 @@ function show(h) {
   if (tab === "desejos" && loaded) refreshPrices(false);
   if (tab === "jogo") { openGame(routeArg); window.scrollTo({ top: 0 }); return }
   if (tab === "amigo") { openFriendPage(routeArg); window.scrollTo({ top: 0 }); return }
+  if (tab === "inicio" && prev !== "inicio" && typeof hm !== "undefined" && hm.loaded) hmLoad(true);
   render(); if (prev !== tab || tab !== "perfil") window.scrollTo({ top: 0 });
 }
 function render() {
@@ -856,7 +857,7 @@ function render() {
   $("#who-av").innerHTML = avatar(profile && profile.avatar); $("#who-name").textContent = nick();
   const w = $("#sn-wish"); if (w) { const n = loaded ? wishlist().length : 0; w.textContent = n || ""; w.hidden = !n }
   if (tab === "idiomas") return;
-  if (tab === "perfil") renderProfile(); else if (tab === "catalogo") renderCatalog(); else if (tab === "galeria") renderGallery();
+  if (tab === "inicio") renderHome(); else if (tab === "movimento") renderMovimento(); else if (tab === "perfil") renderProfile(); else if (tab === "catalogo") renderCatalog(); else if (tab === "galeria") renderGallery();
   else if (tab === "amigos") renderFriends(); else if (tab === "tier") renderTier(); else if (tab === "desejos") renderWishlist();
   else if (tab === "config") renderConfig(); else if (tab === "jogo") renderGameIfLibraryChanged(); else if (tab === "amigo") renderFriendPage(); else renderSummary();
 }
