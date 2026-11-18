@@ -240,7 +240,7 @@ function renderLingo() {
   const best = lg.best[lg.lang] || 0;
   el.innerHTML = `
     <div class="sec-head"><div><h2 class="h">Enzolingo</h2><p class="muted">Inglês e espanhol em lições de 2 minutos, com o hipopótamo.</p></div>
-      <div class="lg-langs" role="radiogroup" aria-label="Idioma">${Object.entries(LG_LANGS).map(([k, v]) => `<button role="radio" aria-checked="${k === lg.lang}" data-lg-lang="${k}"><span class="lg-flag">${v.flag}</span>${v.name}</button>`).join("")}</div></div>
+      <div class="lg-tools"><div class="lg-langs" role="radiogroup" aria-label="Idioma">${Object.entries(LG_LANGS).map(([k, v]) => `<button role="radio" aria-checked="${k === lg.lang}" data-lg-lang="${k}"><span class="lg-flag">${v.flag}</span>${v.name}</button>`).join("")}</div><button class="btn sh-btn lg-show" data-show-open aria-label="Show do Enzolão">🎤<span>Show do<br>Enzolão</span></button></div></div>
     <div class="lg-top">
       <div class="lg-hero">${lgHippo("idle", allDone ? "Você zerou a trilha! Treine no desafio." : L.hello)}</div>
       <div class="lg-stats">
@@ -250,7 +250,6 @@ function renderLingo() {
       </div>
       <div class="lg-quick">
         ${cur ? `<button class="btn lg-go" data-lg-start="${cur[0]}-${cur[1]}">${ic("play")}Continuar: ${esc(LG_UNITS[cur[0]].title)} · lição ${cur[1] + 1}</button>` : ""}
-        <button class="btn sh-btn" data-show-open>🎤 Show do Enzolão</button>
         <button class="btn ghost" data-lg-rush>⏱️ Desafio de 60 segundos${best ? ` · recorde ${best}` : ""}</button>
         <button class="link lg-sfx" data-lg-sfx aria-pressed="${lg.sfx}">${lg.sfx ? "🔊 Sons ligados" : "🔇 Sons desligados"}</button>
       </div>
