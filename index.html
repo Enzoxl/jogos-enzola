@@ -84,6 +84,7 @@
   <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
   <symbol id="i-prev" viewBox="0 0 24 24"><path d="M19 5 9 12l10 7V5zM5 5v14"/></symbol>
   <symbol id="i-next" viewBox="0 0 24 24"><path d="m5 5 10 7-10 7V5zM19 5v14"/></symbol>
+  <symbol id="i-lingo" viewBox="0 0 24 24"><path d="M4 5h9v7H8l-4 3V5z"/><path d="M13 9h7v8l-3-2h-6v-3"/><path d="M7 8.5h3"/></symbol>
   <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
   <symbol id="i-mute" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="m16 9 5 6M21 9l-5 6"/></symbol>
   <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8l-5-5z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></symbol>
@@ -184,9 +185,8 @@
         <button role="tab" data-tab="catalogo"><svg class="ic"><use href="#i-list"/></svg><span>Catálogo</span></button>
         <button role="tab" data-tab="galeria"><svg class="ic"><use href="#i-grid"/></svg><span>Galeria</span></button>
         <button role="tab" data-tab="tier"><svg class="ic"><use href="#i-layers"/></svg><span>Tier List</span></button>
-        <button role="tab" data-tab="desejos"><svg class="ic"><use href="#i-bookmark"/></svg><span>Desejos</span></button>
         <button role="tab" data-tab="amigos"><svg class="ic"><use href="#i-users"/></svg><span>Amigos</span><i class="nb" id="fr-badge" hidden></i></button>
-        <button role="tab" data-tab="resumo"><svg class="ic"><use href="#i-chart"/></svg><span>Resumo</span></button>
+        <button role="tab" data-tab="idiomas"><svg class="ic"><use href="#i-lingo"/></svg><span>Idiomas</span></button>
       </nav>
       <div class="who">
         <button class="search-pill" id="search-btn" aria-label="Pesquisar jogos" title="Pesquisar qualquer jogo (atalho: /)"><svg class="ic"><use href="#i-search"/></svg><span class="sp-t">Pesquisar jogos</span><kbd>/</kbd></button>
@@ -209,6 +209,11 @@
 
   <main class="wrap">
     <section id="perfil"></section>
+    <nav class="subnav" id="cat-nav" aria-label="Catálogo" hidden>
+      <button data-go="catalogo" data-sub="catalogo"><svg class="ic"><use href="#i-list"/></svg>Jogos</button>
+      <button data-go="desejos" data-sub="desejos"><svg class="ic"><use href="#i-bookmark"/></svg>Lista de desejos<i class="sn-n" id="sn-wish"></i></button>
+      <button data-go="resumo" data-sub="resumo"><svg class="ic"><use href="#i-chart"/></svg>Resumo</button>
+    </nav>
 
     <section id="catalogo" hidden>
       <div class="sec-head"><div><h2 class="h">Catálogo</h2><p class="muted" id="cat-sub"></p></div>
@@ -267,16 +272,19 @@
     <section id="jogo" hidden></section>
     <section id="config" hidden></section>
     <section id="resumo" hidden></section>
+    <section id="idiomas" hidden></section>
   </main>
 
   <footer class="foot">
     <section class="sponsors" aria-labelledby="sp-title">
       <h2 id="sp-title">Patrocinadores</h2>
       <ul class="sp-list">
+        <li><span class="spn"><span class="sp-logo" style="--m:url(patrocinadores/cruzeiro.png)" aria-hidden="true"></span><span class="sp-n">Cruzeiro</span></span></li>
         <li><a class="spn" href="https://br.pinterest.com/daanzada/" target="_blank" rel="noopener"><span class="sp-logo" style="--m:url(patrocinadores/pinterest.png)" aria-hidden="true"></span><span class="sp-n">daanzada</span></a></li>
         <li><a class="spn" href="https://labumawards.vercel.app/" target="_blank" rel="noopener"><span class="sp-logo" style="--m:url(patrocinadores/labum.png)" aria-hidden="true"></span><span class="sp-n">Labum</span></a></li>
         <li><a class="spn" href="https://www.instagram.com/movimento.enzola/" target="_blank" rel="noopener"><span class="sp-logo" style="--m:url(patrocinadores/movimento-enzola.png)" aria-hidden="true"></span><span class="sp-n">Movimento Enzola</span></a></li>
         <li><span class="spn"><span class="sp-logo" style="--m:url(patrocinadores/sbt.png)" aria-hidden="true"></span><span class="sp-n">SBT</span></span></li>
+        <li><span class="spn"><span class="sp-logo" style="--m:url(patrocinadores/supermercados-bh.png)" aria-hidden="true"></span><span class="sp-n">Supermercados BH</span></span></li>
       </ul>
     </section>
     <div class="foot-in">
@@ -306,6 +314,7 @@
 <script src="app.js"></script>
 <script src="jogo.js"></script>
 <script src="social.js"></script>
+<script src="lingo.js"></script>
 <script src="extras.js"></script>
 </body>
 </html>

@@ -24,7 +24,7 @@ const sw = (attr, on, label) => `<label class="sw"><input type="checkbox" ${attr
 const row = (t, d, ctrl, id = "") => `<div class="cfg-row"${id ? ` id="${id}"` : ""}><div class="cfg-t"><b>${t}</b>${d ? `<span>${d}</span>` : ""}</div><div class="cfg-c">${ctrl}</div></div>`;
 function renderConfig() {
   const el = $("#config"); if (!el || tab !== "config") return;
-  if (!loaded) { el.innerHTML = `<div class="sk" style="height:400px;border-radius:20px"></div>`; return }
+  if (!loaded) { el.innerHTML = hippoLoad("Carregando suas configurações…"); return }
   const p = profile || {}, t = themePref(), v3 = caps.v3;
   const standaloneNow = standalone();
   const keep = ["pw-cur", "pw-new", "pw-new2", "em-new"].map(id => [id, $("#" + id) ? $("#" + id).value : ""]), act = document.activeElement && document.activeElement.id;

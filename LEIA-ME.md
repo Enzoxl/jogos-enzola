@@ -1,4 +1,4 @@
-# Jogos Enzola 3.3 — como publicar
+# Jogos Enzola 3.4 — como publicar
 
 Faça os passos na ordem. Os passos 1 e 3 são no painel do Supabase; o passo 2 é no GitHub (a Vercel publica sozinha).
 
@@ -13,7 +13,7 @@ Se aparecer erro em `pg_net`: Database > Extensions > procure **pg_net** > Enabl
 
 ## 2. Arquivos (GitHub)
 Substitua tudo no repositório pelos arquivos deste pacote: `index.html`, `styles.css`, `app.js`, `jogo.js`,
-`social.js`, `extras.js`, `config.js`, `sw.js`, `vercel.json`, `manifest.webmanifest`, `hipopotamo.webp`,
+`social.js`, `lingo.js`, `extras.js`, `config.js`, `sw.js`, `vercel.json`, `manifest.webmanifest`, `hipopotamo.webp`,
 `logo.png`, `og-image.png`, as pastas `icons/`, `convite/`, `musica/`, `patrocinadores/` e `supabase/`.
 Apague do repositório, se existirem: `hipopotamo.png`, `musica.mp3` (agora as músicas ficam na pasta `musica/`)
 e a pasta `supabase/functions/precos`.
@@ -60,6 +60,15 @@ Segredos opcionais (Edge Functions > Secrets): `ITAD_KEY` (preços em reais), `Y
 As logos ficam em `patrocinadores/` (PNG sem fundo, em uma cor só; o site pinta na cor do tema).
 Para incluir outro, adicione um item na lista `.sp-list` do `index.html`, mantendo a ordem alfabética.
 
-## 8. Se a busca disser que a chave da RAWG foi recusada
+## 8. Enzolingo (aba Idiomas)
+Mini Duolingo de inglês e espanhol com o hipopótamo: 4 unidades com 3 lições cada (8 perguntas), 3 vidas por lição,
+XP, meta diária de 30 XP, ofensiva de dias seguidos e o Desafio de 60 segundos. A pronúncia usa a voz do próprio
+aparelho. O progresso fica salvo na conta. Para incluir frases, edite a lista `LG_UNITS` no `lingo.js`.
+
+## 9. Abas
+Lista de desejos e Resumo agora ficam dentro do Catálogo (sub-abas no topo). Os links antigos (`#desejos`, `#resumo`)
+continuam funcionando.
+
+## 10. Se a busca disser que a chave da RAWG foi recusada
 A chave grátis da RAWG tem limite mensal. Crie outra em https://rawg.io/apidocs e troque `RAWG_KEY` no `config.js`.
 Com a função publicada, a busca continua achando jogos pela Steam mesmo com a RAWG fora.

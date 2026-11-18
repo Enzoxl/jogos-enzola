@@ -381,7 +381,7 @@ const fmtDate = s => { if (!s) return ""; const d = new Date(s + "T12:00:00"); r
 function sizeFromReq(t) { const m = String(t || "").match(/(storage|hard ?drive|hdd|disk space|armazenamento)[^:]*:\s*([^\n]*?\d+(?:[.,]\d+)?\s*[GMT]B)/i); return m ? (m[2].match(/\d+(?:[.,]\d+)?\s*[GMT]B/i) || [""])[0] : null }
 function renderGame() {
   const el = $("#jogo"); if (!gv) return;
-  if (gv.loading) { el.innerHTML = `<div class="gp-hero sk" style="height:300px;border-radius:24px"></div><div class="gp-grid"><div><div class="sk" style="height:220px;border-radius:20px"></div></div><div class="sk" style="height:320px;border-radius:20px"></div></div>`; return }
+  if (gv.loading) { el.innerHTML = hippoLoad("Buscando o jogo…", "big"); return }
   if (gv.error) { el.innerHTML = empty("Não foi possível abrir este jogo", "Verifique sua conexão e tente de novo.", `<br><button class="btn sm" data-gp="retry">Tentar de novo</button>`); return }
   const d = gv.d, s = gv.steam || {}, plat = gv.plat;
   const own = games.filter(g => (d.id && g.rawg_id === d.id) || (s.steam && String(g.steam_id || "") === String(s.steam)) || norm(g.name) === norm(d.name));

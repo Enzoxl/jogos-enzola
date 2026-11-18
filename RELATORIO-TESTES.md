@@ -1,9 +1,8 @@
-# Relatório de testes — Jogos Enzola 3.3
+# Relatório de testes — Jogos Enzola 3.4
 
-**250/250 verificações passaram.** Erros no console: 0.
+**275/275 verificações passaram.** Erros no console: 0.
 
 Ambiente: Chrome automatizado (Playwright), no computador e no celular, com Supabase, RAWG, Steam, CheapShark, câmbio e a função do servidor simulados.
-Também: `migracao.sql` rodada duas vezes em PostgreSQL 16, a função do servidor testada em Node (15 casos, incluindo a criptografia das notificações) e uma varredura de layout em 320, 390, 768, 1024 e 1440 px em todas as telas.
 
 
 ## Cadastro com e-mail, login e recuperação de senha
@@ -229,7 +228,7 @@ Também: `migracao.sql` rodada duas vezes em PostgreSQL 16, a função do servid
 | Verificação | Resultado |
 |---|---|
 | Barra de abas fixa embaixo no celular | ✅ |
-| Abas com ícone e nome | ✅ |
+| Abas com ícone e nome (5 abas) | ✅ |
 | Celular: sem rolagem lateral em perfil | ✅ |
 | Celular: sem rolagem lateral em catalogo | ✅ |
 | Celular: sem rolagem lateral em galeria | ✅ |
@@ -340,10 +339,45 @@ Também: `migracao.sql` rodada duas vezes em PostgreSQL 16, a função do servid
 
 | Verificação | Resultado |
 |---|---|
-| Quatro patrocinadores em ordem alfabética | ✅ |
+| Seis patrocinadores em ordem alfabética | ✅ |
+| Duas linhas com três patrocinadores cada | ✅ |
+| Grade centralizada (simétrica) | ✅ |
 | daanzada leva ao Pinterest | ✅ |
 | Labum leva ao site da Labum | ✅ |
-| Logos sem fundo, na cor do tema | ✅ |
+| Logos sem fundo carregam | ✅ |
+
+## Catálogo com Lista de desejos e Resumo
+
+| Verificação | Resultado |
+|---|---|
+| Abas: Catálogo, Galeria, Tier List, Amigos, Idiomas | ✅ |
+| Catálogo mostra as sub-abas Jogos · Lista de desejos · Resumo | ✅ |
+| Contador da lista de desejos na sub-aba | ✅ |
+| Sub-aba abre a lista de desejos e mantém Catálogo marcado | ✅ |
+| Sub-aba abre o resumo | ✅ |
+| Sub-abas somem fora do catálogo | ✅ |
+| Carregamento mostra o hipopótamo nadando | ✅ |
+
+## Enzolingo (Idiomas)
+
+| Verificação | Resultado |
+|---|---|
+| Trilha com 4 unidades e 12 lições | ✅ |
+| Só a primeira lição começa liberada | ✅ |
+| Hipopótamo na tela com fala | ✅ |
+| Lição em tela cheia com barra de progresso e 3 vidas | ✅ |
+| Botão Verificar só libera depois de responder | ✅ |
+| Errou: rodapé vermelho mostra a resposta certa e o hipopótamo fica triste | ✅ |
+| Errou: perde uma vida e a pergunta volta no fim | ✅ |
+| Acertou: rodapé verde e hipopótamo pula de alegria | ✅ |
+| Lição tem os 4 tipos de pergunta (escolha, montar frase, pares, ouvir) | ✅ |
+| Fim da lição: XP, acertos e tempo | ✅ |
+| Ganhou XP, começou a ofensiva e liberou a próxima lição | ✅ |
+| Progresso salvo na conta | ✅ |
+| Trilha atualizada: lição 1 concluída e lição 2 liberada | ✅ |
+| Espanhol tem progresso separado | ✅ |
+| Desafio de 60 segundos: conta acertos e guarda recorde | ✅ |
+| Esc sai da lição | ✅ |
 
 ## Imagens na exportação (celular)
 

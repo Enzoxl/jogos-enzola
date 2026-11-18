@@ -45,7 +45,7 @@ function person(p, extra = "", link = true) {
 }
 function renderFriends() {
   const el = $("#amigos");
-  if (!fr.loaded) { el.innerHTML = `<div class="sec-head"><div><h2 class="h">Amigos</h2></div></div><div class="flist">${Array.from({ length: 3 }, () => `<div class="sk" style="height:74px;border-radius:16px"></div>`).join("")}</div>`; return }
+  if (!fr.loaded) { el.innerHTML = `<div class="sec-head"><div><h2 class="h">Amigos</h2></div></div>${hippoLoad("Procurando seus amigos…")}`; return }
   const fl = frAccepted(), inc = frIn(), out = frOut();
   let found = "";
   if (fr.found && fr.found.length) {
@@ -292,7 +292,7 @@ function compat(gs) {
 }
 function renderFriendPage() {
   const el = $("#amigo"); if (tab !== "amigo") return;
-  if (!fpv || !fr.loaded || !fpv.games) { el.innerHTML = `<div class="banner sk"></div><div class="phead"><div class="av lg sk"></div><div class="pid"><span class="sk" style="width:200px;height:28px"></span></div></div><div class="sk" style="height:260px;border-radius:20px;margin-top:30px"></div>`; return }
+  if (!fpv || !fr.loaded || !fpv.games) { el.innerHTML = hippoLoad("Nadando até o perfil do seu amigo…", "big"); return }
   const uid = fpv.uid, p = pOf(uid), gs = fpv.games, friend = isFriend(uid), rel0 = frRel(uid);
   if (!friend) {
     el.innerHTML = `<button class="btn ghost sm" data-go="amigos">${ic("back")}Amigos</button>${bannerHTML(p, null)}</div><div class="phead"><div class="av lg">${avatar(p.avatar)}</div><div class="pid"><h1>${esc(pName(p))}</h1><div class="un">@${esc(p.username)}${tagOf(p)}</div></div></div>

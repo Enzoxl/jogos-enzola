@@ -2,14 +2,15 @@
    Outros arquivos: jogo.js (busca e página do jogo, preços), social.js (amigos, mensagens, notificações),
    extras.js (configurações, senha, PDF, instalar app, recorte de imagem). */
 const CFG = window.APP_CONFIG || {};
-const VERSION = "3.3";
+const VERSION = "3.4";
 const STATUS = ["Finalizado", "Jogando", "Não iniciado", "Não comprado"];
 const EXPS = ["Perfeito", "Ótimo", "Muito bom", "Bom", "Ok", "Meh", "Chumbos"];
 const EXPCOL = { "Perfeito": "#2E8B6A", "Ótimo": "#4C9F7A", "Muito bom": "#6FA8DC", "Bom": "#4B6B9E", "Ok": "#C9A227", "Meh": "#D98A3D", "Chumbos": "#B14A47" };
 const TIERS = [["S", "#F28B82"], ["A", "#F6B26B"], ["B", "#F5DC78"], ["C", "#A8D5A2"], ["D", "#9CC0F5"]];
 const PLATS = ["PC", "PlayStation", "Xbox", "Switch", "Outro"];
 const PLATCOL = { "PC": "#6C93FF", "PlayStation": "#4F8BE8", "Xbox": "#4ADE9B", "Switch": "#FF7A7A", "Outro": "#A88BFA" };
-const TABS = ["perfil", "catalogo", "galeria", "tier", "desejos", "amigos", "resumo", "config"];
+const TABS = ["perfil", "catalogo", "galeria", "tier", "desejos", "amigos", "resumo", "idiomas", "config"];
+const CAT_SUBS = ["catalogo", "desejos", "resumo"];   // Lista de desejos e Resumo agora ficam dentro do Catálogo
 const NEW_COLS = ["hours", "metacritic", "playtime", "rawg_id", "steam_id", "target_price", "price", "price_checked_at"];
 const PRICE_TTL = 12 * 3600 * 1000;
 const PRESETS = [
@@ -86,6 +87,8 @@ function bannerHTML(p, cur, extraCls = "") {
   if (cur && cur.cover_url) return `<div class="banner auto ${extraCls}"><div class="bgauto" style="background-image:url('${cssUrl(cur.cover_url)}')"></div><span class="logo wm" aria-hidden="true"></span>`;
   return `<div class="banner ${extraCls}"><span class="logo wm" aria-hidden="true"></span>`;
 }
+// tela de carregamento: o hipopótamo nadando de um lado para o outro
+const hippoLoad = (msg = "Carregando…", cls = "") => `<div class="hload ${cls}" role="status" aria-live="polite"><div class="hl-pool" aria-hidden="true"><div class="hl-swim"><img src="hipopotamo.webp" alt="" draggable="false"></div><i class="hl-b"></i><i class="hl-b"></i><i class="hl-b"></i><div class="hl-wave"></div></div><p>${esc(msg)}</p></div>`;
 const skRows = n => Array.from({ length: n }, () => `<div class="row skrow"><span class="sk" style="width:18px;height:12px"></span><span class="sk" style="width:44px;aspect-ratio:2/3"></span><span><span class="sk" style="width:55%;height:14px"></span><span class="sk" style="width:35%;height:10px;margin-top:8px"></span></span><span class="sk" style="height:30px;border-radius:999px"></span><span class="sk" style="height:30px"></span><span class="sk" style="height:18px"></span><span></span></div>`).join("");
 const skGrid = n => Array.from({ length: n }, () => `<div><div class="sk" style="aspect-ratio:2/3;border-radius:10px"></div><div class="sk" style="height:12px;width:70%;margin-top:12px"></div></div>`).join("");
 const empty = (t, d, extra = "") => `<div class="panel empty" style="grid-column:1/-1"><b>${t}</b>${d}${extra}</div>`;
@@ -231,8 +234,7 @@ function statsOf(list) {
 function renderProfile() {
   const el = $("#perfil");
   if (!loaded) {
-    el.innerHTML = `<div class="banner sk"></div><div class="phead"><div class="av lg sk"></div><div class="pid"><span class="sk" style="width:220px;height:30px"></span><span class="sk" style="width:120px;height:12px;margin-top:10px"></span></div></div>
-    <div class="pgrid"><div><div class="sk" style="height:170px;border-radius:20px"></div><div class="favgrid" style="margin-top:30px">${skGrid(5)}</div></div><div class="sk" style="height:380px;border-radius:20px"></div></div>`;
+    el.innerHTML = hippoLoad("Carregando seu perfil…", "big");
     return;
   }
   const p = profile || {};
@@ -308,7 +310,7 @@ function renderCatalog() {
   const q = norm($("#q").value), favs = (profile && profile.favorites) || [];
   const list = sorted(games.filter(g => (!fStatus || g.status === fStatus) && (!pv || g.platform === pv) && (!q || norm(g.name).includes(q))), $("#sort").value);
   const box = $("#list");
-  if (!loaded) { box.innerHTML = skRows(6); return }
+  if (!loaded) { box.innerHTML = hippoLoad("Carregando sua biblioteca…"); return }
   if (!games.length) { box.innerHTML = `<div class="empty"><b>Nenhum jogo ainda</b>Adicione o primeiro jogo ou importe uma planilha.<br><button class="btn sm" data-act="add">${ic("plus")}Adicionar jogo</button></div>`; return }
   if (!list.length) { box.innerHTML = `<div class="empty"><b>Nada encontrado</b>Tente outro nome ou filtro.<br><button class="btn ghost sm" data-act="clear-cat">Limpar filtros</button></div>`; return }
   box.innerHTML = `<div class="row head"><span>Nº</span><span></span><span>Jogo</span><span>Status</span><span>Experiência</span><span style="text-align:center">Nota</span><span></span></div>` +
@@ -332,7 +334,7 @@ function renderGallery() {
   const base = games.filter(g => !q || norm(g.name).includes(q));
   $("#gchips").innerHTML = chipsHTML(gStatus, "g", base);
   const list = sorted(base.filter(g => !gStatus || g.status === gStatus), "n");
-  $("#grid").innerHTML = !loaded ? skGrid(12) : !list.length
+  $("#grid").innerHTML = !loaded ? hippoLoad("Carregando as capas…") : !list.length
     ? empty(games.length ? "Nada encontrado" : "Galeria vazia", games.length ? "Tente outro nome ou filtro." : "Adicione jogos para ver as capas aqui.")
     : list.map(g => `<button class="card" data-open="${g.id}"><div class="poster"><span class="tag badge ${stClass(g.status)}">${esc(g.status)}</span>${g.metacritic ? `<span class="mc" title="Metacritic">${g.metacritic}</span>` : ""}${cover(g)}<div class="ov"><span class="badge st-Finalizado" style="visibility:${g.exp ? "visible" : "hidden"}">${esc(g.exp)}</span><span class="rate">${rateTxt(g)}</span></div></div><div class="t">${esc(g.name)}</div></button>`).join("");
 }
@@ -354,7 +356,7 @@ function renderWishlist() {
     </div>
     <div class="wl-tools"><p class="hint">${esc(priceSourceText())}${checkedTimes.length ? ` Conferido ${rel(checkedTimes[checkedTimes.length - 1])}.` : ""}</p>
       <select id="wl-sort" aria-label="Ordenar lista de desejos">${[["n", "Ordem da lista"], ["price", "Menor preço"], ["cut", "Maior desconto"], ["name", "Nome (A–Z)"]].map(([v, l]) => `<option value="${v}"${v === wlSort ? " selected" : ""}>${l}</option>`).join("")}</select></div>`;
-  $("#wgrid").innerHTML = !loaded ? skGrid(6) : !all.length
+  $("#wgrid").innerHTML = !loaded ? hippoLoad("Carregando sua lista de desejos…") : !all.length
     ? empty("Sua lista está vazia", "Use a busca no topo para achar um jogo e veja onde ele está mais barato.", `<br><button class="btn sm" id="add-wish2">${ic("plus")}Adicionar à lista</button>`)
     : !list.length ? empty("Nada encontrado", "Nenhum jogo da lista tem esse nome.")
     : list.map(g => { const b = bestOf(g); return `<div class="wcard"><button class="card" data-open="${g.id}"><div class="poster">${b && b.cut > 0 ? `<span class="cut">-${b.cut}%</span>` : ""}${cover(g)}</div><div class="t">${esc(g.name)}</div><div class="meta">${platLabel(g.platform)}</div></button>
@@ -481,7 +483,7 @@ function bars(rows, color) {
 }
 function renderSummary() {
   const el = $("#resumo");
-  if (!loaded) { el.innerHTML = `<div class="tiles">${Array.from({ length: 4 }, () => `<div class="sk" style="height:96px;border-radius:20px"></div>`).join("")}</div>`; return }
+  if (!loaded) { el.innerHTML = hippoLoad("Calculando seus números…"); return }
   if (!games.length) { el.innerHTML = `<div class="panel empty"><b>Sem dados ainda</b>Adicione jogos para ver os gráficos.</div>`; return }
   const cnt = s => games.filter(g => g.status === s).length;
   const rated = games.filter(g => g.rating != null && g.rating !== "");
@@ -706,7 +708,7 @@ async function showPublic(u) {
   $("#auth").hidden = true; $("#app").hidden = true; $("#pub").hidden = false; hideSplash();
   const cta = $("#pub-cta"); cta.textContent = user ? "Voltar ao meu perfil" : "Criar meu perfil"; cta.setAttribute("href", user ? "#perfil" : "#entrar");
   const el = $("#pub-body");
-  el.innerHTML = `<div class="banner sk"></div><div class="phead"><div class="av lg sk"></div></div>`;
+  el.innerHTML = hippoLoad("Carregando o perfil…", "big");
   if (!sb) { el.innerHTML = `<div class="panel empty"><b>Site sem configuração</b>Configure o Supabase no config.js.</div>`; return }
   const { data, error } = await sb.rpc("public_profile", { uname: u.toLowerCase() });
   const p = data && data.profile;
@@ -824,10 +826,13 @@ function show(h) {
   const [t, ...rest] = h.split("/"); routeArg = rest.join("/");
   const prev = tab;
   tab = (t === "jogo" && routeArg) || (t === "amigo" && routeArg) ? t : TABS.includes(t) ? t : "perfil";
-  const hl = tab === "amigo" ? "amigos" : tab;
+  const hl = tab === "amigo" ? "amigos" : CAT_SUBS.includes(tab) ? "catalogo" : tab;
+  const cn = $("#cat-nav"); cn.hidden = !CAT_SUBS.includes(tab);
+  for (const b of cn.querySelectorAll("[data-sub]")) { const on = b.dataset.sub === tab; b.classList.toggle("on", on); on ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current") }
   for (const b of $$("nav.tabs button")) b.setAttribute("aria-selected", b.dataset.tab === hl);
   $("#who-btn").classList.toggle("on", tab === "perfil" || tab === "config");
   for (const s of $$("main.wrap > section")) s.hidden = s.id !== tab;
+  if (tab === "idiomas") { renderLingo(); window.scrollTo({ top: 0 }); return }
   closeMenus();
   if (tab === "amigos" && user) loadFriends();
   if (tab === "desejos" && loaded) refreshPrices(false);
@@ -838,6 +843,8 @@ function show(h) {
 function render() {
   if ($("#app").hidden) return;
   $("#who-av").innerHTML = avatar(profile && profile.avatar); $("#who-name").textContent = nick();
+  const w = $("#sn-wish"); if (w) { const n = loaded ? wishlist().length : 0; w.textContent = n || ""; w.hidden = !n }
+  if (tab === "idiomas") return;
   if (tab === "perfil") renderProfile(); else if (tab === "catalogo") renderCatalog(); else if (tab === "galeria") renderGallery();
   else if (tab === "amigos") renderFriends(); else if (tab === "tier") renderTier(); else if (tab === "desejos") renderWishlist();
   else if (tab === "config") renderConfig(); else if (tab === "jogo") renderGameIfLibraryChanged(); else if (tab === "amigo") renderFriendPage(); else renderSummary();
