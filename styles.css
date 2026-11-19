@@ -1508,3 +1508,6 @@ a.spn:hover .sp-logo,a.spn:focus-visible .sp-logo{opacity:1;transform:translateY
 @media (max-width:420px){.lg-shop span{display:none}.lg-shop{padding:0 10px}}
 .sk-row{display:flex;gap:8px;flex-wrap:wrap}.sk-b{padding:0;border:2px solid var(--line-2);border-radius:50%;overflow:hidden;width:52px;height:52px;background:var(--tile);cursor:pointer}.sk-b img{width:100%;height:100%;object-fit:cover;display:block}.sk-b:hover{border-color:var(--accent)}
 .lgs-av{font-size:12px}.lgs-av.on{color:var(--accent)}
+
+.lgs-pack{display:flex;align-items:center;gap:6px;width:100%;margin:2px 0}.lgs-pack .pk-av{width:26px;height:26px;border-radius:50%;object-fit:cover;flex:none}.lgs-pack .pk-ban{flex:1;min-width:0;height:26px;border-radius:6px;object-fit:cover}
+.sk-ban{margin-top:8px}.sk-bn{padding:0;border:2px solid var(--line-2);border-radius:8px;overflow:hidden;width:104px;height:33px;background:var(--tile);cursor:pointer}.sk-bn img{width:100%;height:100%;object-fit:cover;display:block}.sk-bn:hover{border-color:var(--accent)}

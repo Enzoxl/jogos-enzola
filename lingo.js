@@ -248,7 +248,7 @@ function renderLingo() {
       <div class="lg-stats">
         <div class="lg-stat"><span class="lg-ico fire">🔥</span><b>${lg.streak}</b><small>${lg.streak === 1 ? "dia seguido" : "dias seguidos"}</small></div>
         <div class="lg-stat"><span class="lg-ico">⚡</span><b>${lg.xp}</b><small>XP no total</small></div>
-        <button class="lg-stat gb" data-lg-shop aria-label="Abrir a loja"><img class="gb-i big" src="loja/goiaba.webp" alt=""><b>${lg.goiabas || 0}</b><small>goiabas</small></button>
+        <button class="lg-stat gb" data-lg-shop aria-label="Abrir a loja"><img class="gb-i big" src="loja/coin.webp" alt=""><b>${lg.goiabas || 0}</b><small>Enzola Coins</small></button>
         <div class="lg-stat goal"><div class="lg-ring" style="--p:${pct}"><span>${lg.dayXp}/${LG_GOAL}</span></div><small>Meta de hoje</small></div>
       </div>
       <div class="lg-quick">
@@ -365,7 +365,7 @@ function lgFinish(failed) {
   if (xp) {
     const was = lg.dayXp; lg.xp += xp; lg.dayXp += xp;
     if (lg.last !== lgToday()) { lg.streak = (lg.streak || 0) + 1; lg.last = lgToday() }
-    if (was < LG_GOAL && lg.dayXp >= LG_GOAL) { msg += " Meta de hoje batida! 🎯 +10 goiabas"; gb += 10 }
+    if (was < LG_GOAL && lg.dayXp >= LG_GOAL) { msg += " Meta de hoje batida! 🎯 +10 Enzola Coins"; gb += 10 }
   }
   if (gb) lg.goiabas = (lg.goiabas || 0) + gb;
   lgSave(true);
@@ -376,7 +376,7 @@ function lgFinish(failed) {
     <h2>${title}</h2><p>${msg}</p>
     <div class="lg-res">
       <div style="--c:#FFC800"><small>XP</small><b>+${xp}</b></div>
-      ${gb ? `<div style="--c:#8BC34A"><small>Goiabas</small><b><img class="gb-i" src="loja/goiaba.webp" alt="">+${gb}</b></div>` : ""}
+      ${gb ? `<div style="--c:#8BC34A"><small>Coins</small><b><img class="gb-i" src="loja/coin.webp" alt="">+${gb}</b></div>` : ""}
       <div style="--c:#58CC02"><small>Acertos</small><b>${acc}%</b></div>
       <div style="--c:#1CB0F6"><small>Tempo</small><b>${mm}:${ss}</b></div>
     </div>

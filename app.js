@@ -31,7 +31,7 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": 
 const hrefOk = u => esc(/^(https?:\/\/|#|mailto:)/i.test(String(u || "")) ? u : "#");
 const REWARDS = { silvio: { name: "Hipopótamo apresentador", avatar: "premios/silvio-avatar.webp", banner: "premios/silvio-banner.webp" } };
 const rewardOf = v => { const m = /^reward:([a-z0-9_-]+)$/.exec(String(v || "")); return m && REWARDS[m[1]] ? REWARDS[m[1]] : null };
-const cssUrl = u => rewardOf(u) ? rewardOf(u).banner : /^(https?:\/\/|data:image\/|blob:)/i.test(String(u || "")) ? String(u).replace(/['"()\\\s<>]/g, c => "%" + c.charCodeAt(0).toString(16).padStart(2, "0")) : "";
+const cssUrl = u => rewardOf(u) ? rewardOf(u).banner : /^skin:[a-z0-9_-]+$/.test(String(u || "")) ? "loja/b-" + String(u).slice(5) + ".webp" : /^(https?:\/\/|data:image\/|blob:)/i.test(String(u || "")) ? String(u).replace(/['"()\\\s<>]/g, c => "%" + c.charCodeAt(0).toString(16).padStart(2, "0")) : "";
 const ic = (n, cls = "") => `<svg class="ic ${cls}"><use href="#i-${n}"/></svg>`;
 const sk = s => s.replace("ã", "a").replace(/ /g, "-");
 const stClass = s => "st-" + sk(s || "Não iniciado");
@@ -919,6 +919,10 @@ document.addEventListener("click", async e => {
   if (b = c("[data-preset]")) { pe.avatar = "preset:" + b.dataset.preset; $("#pe-av").innerHTML = avatar(pe.avatar) + `<span class="av-cam">${ic("camera")}</span>`; for (const x of $$("#pe-presets button")) x.setAttribute("aria-pressed", x === b); return }
   if (b = c("[data-equip-skin]")) { const id = b.dataset.equipSkin; if (!pe || typeof skinHas !== "function" || !skinHas(id)) return;
     pe.avatar = "skin:" + id; $("#pe-av").innerHTML = avatar(pe.avatar) + `<span class="av-cam">${ic("camera")}</span>`; for (const x of $$("#pe-presets button")) x.setAttribute("aria-pressed", "false")
+    toast("Equipado. Clique em Salvar perfil."); return }
+  if (b = c("[data-equip-pack]")) { const [kind, id] = b.dataset.equipPack.split(":"); if (!pe || typeof skinHas !== "function" || !skinHas(id)) return;
+    if (kind !== "banner") { pe.avatar = "skin:" + id; $("#pe-av").innerHTML = avatar(pe.avatar) + `<span class="av-cam">${ic("camera")}</span>`; for (const x of $$("#pe-presets button")) x.setAttribute("aria-pressed", "false") }
+    if (kind !== "avatar") { pe.banner = "skin:" + id; $("#pe-ban").style.backgroundImage = `url('${cssUrl(pe.banner)}')` }
     toast("Equipado. Clique em Salvar perfil."); return }
   if (b = c("[data-equip]")) { const [kind, k] = b.dataset.equip.split(":"); if (!pe || !rewardsHas(k)) return;
     if (kind === "avatar") { pe.avatar = "reward:" + k; $("#pe-av").innerHTML = avatar(pe.avatar) + `<span class="av-cam">${ic("camera")}</span>`; for (const x of $$("#pe-presets button")) x.setAttribute("aria-pressed", "false") }

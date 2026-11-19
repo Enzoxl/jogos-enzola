@@ -1,5 +1,5 @@
 /* =====================================================================
-   Enzolingo — goiabas (pontos) e loja de skins do mascote
+   Enzolingo — Enzola Coins (pontos) e loja de skins do mascote
    Goiabas vêm das lições, do desafio de 60 s, da meta diária e do Show do Enzolão.
    ===================================================================== */
 const LG_SKINS = [
@@ -36,8 +36,8 @@ function lgSkinImg() {
   const sk = skinOf(lg && lg.skin), own = skinHas(sk.id) ? sk : LG_SKINS[0];
   return `<img class="lgh-img${own.kind === "chr" ? " chr" : ""}" src="${own.img}" alt="" draggable="false">`;
 }
-const gbI = (cls = "") => `<img class="gb-i ${cls}" src="loja/goiaba.webp" alt="goiabas">`;
-/* ganhar goiabas fora das lições (Show do Enzolão) */
+const gbI = (cls = "") => `<img class="gb-i ${cls}" src="loja/coin.webp" alt="Enzola Coins">`;
+/* ganhar Enzola Coins fora das lições (Show do Enzolão) */
 function lgAward(n) {
   if (!user || !n) return 0;
   lg = lg || lgLoad(); lg.goiabas = (lg.goiabas || 0) + n; lgSave(true); return n;
@@ -50,29 +50,30 @@ function lgShopRender() {
   lg = lg || lgLoad(); const cur = skinOf(lg.skin), bal = lg.goiabas || 0;
   const list = LG_SKINS.filter(s => s.kind === lgsTab);
   lgShopBox().innerHTML = `<div class="lgs"><button class="iconbtn lgs-x" data-lgs-close aria-label="Fechar a loja">${ic("x")}</button>
-    <header class="lgs-h"><div class="lgs-t"><h2>${ic("store")}Loja de skins</h2><p class="muted">Troque goiabas por visuais para o seu mascote do Enzolingo.</p></div>
+    <header class="lgs-h"><div class="lgs-t"><h2>${ic("store")}Loja de skins</h2><p class="muted">Cada skin é um pacote: mascote, avatar e banner temáticos para o perfil.</p></div>
       <div class="lgs-bal" aria-label="Seu saldo">${gbI("big")}<b>${bal}</b></div></header>
     <div class="lgs-prev"><div class="lgs-pv${cur.kind === "chr" ? " chr" : ""}"><img src="${cur.img}" alt=""></div><div><small class="muted">Equipado agora</small><b>${esc(cur.name)}</b></div></div>
     <div class="lgs-tabs" role="tablist"><button role="tab" aria-selected="${lgsTab === "hip"}" data-lgs-tab="hip">🦛 Hipopótamo</button><button role="tab" aria-selected="${lgsTab === "chr"}" data-lgs-tab="chr">🫧 Personagens</button></div>
     <div class="lgs-grid">${list.map(sk => {
       const own = skinHas(sk.id), on = lg.skin === sk.id || (!lg.skin && sk.id === "classico"), can = bal >= sk.price;
       return `<div class="lgs-card${on ? " on" : ""}"><div class="lgs-img${sk.kind === "chr" ? " chr" : ""}"><img src="${sk.img}" alt=""></div><b>${esc(sk.name)}</b>
-        ${on ? `<span class="lgs-eq">${ic("check")}Equipado</span>` : own ? `<button class="btn sm" data-lgs-equip="${sk.id}">Equipar</button>` : `<button class="btn sm lgs-buy${can ? "" : " lack"}" data-lgs-buy="${sk.id}" aria-label="Comprar ${esc(sk.name)} por ${sk.price} goiabas">${gbI()}${sk.price}</button>`}
-        ${own ? `<button class="btn ghost sm lgs-av${profile && profile.avatar === "skin:" + sk.id ? " on" : ""}" data-lgs-avatar="${sk.id}">${profile && profile.avatar === "skin:" + sk.id ? "É seu avatar" : "Usar no perfil"}</button>` : ""}</div>`;
+        <div class="lgs-pack" title="O pacote inclui skin, avatar e banner"><img src="${skinAvatarSrc(sk.id)}" alt="" class="pk-av"><img src="loja/b-${sk.id}.webp" alt="" class="pk-ban" loading="lazy"></div>
+        ${on ? `<span class="lgs-eq">${ic("check")}Equipado</span>` : own ? `<button class="btn sm" data-lgs-equip="${sk.id}">Equipar</button>` : `<button class="btn sm lgs-buy${can ? "" : " lack"}" data-lgs-buy="${sk.id}" aria-label="Comprar ${esc(sk.name)} por ${sk.price} Enzola Coins">${gbI()}${sk.price}</button>`}
+        ${own ? `<button class="btn ghost sm lgs-av${profile && profile.avatar === "skin:" + sk.id && profile.banner === "skin:" + sk.id ? " on" : ""}" data-lgs-avatar="${sk.id}">${profile && profile.avatar === "skin:" + sk.id && profile.banner === "skin:" + sk.id ? "Pacote no perfil" : "Usar pacote no perfil"}</button>` : ""}</div>`;
     }).join("")}</div>
-    <p class="muted lgs-how">Como ganhar goiabas: lições (+5, +3 se perfeitas), desafio de 60 s (1 por acerto), meta diária (+10) e o Show do Enzolão (quanto mais acertos, mais goiabas).</p></div>`;
+    <p class="muted lgs-how">Como ganhar Enzola Coins: lições (+5, +3 se perfeitas), desafio de 60 s (1 por acerto), meta diária (+10) e o Show do Enzolão (quanto mais acertos, mais Enzola Coins).</p></div>`;
 }
 function lgShopOpen() { if (!user || !loaded) return; lg = lg || lgLoad(); lgShopRender() }
 function lgBuy(id) {
   const sk = skinOf(id); lg = lg || lgLoad();
   if (skinHas(id)) return;
-  if ((lg.goiabas || 0) < sk.price) { toast(`Faltam ${sk.price - (lg.goiabas || 0)} goiabas para essa skin.`); return }
+  if ((lg.goiabas || 0) < sk.price) { toast(`Faltam ${sk.price - (lg.goiabas || 0)} Enzola Coins para essa skin.`); return }
   lg.goiabas -= sk.price; lg.skins = { ...(lg.skins || {}), [id]: true }; lg.skin = id; lgSave(true);
   toast(`Skin “${sk.name}” comprada e equipada! 🛍️`); if (typeof lgBeep === "function") lgBeep("ok"); lgShopRender();
 }
 async function lgAvatar(id) {
   if (!skinHas(id) || !profile) return;
-  if (await saveProfile({ avatar: "skin:" + id })) { toast("Avatar do perfil trocado! ✨"); lgShopRender() }
+  if (await saveProfile({ avatar: "skin:" + id, banner: "skin:" + id })) { toast("Avatar e banner do pacote aplicados no perfil! ✨"); lgShopRender() }
 }
 function lgEquip(id) { if (!skinHas(id)) return; lg.skin = id; lgSave(true); lgShopRender(); toast("Skin equipada!") }
 document.addEventListener("click", e => {
@@ -91,6 +92,8 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#lgs-ov
 function skinsHTML() {
   try { lg = lg || lgLoad() } catch (e) { return "" }
   const own = LG_SKINS.filter(s => skinHas(s.id));
-  return `<div class="rw-box"><div class="fld" style="margin-bottom:6px">Skins da loja <span class="hint">· compre na loja do Enzolingo com goiabas</span></div>
-    <div class="sk-row">${own.map(s => `<button type="button" class="sk-b" data-equip-skin="${s.id}" title="${esc(s.name)}" aria-label="Usar ${esc(s.name)} como avatar"><img src="${skinAvatarSrc(s.id)}" alt="" width="52" height="52"></button>`).join("")}</div></div>`;
+  return `<div class="rw-box"><div class="fld" style="margin-bottom:6px">Pacotes de skin <span class="hint">· compre na loja do Enzolingo com Enzola Coins</span></div>
+    <div class="sk-row">${own.map(s => `<button type="button" class="sk-b" data-equip-pack="avatar:${s.id}" title="Avatar: ${esc(s.name)}" aria-label="Usar o avatar ${esc(s.name)}"><img src="${skinAvatarSrc(s.id)}" alt="" width="52" height="52"></button>`).join("")}</div>
+    <div class="sk-row sk-ban">${own.map(s => `<button type="button" class="sk-bn" data-equip-pack="banner:${s.id}" title="Banner: ${esc(s.name)}" aria-label="Usar o banner ${esc(s.name)}"><img src="loja/b-${s.id}.webp" alt="" loading="lazy"></button>`).join("")}</div>
+    <div class="sk-row">${own.map(s => `<button type="button" class="btn ghost sm" data-equip-pack="both:${s.id}">Pacote ${esc(s.name)}</button>`).join("")}</div></div>`;
 }
