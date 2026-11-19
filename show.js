@@ -274,16 +274,18 @@ function shAnswer(i) {
 function shLose(q, i) {
   const s = sh; clearInterval(s.timer); shStopAll();
   shMusic(.1); shSnd("vcerrou.mp3", { fb: () => shBeep("bad") });
+  const gb = lgAward(s.right * (rewardsHas("silvio") ? 2 : 1));
   try { if (profile && user) { const old = (profile.settings && profile.settings.show) || {}, show = { best: Math.max(old.best || 0, s.right), plays: (old.plays || 0) + 1 }; saveProfile({ settings: { ...(profile.settings || {}), show } }) } } catch (e) { }
   shBox().innerHTML = `<div class="sh-end lose"><div class="sh-sad" aria-hidden="true">😢</div><h2>Que pena, você errou!</h2>
     <p>${i < 0 ? "O tempo acabou na pergunta " : "Você caiu na pergunta "}${s.i + 1} de ${s.qs.length}.</p>
     <div class="sh-wrongq"><span>${esc(q.q)}</span><b>Resposta: ${q.answers.map(esc).join(" ou ")}</b></div>
-    <div class="sh-score"><b>${s.right}</b><span>acertos</span></div>
+    <div class="sh-score"><b>${s.right}</b><span>acertos</span></div>${gb ? `<div class="sh-gb">${gbI()}<b>+${gb}</b> goiabas</div>` : ""}
     <div class="sh-acts"><button class="btn sh-go" data-sh-start>Reiniciar</button><button class="btn ghost" data-sh-close>Voltar ao Enzolingo</button></div></div>`;
 }
 async function shEnd() {
   const s = sh; clearInterval(s.timer); shStopAll();
-  const total = s.qs.length, perfect = s.right === total, first = perfect && !rewardsHas("silvio"), R = REWARDS.silvio;
+  const total = s.qs.length, perfect = s.right === total, owned = rewardsHas("silvio"), first = perfect && !owned, R = REWARDS.silvio;
+  const gb = lgAward(s.right * (owned ? 2 : 1) + (perfect && owned ? 50 : 0));
   shMusic(.12);
   if (perfect) { shSnd("maoe.mp3", { fb: () => shBeep("ok") }); await rewardsGive("silvio") }
   try { if (profile && user) { const old = (profile.settings && profile.settings.show) || {}, show = { best: Math.max(old.best || 0, s.right), plays: (old.plays || 0) + 1 }; if (!perfect) saveProfile({ settings: { ...(profile.settings || {}), show } }); else saveProfile({ settings: { ...(profile.settings || {}), rewards: { ...shReward(), silvio: true }, show } }) } } catch (e) { }
@@ -291,7 +293,7 @@ async function shEnd() {
   const conf = n => Array.from({ length: n }, () => `<i style="--x:${(Math.random() * 100).toFixed(0)}%;--d:${(Math.random() * 1.2).toFixed(2)}s;--c:${["#FFC800", "#E8505B", "#fff", "#2B7DE9"][Math.floor(Math.random() * 4)]}"></i>`).join("");
   shBox().innerHTML = `<div class="sh-end ${perfect ? "win" : ""}">
     ${perfect ? `<div class="sh-rays win" aria-hidden="true"></div><div class="lg-confetti" aria-hidden="true">${conf(60)}</div>` : ""}
-    <div class="sh-score"><b>${s.right}</b><span>/ ${total}</span></div><h2>${perfect ? "Gabaritou!" : "Fim do show"}</h2><p>${msg}</p>
+    <div class="sh-score"><b>${s.right}</b><span>/ ${total}</span></div>${gb ? `<div class="sh-gb">${gbI()}<b>+${gb}</b> goiabas${owned ? " (em dobro: você já tem o prêmio)" : ""}</div>` : ""}<h2>${perfect ? "Gabaritou!" : "Fim do show"}</h2><p>${msg}</p>
     ${s.games < 5 ? `<p class="sh-note">Dica: marque mais jogos como Finalizado para ganhar perguntas só sobre eles.</p>` : ""}
     ${perfect ? `<div class="sh-win"><div class="sh-medal"><img src="${R.avatar}" alt="" width="96" height="96"></div><div class="sh-winb" style="background-image:url('${R.banner}')"></div></div>
       <div class="sh-acts"><button class="btn sh-go" data-sh-equip="both">Equipar avatar e banner</button></div>` : ""}

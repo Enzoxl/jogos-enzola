@@ -1482,3 +1482,27 @@ a.spn:hover .sp-logo,a.spn:focus-visible .sp-logo{opacity:1;transform:translateY
 .hm-mo{display:flex;align-items:center;gap:10px;background:none;border:0;color:var(--fg);padding:8px 12px;text-align:left;cursor:pointer;font:500 13.5px var(--f-body)}.hm-mo span{display:grid}.hm-mo i{font-style:normal;color:var(--muted);font-size:12px}
 .hm-mo.on,.hm-mo:hover{background:var(--accent-soft)}
 .hm-at{color:var(--accent);font-weight:600;text-decoration:none}
+
+/* goiabas e loja de skins */
+.gb-i{width:22px;height:auto;vertical-align:middle;display:inline-block;margin-right:4px}.gb-i.big{width:38px;margin:0}
+.lg-stat.gb{cursor:pointer;color:var(--fg);font:inherit}.lg-stat.gb:hover{background:var(--soft)}
+.lg-res b .gb-i{width:20px;margin-right:2px}
+.sh-gb{display:inline-flex;align-items:center;gap:6px;background:rgba(0,0,0,.3);border:1px solid rgba(139,195,74,.6);border-radius:999px;padding:6px 14px;font-size:15px}.sh-gb b{color:#b6e86a}
+.lg-shop{display:inline-flex;align-items:center;gap:6px;padding:0 12px;border-radius:16px;font-size:13px;white-space:nowrap}
+.lgh-img.chr{border-radius:50%;border:4px solid #fff;aspect-ratio:1;object-fit:cover;box-shadow:0 8px 14px rgba(0,0,0,.35)}
+.lgs-ovl{position:fixed;inset:0;z-index:290;background:rgba(5,8,20,.88);display:grid;place-items:center;padding:12px}
+.lgs{position:relative;width:min(640px,100%);max-height:100%;overflow:auto;background:var(--surface);border:1px solid var(--line-2);border-radius:20px;padding:18px 16px 16px;display:grid;gap:14px;color:var(--fg)}
+.lgs-x{position:absolute;top:8px;right:8px}
+.lgs-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-right:36px}.lgs-t h2{margin:0;display:flex;align-items:center;gap:8px;font:800 20px var(--f-head)}.lgs-t p{margin:2px 0 0;font-size:13px}
+.lgs-bal{display:flex;align-items:center;gap:6px;background:var(--tile);border:1px solid var(--line-2);border-radius:999px;padding:4px 14px 4px 8px;flex:none}.lgs-bal b{font:800 20px var(--f-head)}
+.lgs-prev{display:flex;align-items:center;gap:12px;background:var(--tile);border-radius:14px;padding:10px 12px}.lgs-prev b{display:block}
+.lgs-pv{width:72px;height:72px;display:grid;place-items:center;flex:none}.lgs-pv img{max-width:100%;max-height:100%;object-fit:contain}.lgs-pv.chr img{border-radius:50%;width:72px;height:72px;object-fit:cover}
+.lgs-tabs{display:flex;gap:6px}.lgs-tabs button{flex:1;padding:9px;border-radius:12px;border:1px solid var(--line-2);background:var(--tile);color:var(--fg);font:600 13.5px var(--f-body);cursor:pointer}.lgs-tabs button[aria-selected="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.lgs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.lgs-card{display:grid;justify-items:center;gap:8px;padding:10px;border-radius:14px;background:var(--tile);border:2px solid transparent;text-align:center}.lgs-card.on{border-color:var(--accent)}
+.lgs-card b{font-size:13.5px}
+.lgs-img{height:110px;width:100%;display:grid;place-items:center}.lgs-img img{max-height:100%;max-width:100%;object-fit:contain}.lgs-img.chr img{width:100px;height:100px;border-radius:50%;object-fit:cover}
+.lgs-buy{display:inline-flex;align-items:center;gap:4px}.lgs-buy .gb-i{width:18px;margin:0}.lgs-buy.lack{filter:grayscale(.7);opacity:.7}
+.lgs-eq{display:inline-flex;align-items:center;gap:4px;color:var(--accent);font-weight:700;font-size:13px}.lgs-eq .ic{width:1em;height:1em}
+.lgs-how{margin:0;font-size:12.5px}
+@media (max-width:420px){.lg-shop span{display:none}.lg-shop{padding:0 10px}}

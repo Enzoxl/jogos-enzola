@@ -117,9 +117,10 @@ const LG_IDX = { en: 1, es: 2 };
 const lgKey = () => "lingo:" + (user ? user.id : "anon");
 const lgToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` };
 function lgLoad() {
-  const base = { lang: "en", xp: 0, streak: 0, last: "", day: "", dayXp: 0, done: {}, best: {}, sfx: true };
+  const base = { lang: "en", xp: 0, streak: 0, last: "", day: "", dayXp: 0, done: {}, best: {}, sfx: true, goiabas: 0, skins: {}, skin: "classico", rev: 0 };
   const local = lsGet(lgKey()) || {}, remote = (profile && profile.settings && profile.settings.lingo) || {};
-  const s = { ...base, ...((remote.xp || 0) > (local.xp || 0) ? remote : local) };
+  const newer = (remote.rev || 0) !== (local.rev || 0) ? (remote.rev || 0) > (local.rev || 0) : (remote.xp || 0) > (local.xp || 0);
+  const s = { ...base, ...(newer ? remote : local) }; s.skins = { ...(s.skins || {}) };
   if (s.day !== lgToday()) { s.day = lgToday(); s.dayXp = 0 }
   // ofensiva quebra se passou mais de um dia sem treinar
   if (s.last && s.last !== lgToday()) { const y = new Date(); y.setDate(y.getDate() - 1); const ys = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, "0")}-${String(y.getDate()).padStart(2, "0")}`; if (s.last !== ys) s.streak = 0 }
@@ -127,6 +128,7 @@ function lgLoad() {
 }
 let lg = null;
 function lgSave(sync) {
+  lg.rev = (lg.rev || 0) + 1;
   lsSet(lgKey(), lg);
   if (sync && user && profile && caps.v3) { profile.settings = { ...(profile.settings || {}), lingo: lg }; saveProfile({ settings: profile.settings }).catch(() => { }) }
 }
@@ -138,7 +140,7 @@ function lgUnlocked(u, l) {
 }
 
 /* ---------- hipopótamo ---------- */
-const lgHippo = (cls = "", say = "") => `<div class="lgh ${cls}">${say ? `<div class="lgh-say">${esc(say)}</div>` : ""}<img class="lgh-img" src="hipopotamo.webp" alt="" draggable="false"></div>`;
+const lgHippo = (cls = "", say = "") => `<div class="lgh ${cls}">${say ? `<div class="lgh-say">${esc(say)}</div>` : ""}${typeof lgSkinImg === "function" ? lgSkinImg() : `<img class="lgh-img" src="hipopotamo.webp" alt="" draggable="false">`}</div>`;
 function lgMood(mood, say) {
   const h = document.querySelector(".lg-lesson .lgh"); if (!h) return;
   h.classList.remove("happy", "sad", "cheer"); void h.offsetWidth; if (mood) h.classList.add(mood);
@@ -240,12 +242,13 @@ function renderLingo() {
   const best = lg.best[lg.lang] || 0;
   el.innerHTML = `
     <div class="sec-head"><div><h2 class="h">Enzolingo</h2><p class="muted">Inglês e espanhol em lições de 2 minutos, com o hipopótamo.</p></div>
-      <div class="lg-tools"><div class="lg-langs" role="radiogroup" aria-label="Idioma">${Object.entries(LG_LANGS).map(([k, v]) => `<button role="radio" aria-checked="${k === lg.lang}" data-lg-lang="${k}"><span class="lg-flag">${v.flag}</span>${v.name}</button>`).join("")}</div><button class="btn sh-btn lg-show" data-show-open aria-label="Show do Enzolão">🎤<span>Show do<br>Enzolão</span></button></div></div>
+      <div class="lg-tools"><div class="lg-langs" role="radiogroup" aria-label="Idioma">${Object.entries(LG_LANGS).map(([k, v]) => `<button role="radio" aria-checked="${k === lg.lang}" data-lg-lang="${k}"><span class="lg-flag">${v.flag}</span>${v.name}</button>`).join("")}</div><button class="btn sh-btn lg-show" data-show-open aria-label="Show do Enzolão">🎤<span>Show do<br>Enzolão</span></button><button class="btn ghost lg-shop" data-lg-shop aria-label="Loja de skins" title="Loja de skins">${ic("store")}<span>Loja</span></button></div></div>
     <div class="lg-top">
       <div class="lg-hero">${lgHippo("idle", allDone ? "Você zerou a trilha! Treine no desafio." : L.hello)}</div>
       <div class="lg-stats">
         <div class="lg-stat"><span class="lg-ico fire">🔥</span><b>${lg.streak}</b><small>${lg.streak === 1 ? "dia seguido" : "dias seguidos"}</small></div>
         <div class="lg-stat"><span class="lg-ico">⚡</span><b>${lg.xp}</b><small>XP no total</small></div>
+        <button class="lg-stat gb" data-lg-shop aria-label="Abrir a loja"><img class="gb-i big" src="loja/goiaba.webp" alt=""><b>${lg.goiabas || 0}</b><small>goiabas</small></button>
         <div class="lg-stat goal"><div class="lg-ring" style="--p:${pct}"><span>${lg.dayXp}/${LG_GOAL}</span></div><small>Meta de hoje</small></div>
       </div>
       <div class="lg-quick">
@@ -357,11 +360,14 @@ function lgFinish(failed) {
     xp = 10 + (s.wrong ? 0 : 5); lg.done[lgDoneKey(s.meta.u, s.meta.l)] = true;
     title = s.wrong ? "Lição concluída!" : "Lição perfeita!"; msg = s.wrong ? "Continue assim para manter a ofensiva." : "Nenhum erro. +5 XP de bônus!";
   }
+  let gb = 0;
+  if (s.meta.rush) gb = s.right; else if (!failed) gb = 5 + (s.wrong ? 0 : 3);
   if (xp) {
     const was = lg.dayXp; lg.xp += xp; lg.dayXp += xp;
     if (lg.last !== lgToday()) { lg.streak = (lg.streak || 0) + 1; lg.last = lgToday() }
-    if (was < LG_GOAL && lg.dayXp >= LG_GOAL) msg += " Meta de hoje batida! 🎯";
+    if (was < LG_GOAL && lg.dayXp >= LG_GOAL) { msg += " Meta de hoje batida! 🎯 +10 goiabas"; gb += 10 }
   }
+  if (gb) lg.goiabas = (lg.goiabas || 0) + gb;
   lgSave(true);
   const mm = Math.floor(secs / 60), ss = String(secs % 60).padStart(2, "0");
   box.innerHTML = `<div class="lg-end ${failed ? "fail" : ""}">
@@ -370,6 +376,7 @@ function lgFinish(failed) {
     <h2>${title}</h2><p>${msg}</p>
     <div class="lg-res">
       <div style="--c:#FFC800"><small>XP</small><b>+${xp}</b></div>
+      ${gb ? `<div style="--c:#8BC34A"><small>Goiabas</small><b><img class="gb-i" src="loja/goiaba.webp" alt="">+${gb}</b></div>` : ""}
       <div style="--c:#58CC02"><small>Acertos</small><b>${acc}%</b></div>
       <div style="--c:#1CB0F6"><small>Tempo</small><b>${mm}:${ss}</b></div>
     </div>

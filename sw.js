@@ -1,7 +1,7 @@
 /* Jogos Enzola — service worker: abre rápido, funciona com internet ruim e recebe notificações no celular.
    Só guarda os arquivos do próprio site; dados do Supabase e preços sempre vêm da rede. */
-const CACHE = "jogos-enzola-v3-19";
-const SHELL = ["./", "index.html", "styles.css", "app.js", "jogo.js", "social.js", "lingo.js", "show.js","home.js", "extras.js", "config.js", "logo.png", "hipopotamo.webp", "manifest.webmanifest",
+const CACHE = "jogos-enzola-v3-20";
+const SHELL = ["./", "index.html", "styles.css", "app.js", "jogo.js", "social.js", "lingo.js", "loja.js","show.js","home.js", "extras.js", "config.js", "logo.png", "hipopotamo.webp", "manifest.webmanifest",
   "icons/icon-192.png", "icons/icon-512.png", "icons/favicon.png", "icons/notif.png", "icons/badge.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())) });
 self.addEventListener("activate", e => {
