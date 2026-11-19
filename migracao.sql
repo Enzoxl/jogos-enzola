@@ -438,3 +438,48 @@ create trigger posts_clean_tags before insert on public.posts for each row execu
 alter table public.notifications drop constraint if exists notifications_kind_check;
 alter table public.notifications add constraint notifications_kind_check check (kind in ('poke','suggest','message','friend_request','friend_accept','tag','like','comment'));
 -- (funções notify_post_tags / notify_post_like / notify_post_comment e seus gatilhos: ver migração "notify_feed" no Supabase)
+
+-- ===== Grupos do Enzolingo: ofensiva coletiva, pontos e metas =====
+create table if not exists public.group_activity (
+  group_id uuid not null references public.groups(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  day date not null,
+  points int not null default 0 check (points >= 0),
+  primary key (group_id, user_id, day)
+);
+create table if not exists public.group_claims (
+  group_id uuid not null references public.groups(id) on delete cascade,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  tier int not null,
+  primary key (group_id, user_id, tier)
+);
+alter table public.group_activity enable row level security;
+alter table public.group_claims enable row level security;
+drop policy if exists ga_select on public.group_activity;
+create policy ga_select on public.group_activity for select to authenticated using (public.is_group_member(group_id, auth.uid()));
+drop policy if exists gc_select on public.group_claims;
+create policy gc_select on public.group_claims for select to authenticated using (user_id = auth.uid());
+
+create or replace function public.group_log(p_points int) returns void
+language plpgsql security definer set search_path = public as $$
+declare d date := (now() at time zone 'America/Sao_Paulo')::date; p int := least(greatest(coalesce(p_points,0),0),100);
+begin
+  if auth.uid() is null or p = 0 then return; end if;
+  insert into group_activity(group_id,user_id,day,points)
+  select g.id, auth.uid(), d, p from groups g where public.is_group_member(g.id, auth.uid())
+  on conflict (group_id,user_id,day) do update set points = group_activity.points + excluded.points;
+end $$;
+
+create or replace function public.group_claim(gid uuid, p_tier int) returns boolean
+language plpgsql security definer set search_path = public as $$
+declare th int[] := array[100,250,500,1000,2000]; tot bigint; n int;
+begin
+  if auth.uid() is null or not public.is_group_member(gid, auth.uid()) then return false; end if;
+  if p_tier < 0 or p_tier > 4 then return false; end if;
+  select coalesce(sum(points),0) into tot from group_activity where group_id = gid;
+  if tot < th[p_tier+1] then return false; end if;
+  insert into group_claims(group_id,user_id,tier) values (gid, auth.uid(), p_tier) on conflict do nothing;
+  get diagnostics n = row_count; return n > 0;
+end $$;
+revoke all on function public.group_log(int), public.group_claim(uuid,int) from public, anon;
+grant execute on function public.group_log(int), public.group_claim(uuid,int) to authenticated;

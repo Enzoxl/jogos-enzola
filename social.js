@@ -20,9 +20,9 @@ async function loadProfiles(ids) {
 }
 async function loadFriends() {
   if (!sb || !user) return;
-  const [a, b, c] = await Promise.all([sb.from("friendships").select("*"), sb.from("groups").select("*"), sb.from("group_members").select("*")]);
+  const [a, b, c, d, e] = await Promise.all([sb.from("friendships").select("*"), sb.from("groups").select("*"), sb.from("group_members").select("*"), sb.from("group_activity").select("*"), sb.from("group_claims").select("*")]);
   if (a.error || b.error || c.error) { toast("Não foi possível carregar os amigos."); return }
-  fr.rows = a.data || []; fr.groups = b.data || []; fr.members = c.data || [];
+  fr.rows = a.data || []; fr.groups = b.data || []; fr.members = c.data || []; fr.gact = d.data || []; fr.gclaims = e.data || [];
   const ids = [...new Set([...fr.rows.map(other), ...fr.members.map(m => m.user_id), ...fr.groups.map(g => g.owner)])].filter(x => x !== user.id);
   fr.profs = {}; await loadProfiles(ids);
   if (caps.v3) {
@@ -60,7 +60,7 @@ function renderFriends() {
   const outHTML = out.length ? section(ic("clock") + "Pedidos enviados", out.length, `<div class="flist">${out.map(f => person(pOf(f.addressee), `<button class="btn ghost sm" data-fr="remove" data-id="${f.id}">Cancelar</button>`)).join("")}</div>`) : "";
   const v3 = caps.v3;
   const friendsHTML = section(ic("users") + "Meus amigos", fl.length, fl.length ? `<div class="flist">${fl.map(f => { const p = pOf(other(f)); return person(p, `${v3 ? `<button class="iconbtn" data-fr="chat" data-id="${p.user_id}" aria-label="Mensagem para ${esc(pName(p))}" title="Mensagem">${ic("message")}</button><button class="iconbtn" data-fr="poke" data-id="${p.user_id}" aria-label="Cutucar ${esc(pName(p))}" title="Cutucar">${ic("hand")}</button>` : ""}<a class="btn ghost sm" href="#amigo/${p.user_id}">Ver perfil</a>`) }).join("")}</div>` : `<div class="panel empty"><b>Nenhum amigo ainda</b>Busque pelo usuário ou pelo #ID de quem usa o site e envie um pedido.</div>`);
-  const groupsHTML = section(ic("layers") + "Grupos", fr.groups.length, (fr.groups.length ? `<div class="gwrap">${fr.groups.map(g => { const ms = fr.members.filter(m => m.group_id === g.id); return `<button class="gcard" data-fr="group" data-id="${g.id}"><div class="gn">${esc(g.name)}</div><div class="stackav">${ms.slice(0, 5).map(m => `<div class="av xs">${avatar(m.user_id === user.id ? profile && profile.avatar : pOf(m.user_id).avatar)}</div>`).join("")}</div><div class="muted">${ms.length} membro${ms.length === 1 ? "" : "s"}${g.owner === user.id ? " · você é o dono" : ""}</div></button>` }).join("")}</div>` : `<div class="panel empty"><b>Nenhum grupo</b>Crie um grupo e chame seus amigos.</div>`));
+  const groupsHTML = section(ic("layers") + "Grupos", fr.groups.length, (fr.groups.length ? `<div class="gwrap">${fr.groups.map(g => { const ms = fr.members.filter(m => m.group_id === g.id); return `<button class="gcard" data-fr="group" data-id="${g.id}"><div class="gn">${esc(g.name)}</div><div class="stackav">${ms.slice(0, 5).map(m => `<div class="av xs">${avatar(m.user_id === user.id ? profile && profile.avatar : pOf(m.user_id).avatar)}</div>`).join("")}</div><div class="muted">${ms.length} membro${ms.length === 1 ? "" : "s"}${g.owner === user.id ? " · você é o dono" : ""}</div>${gSummary(g.id)}</button>` }).join("")}</div>` : `<div class="panel empty"><b>Nenhum grupo</b>Crie um grupo e chame seus amigos.</div>`));
   el.innerHTML = `<div class="sec-head"><div><h2 class="h">Amigos</h2><p class="muted">${profile && profile.tag ? `Seu ID é <button class="idtag big" data-act="copy-id" title="Copiar">${esc(uname())}#${esc(profile.tag)}</button>. Passe para seus amigos te acharem.` : "Adicione quem também usa o Jogos Enzola."}</p></div><button class="btn" data-fr="newgroup">${ic("plus")}Novo grupo</button></div>
   <div class="panel fsearch"><div class="bar" style="margin:0"><span class="inp grow">${ic("search")}<input type="search" id="fq" placeholder="${v3 ? "Usuário ou #ID (ex.: enzola ou #0427)" : "Usuário do seu amigo (ex.: enzola)"}" value="${esc(fr.q)}"></span><button class="btn" data-fr="search">${ic("userplus")}Buscar</button></div>${found}</div>
   ${incHTML}${friendsHTML}${outHTML}${groupsHTML}`;
@@ -371,11 +371,43 @@ function openNewGroup() {
   <div class="acts"><button class="btn ghost" data-close>Cancelar</button><button class="btn" data-fr="gcreate">Criar grupo</button></div>`);
   $("#g-name").focus();
 }
+/* ---------- ofensiva e metas do grupo (Enzolingo) ---------- */
+const GRP_TIERS = [{ pts: 100, coins: 20 }, { pts: 250, coins: 40 }, { pts: 500, coins: 80 }, { pts: 1000, coins: 150 }, { pts: 2000, coins: 300, skin: "ff" }];
+const spDay = (off = 0) => { const d = new Date(Date.now() - off * 864e5); return d.toLocaleDateString("sv", { timeZone: "America/Sao_Paulo" }) };
+function gStats(gid) {
+  const rows = (fr.gact || []).filter(r => r.group_id === gid), byDay = {};
+  let total = 0; for (const r of rows) { total += r.points; if (r.points > 0) (byDay[r.day] = byDay[r.day] || new Set()).add(r.user_id) }
+  const act = d => (byDay[d] ? byDay[d].size : 0) >= 2;
+  let off = act(spDay(0)) ? 0 : 1, streak = 0; while (act(spDay(off))) { streak++; off++ }
+  return { total, streak, todayN: byDay[spDay(0)] ? byDay[spDay(0)].size : 0, todayOn: act(spDay(0)) };
+}
+const gSummary = gid => { const st = gStats(gid); return `<div class="g-sum"><span class="g-fire${st.todayOn ? " on" : ""}">🔥 ${st.streak}</span><span class="muted">${st.total} pts</span></div>` };
+async function gClaim(gid, i) {
+  const t = GRP_TIERS[i]; if (!t || typeof lgAward !== "function") return;
+  const { data, error } = await sb.rpc("group_claim", { gid, p_tier: i });
+  if (error || !data) { toast("Meta ainda não liberada ou já resgatada."); return }
+  fr.gclaims.push({ group_id: gid, user_id: user.id, tier: i });
+  lgAward(t.coins);
+  if (t.skin) { lg = lg || lgLoad(); lg.skins = { ...(lg.skins || {}), [t.skin]: true }; lgSave(true) }
+  toast(t.skin ? `Meta máxima! +${t.coins} Enzola Coins e a skin “Enzola Free Fire” 🔥` : `+${t.coins} Enzola Coins resgatados!`);
+  if (typeof lgBeep === "function") lgBeep("ok"); openGroup(gid);
+}
+function groupLingoHTML(gid) {
+  const st = gStats(gid), done = new Set((fr.gclaims || []).filter(c => c.group_id === gid).map(c => c.tier)), max = GRP_TIERS[GRP_TIERS.length - 1].pts;
+  const pct = Math.min(100, st.total / max * 100);
+  return `<div class="g-lingo"><div class="g-flame${st.todayOn ? " on" : ""}"><span class="g-fi" aria-hidden="true">🔥</span><div><b>${st.streak} dia${st.streak === 1 ? "" : "s"} de ofensiva</b><small class="muted">${st.todayOn ? "Ofensiva de hoje garantida!" : `Hoje: ${st.todayN}/2 pessoas fizeram atividade no Enzolingo`}</small></div></div>
+    <div class="g-pts"><div class="g-ptsh"><b>${st.total} pontos do grupo</b><small class="muted">meta final: ${max}</small></div><div class="g-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${max}" aria-valuenow="${Math.min(st.total, max)}"><i style="width:${pct}%"></i></div></div>
+    <div class="g-tiers">${GRP_TIERS.map((t, i) => { const ok = st.total >= t.pts, got = done.has(i);
+      return `<div class="g-tier${ok ? " ok" : ""}${got ? " got" : ""}"><b>${t.pts}</b><span class="g-rw">${typeof gbI === "function" ? gbI() : ""}+${t.coins}</span>${t.skin ? `<img class="g-skin" src="loja/h-ff.webp" alt="Skin Enzola Free Fire">` : ""}
+      ${got ? `<small>${ic("check")}Resgatado</small>` : ok ? `<button class="btn sm" data-fr="gclaim" data-gid="${gid}" data-i="${i}">Resgatar</button>` : `<small class="muted">${t.pts - st.total} pts</small>`}</div>` }).join("")}</div>
+    <p class="muted g-how">Cada lição, desafio ou Show do Enzolão de qualquer membro soma pontos para o grupo. A chama acende quando 2 ou mais pessoas fazem atividade no mesmo dia.</p></div>`;
+}
 function openGroup(gid) {
   const g = fr.groups.find(x => x.id === gid); if (!g) { closeModal(); return }
   const own = g.owner === user.id, ms = fr.members.filter(m => m.group_id === gid);
   const addable = frAccepted().map(f => pOf(other(f))).filter(p => !ms.some(m => m.user_id === p.user_id));
   modalShell(`<h2>${esc(g.name)}</h2><p class="sub">${ms.length} membro${ms.length === 1 ? "" : "s"}</p>
+  ${groupLingoHTML(gid)}
   <div class="flist">${ms.map(m => { const me = m.user_id === user.id, p = me ? { ...(profile || {}), username: uname(), user_id: user.id } : pOf(m.user_id);
     return person(p, `${m.user_id === g.owner ? `<span class="badge st-Jogando">dono</span>` : ""}${own && !me ? `<button class="iconbtn" data-fr="gkick" data-gid="${gid}" data-id="${m.user_id}" aria-label="Remover do grupo">${ic("x")}</button>` : ""}`, !me) }).join("")}</div>
   ${own ? `<div class="bar" style="margin:14px 0 0"><select class="grow" id="g-add"><option value="">Adicionar amigo…</option>${addable.map(p => `<option value="${p.user_id}">${esc(pName(p))} (@${esc(p.username || "")})</option>`).join("")}</select><button class="btn" data-fr="gadd" data-gid="${gid}">Adicionar</button></div>` : ""}
@@ -418,6 +450,7 @@ document.addEventListener("click", async e => {
   if (a === "unfriend") { if (!b.dataset.sure) { b.dataset.sure = 1; b.classList.add("sure"); toast("Toque de novo para remover este amigo."); return } const ok = await frDo(sb.from("friendships").delete().eq("id", id), "Amigo removido."); if (ok && tab === "amigo") location.hash = "amigos"; return }
   if (a === "newgroup") return openNewGroup();
   if (a === "group") return openGroup(id);
+  if (a === "gclaim") return gClaim(gid, +b.dataset.i);
   if (a === "gcreate") {
     const name = $("#g-name").value.trim(); if (!name) { toast("Dê um nome ao grupo."); return }
     if (gBusy) return; gBusy = true;

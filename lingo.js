@@ -368,6 +368,7 @@ function lgFinish(failed) {
     if (was < LG_GOAL && lg.dayXp >= LG_GOAL) { msg += " Meta de hoje batida! 🎯 +10 Enzola Coins"; gb += 10 }
   }
   if (gb) lg.goiabas = (lg.goiabas || 0) + gb;
+  if (typeof grpLog === "function") grpLog(xp);
   lgSave(true);
   const mm = Math.floor(secs / 60), ss = String(secs % 60).padStart(2, "0");
   box.innerHTML = `<div class="lg-end ${failed ? "fail" : ""}">
