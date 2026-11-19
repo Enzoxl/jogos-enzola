@@ -123,12 +123,80 @@ function hmPostHTML(p) {
     <div class="hm-acts"><button class="hm-act${liked ? " on" : ""}" data-hm="like" data-id="${p.id}" aria-pressed="${liked}" aria-label="Curtir">${ic("heart")}<span>${likes.length || ""}</span></button>
       <button class="hm-act" data-hm="cm" data-id="${p.id}" aria-expanded="${open}" aria-label="Comentários">${ic("message")}<span>${cm.length || ""}</span></button></div>${comments}</article>`;
 }
+/* ---------- medidor de aura diário ---------- */
+const AU_TIERS = [
+  { min: 0, name: "Aura em manutenção", emoji: "🌧️", c1: "#5b6b8c", c2: "#2b3350", msgs: ["O universo está em atualização. Evite decisões importantes e proteja seu Wi-Fi hoje.", "Dia de ficar quietinho: o lag da vida está alto. Amanhã a gente reinicia.", "Sua sorte foi pra loja trocar a bateria. Jogue só o que você já domina."] },
+  { min: 20, name: "Aura nublada", emoji: "☁️", c1: "#7a8fb8", c2: "#39466e", msgs: ["Nem tudo vai dar certo hoje, mas dá pra tirar um ranked sem perder a paz.", "A sorte está de óculos escuros: te vê, mas finge que não. Vá com calma.", "Dia de jogar casual e guardar a ousadia pra amanhã."] },
+  { min: 40, name: "Aura estável", emoji: "🌤️", c1: "#38b6a8", c2: "#1d5a7a", msgs: ["Equilibrado como um Wi-Fi de 5G: sem milagres, sem tragédias.", "Um dia normal com chance de pequenas boas surpresas. Bora jogar.", "A sorte está do seu lado, mas sentada no banco de reservas."] },
+  { min: 60, name: "Aura brilhante", emoji: "✨", c1: "#ffb347", c2: "#e8505b", msgs: ["A sorte te notou hoje! Bom dia pra começar aquele jogo que está na fila.", "Sua aura está brilhando: tudo tende a dar certo, até o drop raro.", "Dia ótimo pra arriscar uma jogada ousada e ainda sair rindo."] },
+  { min: 80, name: "Aura lendária", emoji: "🔥", c1: "#ff7a18", c2: "#af002d", msgs: ["Hoje é o seu dia: clutch, loot e vitória garantidos (quase).", "Os hipopótamos se curvam. Qualquer partida hoje tem cheiro de vitória.", "Sorte nível lendário! Chame a galera, hoje o servidor é seu."] },
+  { min: 95, name: "Aura do Enzolão", emoji: "👑", c1: "#ffd23f", c2: "#b8860b", msgs: ["AURA MÁXIMA! Compre o bilhete, aposte tudo, ligue pro Silvio: hoje você é imbatível.", "Nível Enzolão: o universo inteiro torce por você. Aproveite cada minuto.", "Você é a lenda do dia. Os amigos precisam saber disso agora."] },
+];
+const AU_COLORS = ["verde", "azul", "roxo", "laranja", "dourado", "vermelho", "rosa", "branco"];
+const auTier = v => { let t = AU_TIERS[0]; for (const x of AU_TIERS) if (v >= x.min) t = x; return t };
+const auKey = () => "aura:" + user.id + ":" + spDay(0);
+function auGet() { try { return JSON.parse(localStorage.getItem(auKey()) || "null") } catch (e) { return null } }
+function auSet(o) { try { localStorage.setItem(auKey(), JSON.stringify(o)) } catch (e) {} }
+function auMeasure() {
+  if (auGet()) return;
+  const v = Math.floor(Math.random() * 101), t = auTier(v);
+  auSet({ v, m: Math.floor(Math.random() * t.msgs.length), n: 1 + Math.floor(Math.random() * 99), col: AU_COLORS[Math.floor(Math.random() * AU_COLORS.length)], posted: false });
+  hm.auraFresh = true; renderHome();
+  const n = $("#au-n"), f = $("#au-f"), a = auGet(); if (!a || !n) return;
+  requestAnimationFrame(() => { if (f) f.style.width = a.v + "%" });
+  const t0 = performance.now(), dur = 1400;
+  const step = now => { const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3), x = $("#au-n"); if (!x) return; x.textContent = Math.round(a.v * e); if (k < 1) requestAnimationFrame(step); else hm.auraFresh = false };
+  requestAnimationFrame(step);
+}
+function hmAura() {
+  const a = auGet();
+  if (!a) return `<div class="au panel au-empty"><div class="au-orb" aria-hidden="true">🔮</div><div class="au-tx"><b>Medidor de aura diário</b><span class="muted">Descubra como está a sua sorte hoje.</span></div><button class="btn sm" data-hm="aura">Medir minha aura</button></div>`;
+  const t = auTier(a.v), fresh = !!hm.auraFresh;
+  return `<div class="au panel" style="--c1:${t.c1};--c2:${t.c2}"><div class="au-h"><span class="au-e" aria-hidden="true">${t.emoji}</span><div><small>Sua aura de hoje</small><b>${t.name}</b></div><div class="au-v"><span id="au-n">${fresh ? 0 : a.v}</span><i>%</i></div></div>
+    <div class="au-bar" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${a.v}" aria-label="Nível de aura"><i id="au-f" style="width:${fresh ? 0 : a.v}%"></i></div>
+    <p class="au-m">${esc(t.msgs[a.m % t.msgs.length])}</p>
+    <div class="au-x"><span>🍀 Número da sorte: <b>${a.n}</b></span><span>🎨 Cor do dia: <b>${a.col}</b></span></div>
+    <div class="au-a">${a.posted ? `<span class="au-done">${ic("check")}Publicado para seus amigos</span>` : `<button class="btn sm" data-hm="aurapost"${hm.busy ? " disabled" : ""}>${ic("send")}Publique pra seus amigos</button>`}<small class="muted">Nova medição amanhã</small></div></div>`;
+}
+function auCard(a, t) {
+  return new Promise(res => {
+    try {
+      const c = document.createElement("canvas"); c.width = c.height = 1080; const x = c.getContext("2d");
+      const g = x.createLinearGradient(0, 0, 1080, 1080); g.addColorStop(0, t.c1); g.addColorStop(1, t.c2); x.fillStyle = g; x.fillRect(0, 0, 1080, 1080);
+      x.fillStyle = "rgba(255,255,255,.07)"; for (let i = -1080; i < 1080; i += 120) { x.beginPath(); x.moveTo(i, 1080); x.lineTo(i + 60, 1080); x.lineTo(i + 60 + 1080, 0); x.lineTo(i + 1080, 0); x.fill() }
+      x.textAlign = "center"; x.fillStyle = "#fff"; const F = "Inter, Poppins, system-ui, sans-serif";
+      x.font = `700 44px ${F}`; x.globalAlpha = .9; x.fillText("MEDIDOR DE AURA · " + spDay(0).split("-").reverse().join("/"), 540, 130); x.globalAlpha = 1;
+      x.font = "180px serif"; x.fillText(t.emoji, 540, 340);
+      x.font = `800 300px ${F}`; x.shadowColor = "rgba(0,0,0,.3)"; x.shadowBlur = 30; x.fillText(a.v + "%", 540, 640); x.shadowBlur = 0;
+      x.fillStyle = "rgba(0,0,0,.25)"; x.beginPath(); x.roundRect(140, 700, 800, 36, 18); x.fill();
+      x.fillStyle = "#fff"; x.beginPath(); x.roundRect(140, 700, Math.max(36, 800 * a.v / 100), 36, 18); x.fill();
+      x.font = `800 70px ${F}`; x.fillText(t.name, 540, 830);
+      x.font = `500 38px ${F}`; const words = t.msgs[a.m % t.msgs.length].split(" "); let line = "", y = 900;
+      for (const w of words) { const test = line + w + " "; if (x.measureText(test).width > 860 && line) { x.fillText(line.trim(), 540, y); line = w + " "; y += 50 } else line = test }
+      x.fillText(line.trim(), 540, y);
+      x.font = `700 34px ${F}`; x.globalAlpha = .85; x.fillText("jogos-enzola.vercel.app", 540, 1040);
+      c.toBlob(b => res(b), "image/jpeg", .88);
+    } catch (e) { res(null) }
+  });
+}
+async function auPost() {
+  const a = auGet(); if (!a || a.posted || hm.busy) return;
+  hm.busy = true; renderHome(); const t = auTier(a.v);
+  try {
+    const blob = await auCard(a, t), image = blob ? await hmUpload(blob).catch(() => null) : null;
+    const body = `${t.emoji} Minha aura de hoje: ${a.v}% — ${t.name}\n${t.msgs[a.m % t.msgs.length]}\n🍀 Número da sorte: ${a.n} · 🎨 Cor do dia: ${a.col}`;
+    const { data, error } = await sb.from("posts").insert({ body, image, tags: [] }).select().single();
+    if (error) throw error;
+    hm.posts.unshift(data); a.posted = true; auSet(a); toast("Aura publicada para seus amigos!");
+  } catch (e) { toast("Não foi possível publicar agora.") }
+  hm.busy = false; renderHome();
+}
 function renderHome() {
   const el = $("#inicio"); if (!el || !user) return;
   if (!hm.loaded) { el.innerHTML = hmPromo() + hippoLoad("Carregando o feed…"); hmLoad(); return }
   const kc = document.activeElement && document.activeElement.closest && document.activeElement.closest("[data-hm-form]");
   if (kc && kc.querySelector("input").value) return;      // não apaga o comentário que a pessoa está digitando
-  el.innerHTML = `${hmPromo()}${hmStoryBar()}
+  el.innerHTML = `${hmPromo()}${hmStoryBar()}${hmAura()}
     <div class="hm-compose panel"><div class="hm-cr">${hmAv(user.id, "md")}<textarea id="hm-text" rows="2" maxlength="2000" placeholder="O que você está jogando ou pensando, ${esc(nick())}?" aria-label="Nova publicação"></textarea></div>
       ${hm.imgUrl ? `<div class="hm-prev"><img src="${hm.imgUrl}" alt="Prévia"><button class="iconbtn" data-hm="rmimg" aria-label="Remover foto">${ic("x")}</button></div>` : ""}
       ${hm.tags.length ? `<div class="hm-chips">${hm.tags.map(t => `<button class="hm-chip" data-hm="tag" data-id="${t}" aria-label="Remover marcação">${esc(pName(hmWho(t)))} ${ic("x")}</button>`).join("")}</div>` : ""}
@@ -257,6 +325,7 @@ document.addEventListener("click", e => {
   if (a === "tagtoggle") { hmKeepText(); hm.tagOpen = !hm.tagOpen; renderHome(); hmRestoreText() }
   else if (a === "tag") { hmKeepText(); hm.tags = hm.tags.includes(id) ? hm.tags.filter(x => x !== id) : hm.tags.length < 10 ? [...hm.tags, id] : hm.tags; renderHome(); hmRestoreText() }
   else if (a === "like") hmLike(id); else if (a === "cm") { hm.open.has(id) ? hm.open.delete(id) : hm.open.add(id); renderHome() }
+  else if (a === "aura") auMeasure(); else if (a === "aurapost") auPost();
   else if (a === "post") hmPost(); else if (a === "delp") hmDelPost(id); else if (a === "delc") hmDelComment(id, b.dataset.p);
   else if (a === "rmimg") { hm.img = null; hm.imgUrl = ""; renderHome() }
   else if (a === "newstory") hmNewStory(); else if (a === "story") hmOpenStory(b.dataset.u);
