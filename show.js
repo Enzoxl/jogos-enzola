@@ -107,6 +107,9 @@ async function rewardsGive(k) {
   if (profile) { const settings = { ...(profile.settings || {}), rewards: { ...shReward(), [k]: true } }; await saveProfile({ settings }) }
 }
 function rewardsHTML() {
+  return rewardsHTML0() + (typeof skinsHTML === "function" ? skinsHTML() : "");
+}
+function rewardsHTML0() {
   const k = "silvio", R = REWARDS[k], has = rewardsHas(k);
   return `<div class="rw-box"><div class="fld" style="margin-bottom:6px">Prêmios <span class="hint">· ganhos no Show do Enzolão (aba Idiomas)</span></div>
     <div class="rw-row${has ? "" : " locked"}"><img class="rw-av" src="${R.avatar}" alt="" width="56" height="56"><div class="rw-t"><b>${esc(R.name)}</b><span class="hint">${has ? "Avatar e banner desbloqueados." : "Acerte as 20 perguntas para desbloquear."}</span></div>

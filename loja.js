@@ -29,6 +29,7 @@ const LG_SKINS = [
   { id: "c12", kind: "chr", name: "Boné azul", img: "convite/c12.jpg", price: 130 },
   { id: "c16", kind: "chr", name: "CJ", img: "convite/c16.jpg", price: 140 },
 ];
+const skinAvatarSrc = id => { const s = LG_SKINS.find(x => x.id === id); return s ? (s.kind === "hip" ? `loja/a-${s.id}.webp` : s.img) : null };
 const skinOf = id => LG_SKINS.find(s => s.id === id) || LG_SKINS[0];
 const skinHas = id => id === "classico" || !!(lg && lg.skins && lg.skins[id]);
 function lgSkinImg() {
@@ -56,7 +57,8 @@ function lgShopRender() {
     <div class="lgs-grid">${list.map(sk => {
       const own = skinHas(sk.id), on = lg.skin === sk.id || (!lg.skin && sk.id === "classico"), can = bal >= sk.price;
       return `<div class="lgs-card${on ? " on" : ""}"><div class="lgs-img${sk.kind === "chr" ? " chr" : ""}"><img src="${sk.img}" alt=""></div><b>${esc(sk.name)}</b>
-        ${on ? `<span class="lgs-eq">${ic("check")}Equipado</span>` : own ? `<button class="btn sm" data-lgs-equip="${sk.id}">Equipar</button>` : `<button class="btn sm lgs-buy${can ? "" : " lack"}" data-lgs-buy="${sk.id}" aria-label="Comprar ${esc(sk.name)} por ${sk.price} goiabas">${gbI()}${sk.price}</button>`}</div>`;
+        ${on ? `<span class="lgs-eq">${ic("check")}Equipado</span>` : own ? `<button class="btn sm" data-lgs-equip="${sk.id}">Equipar</button>` : `<button class="btn sm lgs-buy${can ? "" : " lack"}" data-lgs-buy="${sk.id}" aria-label="Comprar ${esc(sk.name)} por ${sk.price} goiabas">${gbI()}${sk.price}</button>`}
+        ${own ? `<button class="btn ghost sm lgs-av${profile && profile.avatar === "skin:" + sk.id ? " on" : ""}" data-lgs-avatar="${sk.id}">${profile && profile.avatar === "skin:" + sk.id ? "É seu avatar" : "Usar no perfil"}</button>` : ""}</div>`;
     }).join("")}</div>
     <p class="muted lgs-how">Como ganhar goiabas: lições (+5, +3 se perfeitas), desafio de 60 s (1 por acerto), meta diária (+10) e o Show do Enzolão (quanto mais acertos, mais goiabas).</p></div>`;
 }
@@ -68,6 +70,10 @@ function lgBuy(id) {
   lg.goiabas -= sk.price; lg.skins = { ...(lg.skins || {}), [id]: true }; lg.skin = id; lgSave(true);
   toast(`Skin “${sk.name}” comprada e equipada! 🛍️`); if (typeof lgBeep === "function") lgBeep("ok"); lgShopRender();
 }
+async function lgAvatar(id) {
+  if (!skinHas(id) || !profile) return;
+  if (await saveProfile({ avatar: "skin:" + id })) { toast("Avatar do perfil trocado! ✨"); lgShopRender() }
+}
 function lgEquip(id) { if (!skinHas(id)) return; lg.skin = id; lgSave(true); lgShopRender(); toast("Skin equipada!") }
 document.addEventListener("click", e => {
   const c = s => e.target.closest(s); let b;
@@ -77,5 +83,14 @@ document.addEventListener("click", e => {
   if (b = c("[data-lgs-tab]")) { lgsTab = b.dataset.lgsTab; lgShopRender(); return }
   if (b = c("[data-lgs-buy]")) { lgBuy(b.dataset.lgsBuy); return }
   if (b = c("[data-lgs-equip]")) { lgEquip(b.dataset.lgsEquip); return }
+  if (b = c("[data-lgs-avatar]")) { lgAvatar(b.dataset.lgsAvatar); return }
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#lgs-ovl") && !$("#sh-ovl")) lgShopClose() });
+
+/* editor de perfil: skins da loja como avatar */
+function skinsHTML() {
+  try { lg = lg || lgLoad() } catch (e) { return "" }
+  const own = LG_SKINS.filter(s => skinHas(s.id));
+  return `<div class="rw-box"><div class="fld" style="margin-bottom:6px">Skins da loja <span class="hint">· compre na loja do Enzolingo com goiabas</span></div>
+    <div class="sk-row">${own.map(s => `<button type="button" class="sk-b" data-equip-skin="${s.id}" title="${esc(s.name)}" aria-label="Usar ${esc(s.name)} como avatar"><img src="${skinAvatarSrc(s.id)}" alt="" width="52" height="52"></button>`).join("")}</div></div>`;
+}

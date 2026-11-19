@@ -1506,3 +1506,5 @@ a.spn:hover .sp-logo,a.spn:focus-visible .sp-logo{opacity:1;transform:translateY
 .lgs-eq{display:inline-flex;align-items:center;gap:4px;color:var(--accent);font-weight:700;font-size:13px}.lgs-eq .ic{width:1em;height:1em}
 .lgs-how{margin:0;font-size:12.5px}
 @media (max-width:420px){.lg-shop span{display:none}.lg-shop{padding:0 10px}}
+.sk-row{display:flex;gap:8px;flex-wrap:wrap}.sk-b{padding:0;border:2px solid var(--line-2);border-radius:50%;overflow:hidden;width:52px;height:52px;background:var(--tile);cursor:pointer}.sk-b img{width:100%;height:100%;object-fit:cover;display:block}.sk-b:hover{border-color:var(--accent)}
+.lgs-av{font-size:12px}.lgs-av.on{color:var(--accent)}

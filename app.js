@@ -79,6 +79,7 @@ function cover(g) {
   return `<div class="cvf" style="background:linear-gradient(160deg,hsl(${h} 45% 38%),hsl(${(h + 40) % 360} 50% 20%))">${esc(g.name)}</div>`;
 }
 function avatar(a) {
+  if (/^skin:/.test(a || "") && typeof skinAvatarSrc === "function") { const s = skinAvatarSrc(String(a).slice(5)); if (s) return `<img alt="" src="${s}">` }
   if (rewardOf(a)) return `<img alt="" src="${rewardOf(a).avatar}">`;
   if (a && /^https?:/.test(a)) return `<img alt="" src="${esc(a)}">`;
   const k = a && a.startsWith("preset:") ? a.slice(7) : "p1";
@@ -916,6 +917,9 @@ document.addEventListener("click", async e => {
   if (c("#m-rm")) { $("#m-cover").value = ""; refreshPrev(); return }
   if (c("#m-del")) { const d = c("#m-del"); if (!d.dataset.sure) { d.dataset.sure = 1; d.textContent = "Confirmar remoção"; return } await removeGame($("#modal .f").dataset.id); closeModal(); return }
   if (b = c("[data-preset]")) { pe.avatar = "preset:" + b.dataset.preset; $("#pe-av").innerHTML = avatar(pe.avatar) + `<span class="av-cam">${ic("camera")}</span>`; for (const x of $$("#pe-presets button")) x.setAttribute("aria-pressed", x === b); return }
+  if (b = c("[data-equip-skin]")) { const id = b.dataset.equipSkin; if (!pe || typeof skinHas !== "function" || !skinHas(id)) return;
+    pe.avatar = "skin:" + id; $("#pe-av").innerHTML = avatar(pe.avatar) + `<span class="av-cam">${ic("camera")}</span>`; for (const x of $$("#pe-presets button")) x.setAttribute("aria-pressed", "false")
+    toast("Equipado. Clique em Salvar perfil."); return }
   if (b = c("[data-equip]")) { const [kind, k] = b.dataset.equip.split(":"); if (!pe || !rewardsHas(k)) return;
     if (kind === "avatar") { pe.avatar = "reward:" + k; $("#pe-av").innerHTML = avatar(pe.avatar) + `<span class="av-cam">${ic("camera")}</span>`; for (const x of $$("#pe-presets button")) x.setAttribute("aria-pressed", "false") }
     else { pe.banner = "reward:" + k; $("#pe-ban").style.backgroundImage = `url('${cssUrl(pe.banner)}')` }
