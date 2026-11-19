@@ -125,12 +125,12 @@ function hmPostHTML(p) {
 }
 /* ---------- medidor de aura diário ---------- */
 const AU_TIERS = [
-  { min: 0, name: "Aura em manutenção", emoji: "🌧️", c1: "#5b6b8c", c2: "#2b3350", msgs: ["O universo está em atualização. Evite decisões importantes e proteja seu Wi-Fi hoje.", "Dia de ficar quietinho: o lag da vida está alto. Amanhã a gente reinicia.", "Sua sorte foi pra loja trocar a bateria. Jogue só o que você já domina."] },
+  { min: 0, name: "Desaura", emoji: "🌧️", c1: "#5b6b8c", c2: "#2b3350", msgs: ["O universo está em atualização. Evite decisões importantes e proteja seu Wi-Fi hoje.", "Dia de ficar quietinho: o lag da vida está alto. Amanhã a gente reinicia.", "Sua sorte foi pra loja trocar a bateria. Jogue só o que você já domina."] },
   { min: 20, name: "Aura nublada", emoji: "☁️", c1: "#7a8fb8", c2: "#39466e", msgs: ["Nem tudo vai dar certo hoje, mas dá pra tirar um ranked sem perder a paz.", "A sorte está de óculos escuros: te vê, mas finge que não. Vá com calma.", "Dia de jogar casual e guardar a ousadia pra amanhã."] },
   { min: 40, name: "Aura estável", emoji: "🌤️", c1: "#38b6a8", c2: "#1d5a7a", msgs: ["Equilibrado como um Wi-Fi de 5G: sem milagres, sem tragédias.", "Um dia normal com chance de pequenas boas surpresas. Bora jogar.", "A sorte está do seu lado, mas sentada no banco de reservas."] },
   { min: 60, name: "Aura brilhante", emoji: "✨", c1: "#ffb347", c2: "#e8505b", msgs: ["A sorte te notou hoje! Bom dia pra começar aquele jogo que está na fila.", "Sua aura está brilhando: tudo tende a dar certo, até o drop raro.", "Dia ótimo pra arriscar uma jogada ousada e ainda sair rindo."] },
   { min: 80, name: "Aura lendária", emoji: "🔥", c1: "#ff7a18", c2: "#af002d", msgs: ["Hoje é o seu dia: clutch, loot e vitória garantidos (quase).", "Os hipopótamos se curvam. Qualquer partida hoje tem cheiro de vitória.", "Sorte nível lendário! Chame a galera, hoje o servidor é seu."] },
-  { min: 95, name: "Aura do Enzolão", emoji: "👑", c1: "#ffd23f", c2: "#b8860b", msgs: ["AURA MÁXIMA! Compre o bilhete, aposte tudo, ligue pro Silvio: hoje você é imbatível.", "Nível Enzolão: o universo inteiro torce por você. Aproveite cada minuto.", "Você é a lenda do dia. Os amigos precisam saber disso agora."] },
+  { min: 95, name: "Aura do Enzola", emoji: "👑", c1: "#ffd23f", c2: "#b8860b", msgs: ["AURA MÁXIMA! Compre o bilhete, aposte tudo, ligue pro Silvio: hoje você é imbatível.", "Nível Enzola: o universo inteiro torce por você. Aproveite cada minuto.", "Você é a lenda do dia. Os amigos precisam saber disso agora."] },
 ];
 const AU_COLORS = ["verde", "azul", "roxo", "laranja", "dourado", "vermelho", "rosa", "branco"];
 const auTier = v => { let t = AU_TIERS[0]; for (const x of AU_TIERS) if (v >= x.min) t = x; return t };
