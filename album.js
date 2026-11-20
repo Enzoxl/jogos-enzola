@@ -24,7 +24,27 @@ const ALBUM = [
   { id: "h18", name: "Olhar de Respeito", img: "album/h18.webp", rar: 1 },
   { id: "h19", name: "Amigo dos Peixes", img: "album/h19.webp", rar: 1 },
   { id: "h20", name: "Periscópio", img: "album/h20.webp", rar: 1 },
-  // próximas fotos: { id: "h21", name: "Nome", img: "album/h21.webp", rar: 1 },   // rar: 1 comum · 0.4 rara · 0.15 lendária
+  { id: "h21", name: "Dia de Folga na Areia", img: "album/h21.webp", rar: 1 },
+  { id: "h22", name: "Trio na Lagoa", img: "album/h22.webp", rar: 1 },
+  { id: "h23", name: "Olhos nos Olhos", img: "album/h23.webp", rar: 1 },
+  { id: "h24", name: "Reunião da Família", img: "album/h24.webp", rar: 1 },
+  { id: "h25", name: "Coroa de Aguapé", img: "album/h25.webp", rar: 1 },
+  { id: "h26", name: "Rosto Redondinho", img: "album/h26.webp", rar: 1 },
+  { id: "h27", name: "Focinho Gigante", img: "album/h27.webp", rar: 1 },
+  { id: "h28", name: "Língua de Fora", img: "album/h28.webp", rar: 1 },
+  { id: "h29", name: "Linguinha Fofa", img: "album/h29.webp", rar: 1 },
+  { id: "h30", name: "Bocejo Dentuço", img: "album/h30.webp", rar: 1 },
+  { id: "h31", name: "Banheirinha Azul", img: "album/h31.webp", rar: 1 },
+  { id: "h32", name: "Hora do Lanche", img: "album/h32.webp", rar: 1 },
+  { id: "h33", name: "Cochilo no Tanque", img: "album/h33.webp", rar: 1 },
+  { id: "h34", name: "Briga de Bocões", img: "album/h34.webp", rar: 1 },
+  { id: "h35", name: "Filhote de Estúdio", img: "album/h35.webp", rar: 1 },
+  { id: "h36", name: "Banho de Sol", img: "album/h36.webp", rar: 1 },
+  { id: "h37", name: "Hipopóts Apaixonados", img: "album/h37.webp", rar: 1 },
+  { id: "h38", name: "Ataque Aquático", img: "album/h38.webp", rar: 1 },
+  { id: "h39", name: "Bocejo na Lagoa", img: "album/h39.webp", rar: 1 },
+  { id: "h40", name: "Coroa Verde", img: "album/h40.webp", rar: 1 },
+  // próximas fotos: { id: "h41", name: "Nome", img: "album/h41.webp", rar: 1 },   // rar: 1 comum · 0.4 rara · 0.15 lendária
 ];
 const CHEST_PRICE = 60, CHEST_PRICE_5 = 270, CHEST_DRAWS = 3;
 let mgTab = "game";
