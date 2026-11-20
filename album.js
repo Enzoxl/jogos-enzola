@@ -4,13 +4,33 @@
    Para adicionar fotos: coloque o arquivo em album/ e acrescente uma linha em ALBUM.
    ===================================================================== */
 const ALBUM = [
-  // { id: "h01", name: "Nome da foto", img: "album/h01.webp", rar: 1 },   // rar: 1 comum · 0.4 rara · 0.15 lendária
+  { id: "h01", name: "Mergulhador Rosado", img: "album/h01.webp", rar: 1 },
+  { id: "h02", name: "Pôr do Sol na Savana", img: "album/h02.webp", rar: 1 },
+  { id: "h03", name: "Chegou o Chefe", img: "album/h03.webp", rar: 1 },
+  { id: "h04", name: "Bocejo na Savana", img: "album/h04.webp", rar: 1 },
+  { id: "h05", name: "Rio de Chocolate", img: "album/h05.webp", rar: 1 },
+  { id: "h06", name: "Bebê Nadador", img: "album/h06.webp", rar: 1 },
+  { id: "h07", name: "Rei do Aguapé", img: "album/h07.webp", rar: 1 },
+  { id: "h08", name: "Bocejo ao Amanhecer", img: "album/h08.webp", rar: 1 },
+  { id: "h09", name: "Banho de Esguicho", img: "album/h09.webp", rar: 1 },
+  { id: "h10", name: "Radar de Narinas", img: "album/h10.webp", rar: 1 },
+  { id: "h11", name: "Mamãe e Filhote", img: "album/h11.webp", rar: 1 },
+  { id: "h12", name: "Cheguei Molhando", img: "album/h12.webp", rar: 1 },
+  { id: "h13", name: "Filhote Sentadinho", img: "album/h13.webp", rar: 1 },
+  { id: "h14", name: "Sorriso do Lago", img: "album/h14.webp", rar: 1 },
+  { id: "h15", name: "Sorrisão", img: "album/h15.webp", rar: 1 },
+  { id: "h16", name: "Bocão Gigante", img: "album/h16.webp", rar: 1 },
+  { id: "h17", name: "Soneca na Lama", img: "album/h17.webp", rar: 1 },
+  { id: "h18", name: "Olhar de Respeito", img: "album/h18.webp", rar: 1 },
+  { id: "h19", name: "Amigo dos Peixes", img: "album/h19.webp", rar: 1 },
+  { id: "h20", name: "Periscópio", img: "album/h20.webp", rar: 1 },
+  // próximas fotos: { id: "h21", name: "Nome", img: "album/h21.webp", rar: 1 },   // rar: 1 comum · 0.4 rara · 0.15 lendária
 ];
 const CHEST_PRICE = 60, CHEST_PRICE_5 = 270, CHEST_DRAWS = 3;
 let mgTab = "game";
 const chestSvg = (cls = "") => `<svg class="chest ${cls}" viewBox="0 0 120 100" aria-hidden="true"><g class="chest-lid"><path d="M12 44 Q12 12 60 12 Q108 12 108 44 Z" fill="#a8662f" stroke="#4a2810" stroke-width="3"/><rect x="50" y="12" width="20" height="32" fill="#f2bd2c" stroke="#4a2810" stroke-width="2"/><path d="M12 44 H108" stroke="#4a2810" stroke-width="3"/></g>
   <rect x="12" y="44" width="96" height="46" rx="5" fill="#a8662f" stroke="#4a2810" stroke-width="3"/><rect x="50" y="44" width="20" height="46" fill="#f2bd2c" stroke="#4a2810" stroke-width="2"/><rect x="54" y="52" width="12" height="14" rx="3" fill="#fff4c2" stroke="#4a2810" stroke-width="2"/><circle cx="60" cy="59" r="2.2" fill="#4a2810"/></svg>`;
-function albumLoad() { lg = lg || lgLoad(); lg.album = lg.album || {}; return lg }
+function albumLoad() { lg = lg || lgLoad(); lg.album = lg.album || {}; if (ALBUM.length && !lg.bauWelcome) { lg.bauWelcome = true; lg.chests = (lg.chests || 0) + 1; lgSave(true) } return lg }
 const albumOwned = () => { albumLoad(); return ALBUM.filter(p => lg.album[p.id] > 0).length };
 function chestGive(n, why) {
   if (!user || !ALBUM.length || !n) return 0;
