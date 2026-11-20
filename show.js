@@ -111,7 +111,7 @@ function rewardsHTML() {
 }
 function rewardsHTML0() {
   const k = "silvio", R = REWARDS[k], has = rewardsHas(k);
-  return `<div class="rw-box"><div class="fld" style="margin-bottom:6px">Prêmios <span class="hint">· ganhos no Show do Enzolão (aba Idiomas)</span></div>
+  return `<div class="rw-box"><div class="fld" style="margin-bottom:6px">Prêmios <span class="hint">· ganhos no Show do Enzolão (aba Minigames)</span></div>
     <div class="rw-row${has ? "" : " locked"}"><img class="rw-av" src="${R.avatar}" alt="" width="56" height="56"><div class="rw-t"><b>${esc(R.name)}</b><span class="hint">${has ? "Avatar e banner desbloqueados." : "Acerte as 20 perguntas para desbloquear."}</span></div>
     ${has ? `<div class="rw-b"><button type="button" class="btn ghost sm" data-equip="avatar:${k}">Usar avatar</button><button type="button" class="btn ghost sm" data-equip="banner:${k}">Usar banner</button></div>` : `<span class="rw-lock">🔒</span>`}</div></div>`;
 }
@@ -282,7 +282,7 @@ function shLose(q, i) {
   shBox().innerHTML = `<div class="sh-end lose"><div class="sh-sad" aria-hidden="true">😢</div><h2>Que pena, você errou!</h2>
     <p>${i < 0 ? "O tempo acabou na pergunta " : "Você caiu na pergunta "}${s.i + 1} de ${s.qs.length}.</p>
     <div class="sh-wrongq"><span>${esc(q.q)}</span><b>Resposta: ${q.answers.map(esc).join(" ou ")}</b></div>
-    <div class="sh-score"><b>${s.right}</b><span>acertos</span></div>${gb ? `<div class="sh-gb">${gbI()}<b>+${gb}</b> Enzola Coins</div>` : ""}
+    <div class="sh-score"><b>${s.right}</b><span>acertos</span></div>${chest ? `<div class="sh-gb">🎁 <b>+${chest}</b> baú${chest > 1 ? "s" : ""} da sorte</div>` : ""}${gb ? `<div class="sh-gb">${gbI()}<b>+${gb}</b> Enzola Coins</div>` : ""}
     <div class="sh-acts"><button class="btn sh-go" data-sh-start>Reiniciar</button><button class="btn ghost" data-sh-close>Voltar ao Enzolingo</button></div></div>`;
 }
 async function shEnd() {
@@ -290,6 +290,7 @@ async function shEnd() {
   const total = s.qs.length, perfect = s.right === total, owned = rewardsHas("silvio"), first = perfect && !owned, R = REWARDS.silvio;
   const gb = lgAward(s.right * (owned ? 2 : 1) + (perfect && owned ? 50 : 0));
   shMusic(.12);
+  const chest = s.right >= 5 && typeof chestGive === "function" ? chestGive(s.right >= 15 ? 2 : 1) : 0;
   if (perfect) { shSnd("maoe.mp3", { fb: () => shBeep("ok") }); await rewardsGive("silvio") }
   try { if (profile && user) { const old = (profile.settings && profile.settings.show) || {}, show = { best: Math.max(old.best || 0, s.right), plays: (old.plays || 0) + 1 }; if (!perfect) saveProfile({ settings: { ...(profile.settings || {}), show } }); else saveProfile({ settings: { ...(profile.settings || {}), rewards: { ...shReward(), silvio: true }, show } }) } } catch (e) { }
   const msg = perfect ? (first ? "Você acertou TUDO! O prêmio é seu." : "Gabaritou de novo! Que show.") : s.right >= total - 3 ? "Passou raspando! Tente de novo para levar o prêmio." : s.right >= total / 2 ? "Foi bem! Falta pouco para o prêmio." : "O hipopótamo apresentador acredita em você. Tente de novo!";

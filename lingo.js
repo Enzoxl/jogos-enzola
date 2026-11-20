@@ -117,10 +117,10 @@ const LG_IDX = { en: 1, es: 2 };
 const lgKey = () => "lingo:" + (user ? user.id : "anon");
 const lgToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` };
 function lgLoad() {
-  const base = { lang: "en", xp: 0, streak: 0, last: "", day: "", dayXp: 0, done: {}, best: {}, sfx: true, goiabas: 0, skins: {}, skin: "classico", rev: 0 };
+  const base = { lang: "en", xp: 0, streak: 0, last: "", day: "", dayXp: 0, done: {}, best: {}, sfx: true, goiabas: 0, skins: {}, skin: "classico", rev: 0, chests: 0, album: {} };
   const local = lsGet(lgKey()) || {}, remote = (profile && profile.settings && profile.settings.lingo) || {};
   const newer = (remote.rev || 0) !== (local.rev || 0) ? (remote.rev || 0) > (local.rev || 0) : (remote.xp || 0) > (local.xp || 0);
-  const s = { ...base, ...(newer ? remote : local) }; s.skins = { ...(s.skins || {}) };
+  const s = { ...base, ...(newer ? remote : local) }; s.skins = { ...(s.skins || {}) }; s.album = { ...(s.album || {}) };
   if (s.day !== lgToday()) { s.day = lgToday(); s.dayXp = 0 }
   // ofensiva quebra se passou mais de um dia sem treinar
   if (s.last && s.last !== lgToday()) { const y = new Date(); y.setDate(y.getDate() - 1); const ys = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, "0")}-${String(y.getDate()).padStart(2, "0")}`; if (s.last !== ys) s.streak = 0 }
@@ -220,7 +220,7 @@ function lgLesson(u, l) {
 }
 
 /* ---------- tela inicial (trilha) ---------- */
-function renderLingo() {
+function renderLingo0() {
   const el = $("#idiomas"); if (!el) return;
   lg = lgLoad();
   const L = LG_LANGS[lg.lang], pct = Math.min(100, Math.round(lg.dayXp / LG_GOAL * 100));
@@ -365,7 +365,8 @@ function lgFinish(failed) {
   if (xp) {
     const was = lg.dayXp; lg.xp += xp; lg.dayXp += xp;
     if (lg.last !== lgToday()) { lg.streak = (lg.streak || 0) + 1; lg.last = lgToday() }
-    if (was < LG_GOAL && lg.dayXp >= LG_GOAL) { msg += " Meta de hoje batida! 🎯 +10 Enzola Coins"; gb += 10 }
+    if (was < LG_GOAL && lg.dayXp >= LG_GOAL) { msg += " Meta de hoje batida! 🎯 +10 Enzola Coins"; gb += 10; if (typeof chestGive === "function" && chestGive(1)) msg += " 🎁 E um baú da sorte!" }
+    else if (!failed && !s.meta.rush && !s.wrong && Math.random() < .3 && typeof chestGive === "function" && chestGive(1)) msg += " 🎁 Lição perfeita rendeu um baú da sorte!"
   }
   if (gb) lg.goiabas = (lg.goiabas || 0) + gb;
   if (typeof grpLog === "function") grpLog(xp);
@@ -440,3 +441,11 @@ document.addEventListener("keydown", e => {
 if (lgCanSpeak()) { try { speechSynthesis.getVoices(); speechSynthesis.addEventListener("voiceschanged", () => { }) } catch (e) { } }
 
 document.addEventListener("input", e => { if (lgS && e.target.id === "lg-in") lgReady() });
+
+/* aba Minigames: Enzolingo | Álbum */
+function renderLingo() {
+  const el = $("#idiomas"); if (!el) return;
+  const seg = `<div class="mg-seg" role="tablist" aria-label="Minigames"><button role="tab" aria-selected="${mgTab === "game"}" data-mg="game">🦛 Enzolingo</button><button role="tab" aria-selected="${mgTab === "album"}" data-mg="album">📖 Álbum${typeof lg !== "undefined" && lg && lg.chests > 0 ? ` <span class="mg-dot">${lg.chests}</span>` : ""}</button></div>`;
+  if (mgTab === "album" && typeof albumHTML === "function") { lg = lgLoad(); el.innerHTML = seg + albumHTML() }
+  else { renderLingo0(); el.insertAdjacentHTML("afterbegin", seg) }
+}
