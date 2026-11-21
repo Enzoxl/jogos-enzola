@@ -71,13 +71,20 @@ const ALBUM = [
   { id: "h65", name: "Dupla Cansada", img: "album/h65.webp", ar: 1.5, rar: 1 },
   // próximas fotos: { id: "h66", name: "Nome", img: "album/h66.webp", ar: 1.5, rar: 1 },   // rar: 1 comum · 0.4 rara · 0.15 lendária
 ];
-const CHEST_PRICE = 60, CHEST_PRICE_5 = 270, CHEST_DRAWS = 3;
+const CH_ORDER = ["comum", "raro", "epico", "lendario"], FREE_PER_DAY = 2;
+const CH_R = {
+  comum:    { name: "Baú comum",    price: 60,   draws: 3, odds: [40, 50, 10], coins: [[5, 40], [10, 30], [20, 18], [35, 8], [60, 3], [100, 1]],        skinExp: .5,  w: ["#c98a4b", "#9a5e2c", "#6e3d1a"], m: ["#8a93a6", "#e3e8f2", "#7c869b"], band: ["#fff0a0", "#ffc936", "#c9850a"], col: "#b8794a" },
+  raro:     { name: "Baú raro",     price: 150,  draws: 3, odds: [34, 46, 20], coins: [[10, 28], [20, 30], [35, 22], [60, 12], [100, 6], [200, 2]],    skinExp: .25, w: ["#6f9bf0", "#4468c4", "#2a4590"], m: ["#9fb0d4", "#eef3ff", "#8393b8"], band: ["#fff0a0", "#ffc936", "#c9850a"], col: "#5d86e6" },
+  epico:    { name: "Baú épico",    price: 400,  draws: 4, odds: [30, 40, 30], coins: [[35, 26], [60, 30], [100, 26], [200, 14], [300, 4]],            skinExp: 0,   w: ["#b97ae8", "#8546c0", "#53288a"], m: ["#c9b4e8", "#f6eeff", "#a58cc9"], band: ["#ffe9a0", "#ffb938", "#b8730a"], col: "#a561dd" },
+  lendario: { name: "Baú lendário", price: 1000, draws: 5, odds: [26, 32, 42], coins: [[100, 30], [200, 34], [300, 24], [500, 12]],                    skinExp: -.4, w: ["#ffd04a", "#e8920f", "#a35a00"], m: ["#fff6c0", "#ffe27a", "#d9a21a"], band: ["#ff8aa0", "#ff3d66", "#b3123a"], col: "#ffb000", guaranteeSkin: true },
+};
+const chR = r => CH_R[r] || CH_R.comum;
 let mgTab = "game";
 let chestUid = 0;
-const chestSvg = (cls = "") => { const u = "c" + (++chestUid); return `<svg class="chest ${cls}" viewBox="0 0 140 120" aria-hidden="true"><defs>
-  <linearGradient id="${u}w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c98a4b"/><stop offset=".55" stop-color="#9a5e2c"/><stop offset="1" stop-color="#6e3d1a"/></linearGradient>
-  <linearGradient id="${u}m" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8a93a6"/><stop offset=".45" stop-color="#e3e8f2"/><stop offset="1" stop-color="#7c869b"/></linearGradient>
-  <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0a0"/><stop offset=".5" stop-color="#ffc936"/><stop offset="1" stop-color="#c9850a"/></linearGradient>
+const chestSvg = (cls = "", rar = "comum") => { const u = "c" + (++chestUid), K = chR(rar); return `<svg class="chest ${cls}" viewBox="0 0 140 120" aria-hidden="true"><defs>
+  <linearGradient id="${u}w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${K.w[0]}"/><stop offset=".55" stop-color="${K.w[1]}"/><stop offset="1" stop-color="${K.w[2]}"/></linearGradient>
+  <linearGradient id="${u}m" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${K.m[0]}"/><stop offset=".45" stop-color="${K.m[1]}"/><stop offset="1" stop-color="${K.m[2]}"/></linearGradient>
+  <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${K.band[0]}"/><stop offset=".5" stop-color="${K.band[1]}"/><stop offset="1" stop-color="${K.band[2]}"/></linearGradient>
   <radialGradient id="${u}l" cx=".5" cy=".6" r=".6"><stop offset="0" stop-color="#fff8c4"/><stop offset=".5" stop-color="#ffd24a" stop-opacity=".85"/><stop offset="1" stop-color="#ffb000" stop-opacity="0"/></radialGradient></defs>
   <ellipse cx="70" cy="112" rx="56" ry="6" fill="rgba(0,0,0,.28)"/>
   <g class="chest-in"><ellipse cx="70" cy="62" rx="52" ry="22" fill="url(#${u}l)"/><g class="chest-coins"><ellipse cx="46" cy="60" rx="9" ry="4.2" fill="#ffc936" stroke="#a86a06" stroke-width="1.4"/><ellipse cx="62" cy="55" rx="9" ry="4.2" fill="#ffd95e" stroke="#a86a06" stroke-width="1.4"/><ellipse cx="80" cy="57" rx="9" ry="4.2" fill="#ffc936" stroke="#a86a06" stroke-width="1.4"/><ellipse cx="95" cy="62" rx="9" ry="4.2" fill="#ffd95e" stroke="#a86a06" stroke-width="1.4"/><ellipse cx="70" cy="52" rx="9" ry="4.2" fill="#fff0a0" stroke="#a86a06" stroke-width="1.4"/></g></g>
@@ -94,41 +101,58 @@ const chestSvg = (cls = "") => { const u = "c" + (++chestUid); return `<svg clas
     <g fill="#4a5163"><circle cx="21" cy="46" r="1.8"/><circle cx="119" cy="46" r="1.8"/></g><path d="M56 22 V58 M84 22 V58" stroke="#a86a06" stroke-width="1.2" opacity=".6"/></g>
   <g class="chest-lock"><rect x="58" y="62" width="24" height="26" rx="5" fill="url(#${u}g)" stroke="#3d200c" stroke-width="2.4"/><circle cx="70" cy="73" r="4.2" fill="#3d200c"/><path d="M68.4 75 h3.2 l1 8 h-5.2 z" fill="#3d200c"/><path d="M62 66 q8 -4 16 0" stroke="#fff6c8" stroke-width="1.6" fill="none" opacity=".8" stroke-linecap="round"/></g>
 </svg>` };
-function albumLoad() { lg = lg || lgLoad(); lg.album = lg.album || {}; if (ALBUM.length && !lg.bauWelcome) { lg.bauWelcome = true; lg.chests = (lg.chests || 0) + 1; lgSave(true) } return lg }
+function albumLoad() {
+  lg = lg || lgLoad(); lg.album = lg.album || {}; lg.cx = lg.cx || {}; let ch = false;
+  if (lg.chests > 0) { lg.cx.comum = (lg.cx.comum || 0) + lg.chests; lg.chests = 0; ch = true }      // baús antigos viram comuns
+  if (ALBUM.length && !lg.bauWelcome) { lg.bauWelcome = true; lg.cx.comum = (lg.cx.comum || 0) + 1; ch = true }
+  if (ch) lgSave(true); return lg;
+}
 const albumOwned = () => { albumLoad(); return ALBUM.filter(p => lg.album[p.id] > 0).length };
-function chestGive(n, why) {
-  if (!user || !n) return 0;
-  albumLoad(); lg.chests = (lg.chests || 0) + n; lgSave(true);
-  if (why) toast(`🎁 ${why}: você ganhou ${n === 1 ? "um baú da sorte" : n + " baús da sorte"}! Abra em Minigames › Álbum.`);
+const chestCount = r => { lg = lg || lgLoad(); return (lg.cx && lg.cx[r]) || 0 };
+const chestTotal = () => CH_ORDER.reduce((a, r) => a + chestCount(r), 0);
+const freeLeft = () => { lg = lg || lgLoad(); const f = lg.free || {}; return Math.max(0, FREE_PER_DAY - (f.day === spDay(0) ? f.n || 0 : 0)) };
+const chestBadge = () => { try { return chestTotal() + (user ? freeLeft() : 0) } catch (e) { return 0 } };
+function chestFree() {
+  albumLoad(); if (!freeLeft()) { toast("Os baús grátis de hoje já foram pegos. Volte depois da meia-noite!"); return }
+  const f = lg.free && lg.free.day === spDay(0) ? lg.free : { day: spDay(0), n: 0 }; f.n++; lg.free = f;
+  lg.cx.comum = (lg.cx.comum || 0) + 1; lgSave(true); toast(`🎁 Baú grátis pego! Restam ${freeLeft()} hoje.`); renderLingo();
+}
+function chestGive(n, why, rar = "comum") {
+  if (!user || !n) return 0; albumLoad(); lg.cx[rar] = (lg.cx[rar] || 0) + n; lgSave(true);
+  if (why) toast(`🎁 ${why}: você ganhou ${n === 1 ? "um " + chR(rar).name.toLowerCase() : n + " " + chR(rar).name.toLowerCase() + "s"}! Abra em Minigames › Álbum.`);
   return n;
 }
-const CHEST_COINS = [[5, 44], [10, 28], [20, 14], [35, 8], [60, 4], [100, 1.7], [200, 0.3]];
-const CHEST_ODDS = { photo: 35, coins: 53, skin: 12 };   // % por sorteio
-const chestSkins = () => LG_SKINS.filter(k => !k.group && k.price > 0);   // fora a skin de metas (Free Fire) e a clássica
+const chestSkins = () => LG_SKINS.filter(k => !k.group && k.price > 0);   // fora as skins de conquista (Free Fire, Pássaro, Colecionador) e a clássica
 function chestPick(list) { const t = list.reduce((a, x) => a + x[1], 0); let r = Math.random() * t; for (const x of list) { r -= x[1]; if (r <= 0) return x[0] } return list[0][0] }
-function chestDraw() {
-  let r = Math.random() * 100, kind = r < CHEST_ODDS.photo ? "photo" : r < CHEST_ODDS.photo + CHEST_ODDS.coins ? "coins" : "skin";
+function chestDraw(rar = "comum", forceSkin = false) {
+  const K = chR(rar), r = Math.random() * 100;
+  let kind = forceSkin ? "skin" : r < K.odds[0] ? "photo" : r < K.odds[0] + K.odds[1] ? "coins" : "skin";
   if (kind === "photo" && !ALBUM.length) kind = "coins";
-  if (kind === "skin") { const pool = chestSkins().filter(k => !skinHas(k.id)); if (pool.length) { const w = pool.map(k => [k, 1 / Math.sqrt(k.price)]); return { t: "skin", sk: chestPick(w) } } kind = "coins" }
-  if (kind === "coins") return { t: "coins", n: chestPick(CHEST_COINS) };
+  if (kind === "skin") { const pool = chestSkins().filter(k => !skinHas(k.id)); if (pool.length) return { t: "skin", sk: chestPick(pool.map(k => [k, Math.pow(k.price, -K.skinExp)])) }; kind = "coins" }
+  if (kind === "coins") return { t: "coins", n: chestPick(K.coins) };
   const tot = ALBUM.reduce((a, p) => a + (p.rar || 1), 0); let q = Math.random() * tot, hit = ALBUM[ALBUM.length - 1];
   for (const p of ALBUM) { q -= p.rar || 1; if (q <= 0) { hit = p; break } }
   return { t: "photo", p: hit };
 }
-function chestBuy(n) {
-  albumLoad();
-  const price = n === 5 ? CHEST_PRICE_5 : CHEST_PRICE;
-  if ((lg.goiabas || 0) < price) { toast(`Faltam ${price - (lg.goiabas || 0)} Enzola Coins.`); return }
-  lg.goiabas -= price; lg.chests = (lg.chests || 0) + n; lgSave(true);
-  toast(n === 1 ? "Baú comprado! 🎁" : "5 baús comprados! 🎁"); if (typeof lgShopRender === "function" && $("#lgs-ovl")) lgShopRender();
+function chestBuy(rar) {
+  albumLoad(); const K = chR(rar);
+  if ((lg.goiabas || 0) < K.price) { toast(`Faltam ${K.price - (lg.goiabas || 0)} Enzola Coins.`); return }
+  lg.goiabas -= K.price; lg.cx[rar] = (lg.cx[rar] || 0) + 1; lgSave(true);
+  toast(`${K.name} comprado! 🎁`); if (typeof lgShopRender === "function" && $("#lgs-ovl")) lgShopRender();
+}
+const chestOddsTxt = r => { const K = chR(r); return `${K.draws} prêmios · ${K.odds[2]}% de chance de skin` };
+function chestShopHTML(bal) {
+  return `<div class="lgs-chests"><div class="lgs-ch-h"><b>🎁 Baús da sorte</b><small class="muted">Fotos de hipopótamo, Enzola Coins e skins. Quanto mais raro o baú, melhores os prêmios.</small></div>
+    ${CH_ORDER.map(r => { const K = chR(r); return `<div class="lgs-chest" style="--rc:${K.col}">${chestSvg("sm", r)}<div class="lgs-ci"><b>${K.name}</b><small class="muted">${chestOddsTxt(r)}${K.guaranteeSkin ? " · 1 skin garantida" : ""} · você tem ${chestCount(r)}</small></div>
+      <div class="lgs-cb"><button class="btn sm lgs-buy${bal >= K.price ? "" : " lack"}" data-lgs-buy-chest="${r}" aria-label="Comprar ${K.name} por ${K.price} Enzola Coins">${gbI()}${K.price}</button></div></div>` }).join("")}</div>`;
 }
 function albumOvl() { let b = $("#alb-ovl"); if (!b) { b = document.createElement("div"); b.id = "alb-ovl"; b.className = "alb-ovl"; b.setAttribute("role", "dialog"); b.setAttribute("aria-modal", "true"); b.setAttribute("aria-label", "Baú da sorte"); document.body.append(b); document.documentElement.classList.add("lg-open") } return b }
 function albumClose() { const b = $("#alb-ovl"); if (b) b.remove(); if (!$("#lgs-ovl") && !$("#sh-ovl")) document.documentElement.classList.remove("lg-open"); if (tab === "idiomas") renderLingo() }
-function chestOpen() {
-  albumLoad(); if (!(lg.chests > 0)) return;
-  lg.chests--; lg.skins = lg.skins || {};
-  const got = Array.from({ length: CHEST_DRAWS }, () => {
-    const d = chestDraw();
+function chestOpen(rar) {
+  albumLoad(); if (!rar || !chestCount(rar)) rar = [...CH_ORDER].reverse().find(r => chestCount(r) > 0); if (!rar) return;
+  lg.cx[rar]--; lg.skins = lg.skins || {}; const K = chR(rar);
+  const got = Array.from({ length: K.draws }, (_, i) => {
+    const d = chestDraw(rar, !!K.guaranteeSkin && i === 0);
     if (d.t === "photo") { const had = lg.album[d.p.id] > 0; lg.album[d.p.id] = (lg.album[d.p.id] || 0) + 1; d.fresh = !had }
     else if (d.t === "coins") lg.goiabas = (lg.goiabas || 0) + d.n;
     else { if (skinHas(d.sk.id)) { d.dup = Math.round(d.sk.price / 2); lg.goiabas = (lg.goiabas || 0) + d.dup } else { lg.skins[d.sk.id] = true; d.fresh = true } }
@@ -137,10 +161,10 @@ function chestOpen() {
   lgSave(true);
   rewardsCheck();
   const done = ALBUM.length && albumOwned() === ALBUM.length, nf = got.filter(d => d.t === "photo" && d.fresh).length, coins = got.reduce((a, d) => a + (d.t === "coins" ? d.n : d.dup || 0), 0), sk = got.filter(d => d.t === "skin" && d.fresh);
-  chestShow = { got, i: -1, done, nf, coins, sk, busy: false };
+  chestShow = { got, i: -1, done, nf, coins, sk, busy: false, rar };
   albumOvl().innerHTML = `<div class="alb-box rv"><button class="iconbtn lgs-x" data-alb-close aria-label="Fechar">${ic("x")}</button>
-    <div class="alb-stage" id="alb-stage"><div class="chest-w shake">${chestSvg()}</div><p class="muted">Abrindo o baú…</p></div></div>`;
-  setTimeout(() => { if ($("#alb-stage")) { $("#alb-stage").innerHTML = `<div class="chest-w open pop">${chestSvg("open")}</div><div class="rv-burst" aria-hidden="true"></div>`; setTimeout(chestNext, 750) } }, 1200);
+    <div class="alb-stage" id="alb-stage"><div class="chest-w shake">${chestSvg("", rar)}</div><p class="muted">Abrindo o ${K.name.toLowerCase()}…</p></div></div>`;
+  setTimeout(() => { if ($("#alb-stage")) { $("#alb-stage").innerHTML = `<div class="chest-w open pop">${chestSvg("open", rar)}</div><div class="rv-burst" aria-hidden="true"></div>`; setTimeout(chestNext, 750) } }, 1200);
 }
 let chestShow = null;
 const chestKind = d => d.t === "photo" ? (d.fresh ? "Foto nova!" : "Foto repetida") : d.t === "coins" ? "Enzola Coins" : d.fresh ? "Skin nova!" : "Skin repetida";
@@ -171,15 +195,17 @@ function chestSummary() {
   if (s.nf) parts.push(`${s.nf} foto${s.nf > 1 ? "s" : ""} nova${s.nf > 1 ? "s" : ""}`); if (s.coins) parts.push(`${s.coins} Enzola Coins`);
   st.innerHTML = `<div class="alb-got">${s.got.map((d, i) => `<div style="--i:${i};display:contents">${chestCard(d).replace("alb-c rv-c", "alb-c")}</div>`).join("")}</div>
     <p class="alb-sum">${parts.length ? "Você ganhou " + parts.join(" · ") + "!" : "Só repetidas desta vez. Tente outro baú!"}${s.done ? " 🎉 Álbum completo!" : ""}</p>
-    <div class="alb-acts">${lg.chests > 0 ? `<button class="btn" data-alb-open>Abrir outro (${lg.chests})</button>` : ""}<button class="btn ghost" data-alb-close>Fechar</button></div>`;
+    <div class="alb-acts">${(() => { const nx = chestCount(s.rar) ? s.rar : [...CH_ORDER].reverse().find(r => chestCount(r) > 0); return nx ? `<button class="btn" data-alb-open="${nx}">Abrir outro: ${chR(nx).name.toLowerCase()} (${chestCount(nx)})</button>` : "" })()}<button class="btn ghost" data-alb-close>Fechar</button></div>`;
 }
 function albumHTML() {
   albumLoad(); const own = albumOwned(), N = ALBUM.length, pct = N ? Math.round(own / N * 100) : 0;
   if (!N) return `<div class="sec-head"><div><h2 class="h">Álbum de hipopótamos</h2><p class="muted">Junte todas as fotos abrindo baús da sorte.</p></div></div><div class="panel empty"><b>Em breve</b>As primeiras fotos de hipopótamos estão chegando ao álbum.</div>`;
   return `<div class="sec-head"><div><h2 class="h">Álbum de hipopótamos</h2><p class="muted">Abra baús da sorte: fotos, Enzola Coins ou até skins. Fotos podem vir repetidas!</p></div></div>
     <div class="alb-top panel"><div class="alb-prog"><b>${own}/${N} fotos</b><div class="g-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${N}" aria-valuenow="${own}"><i style="width:${pct}%"></i></div>${own === N ? `<small>🎉 Álbum completo!</small>` : `<small class="muted">Faltam ${N - own}</small>`}</div>
-      <div class="alb-ch">${chestSvg("sm")}<div><b>${lg.chests || 0} baú${(lg.chests || 0) === 1 ? "" : "s"}</b><small class="muted">Ganhe no Enzolingo e no Show</small></div></div>
-      <div class="alb-btns"><button class="btn" data-alb-open${lg.chests > 0 ? "" : " disabled"}>Abrir baú</button><button class="btn ghost" data-lg-shop data-lgs-bau>${gbI()}Comprar baú</button></div></div>
+    </div>
+    <div class="alb-cx panel"><div class="alb-free"><div><b>🎁 Baús grátis de hoje: ${freeLeft()}/${FREE_PER_DAY}</b><small class="muted">${freeLeft() ? "Pegue um baú comum de graça" : "Novos baús grátis à meia-noite"}</small></div><button class="btn sm" data-alb-free${freeLeft() ? "" : " disabled"}>${freeLeft() ? "Pegar baú grátis" : "Volte amanhã"}</button></div>
+      <div class="alb-rar">${CH_ORDER.map(r => { const K = chR(r), n = chestCount(r); return `<div class="alb-rc${n ? " has" : ""}" style="--rc:${K.col}">${chestSvg("sm", r)}<b>${K.name.replace("Baú ", "")}</b><small>${n} baú${n === 1 ? "" : "s"}</small><button class="btn sm${n ? "" : " ghost"}" data-alb-open="${r}"${n ? "" : " disabled"}>Abrir</button></div>` }).join("")}</div>
+      <button class="btn ghost sm alb-buy" data-lg-shop>${gbI()}Comprar baús na loja</button></div>
     ${albBookHTML()}`;
 }
 
@@ -255,11 +281,12 @@ document.addEventListener("click", e => {
   if (b = c("[data-alb-go]")) { const g = b.dataset.albGo; albGo(g === "next" ? albPg + 1 : g === "prev" ? albPg - 1 : +g); return }
   if (b = c("[data-mg]")) { mgTab = b.dataset.mg; renderLingo(); return }
   if (c("[data-alb-next]")) { chestNext(); return }
-  if (c("[data-alb-open]") && !c("[data-alb-open]").disabled) { chestOpen(); return }
+  if (c("[data-alb-free]") && !c("[data-alb-free]").disabled) { chestFree(); return }
+  if (c("[data-alb-open]") && !c("[data-alb-open]").disabled) { chestOpen(c("[data-alb-open]").dataset.albOpen); return }
   if (c("[data-alb-close]") || e.target.id === "alb-ovl") { albumClose(); return }
   if (b = c("[data-alb-zoom]")) { const p = ALBUM.find(x => x.id === b.dataset.albZoom); if (!p) return; const n = (lg.album || {})[p.id] || 0;
     albumOvl().innerHTML = `<div class="alb-box zoom"><button class="iconbtn lgs-x" data-alb-close aria-label="Fechar">${ic("x")}</button><img src="${esc(p.img)}" alt="${esc(p.name)}"><p><b>${esc(p.name)}</b><span class="muted"> · ${n} cópia${n > 1 ? "s" : ""}</span></p></div>`; return }
-  if (c("[data-lgs-buy-chest]")) { chestBuy(+c("[data-lgs-buy-chest]").dataset.lgsBuyChest); return }
+  if (c("[data-lgs-buy-chest]")) { chestBuy(c("[data-lgs-buy-chest]").dataset.lgsBuyChest); return }
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#alb-ovl")) albumClose() });
 

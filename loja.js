@@ -58,8 +58,7 @@ function lgShopRender() {
     <header class="lgs-h"><div class="lgs-t"><h2>${ic("store")}Loja de skins</h2><p class="muted">Cada skin é um pacote: mascote, avatar e banner temáticos para o perfil.</p></div>
       <div class="lgs-bal" aria-label="Seu saldo">${gbI("big")}<b>${bal}</b></div></header>
     <div class="lgs-prev"><div class="lgs-pv${cur.kind === "chr" ? " chr" : ""}"><img src="${cur.img}" alt=""></div><div><small class="muted">Equipado agora</small><b>${esc(cur.name)}</b></div></div>
-    <div class="lgs-chest">${typeof chestSvg === "function" ? chestSvg("sm") : ""}<div class="lgs-ci"><b>Baú da sorte</b><small class="muted">${CHEST_DRAWS} prêmios por baú: fotos de hipopótamo, Enzola Coins ou até skins · você tem ${lg.chests || 0}</small></div>
-      <div class="lgs-cb"><button class="btn sm lgs-buy${bal >= CHEST_PRICE ? "" : " lack"}" data-lgs-buy-chest="1" aria-label="Comprar um baú por ${CHEST_PRICE} Enzola Coins">${gbI()}${CHEST_PRICE}</button><button class="btn sm lgs-buy${bal >= CHEST_PRICE_5 ? "" : " lack"}" data-lgs-buy-chest="5" aria-label="Comprar cinco baús por ${CHEST_PRICE_5} Enzola Coins">×5 ${gbI()}${CHEST_PRICE_5}</button></div></div>
+    ${typeof chestShopHTML === "function" ? chestShopHTML(bal) : ""}
     <div class="lgs-tabs" role="tablist"><button role="tab" aria-selected="${lgsTab === "hip"}" data-lgs-tab="hip">🦛 Hipopótamo</button><button role="tab" aria-selected="${lgsTab === "chr"}" data-lgs-tab="chr">🫧 Personagens</button></div>
     <div class="lgs-grid">${list.map(sk => {
       const own = skinHas(sk.id), on = lg.skin === sk.id || (!lg.skin && sk.id === "classico"), can = bal >= sk.price;

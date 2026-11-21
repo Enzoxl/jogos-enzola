@@ -282,7 +282,7 @@ function shLose(q, i) {
   shBox().innerHTML = `<div class="sh-end lose"><div class="sh-sad" aria-hidden="true">😢</div><h2>Que pena, você errou!</h2>
     <p>${i < 0 ? "O tempo acabou na pergunta " : "Você caiu na pergunta "}${s.i + 1} de ${s.qs.length}.</p>
     <div class="sh-wrongq"><span>${esc(q.q)}</span><b>Resposta: ${q.answers.map(esc).join(" ou ")}</b></div>
-    <div class="sh-score"><b>${s.right}</b><span>acertos</span></div>${chest ? `<div class="sh-gb">🎁 <b>+${chest}</b> baú${chest > 1 ? "s" : ""} da sorte</div>` : ""}${gb ? `<div class="sh-gb">${gbI()}<b>+${gb}</b> Enzola Coins</div>` : ""}
+    <div class="sh-score"><b>${s.right}</b><span>acertos</span></div>${chest ? `<div class="sh-gb">🎁 <b>+${chest}</b> ${typeof chR === "function" ? chR(chRar).name.toLowerCase() : "baú"}</div>` : ""}${gb ? `<div class="sh-gb">${gbI()}<b>+${gb}</b> Enzola Coins</div>` : ""}
     <div class="sh-acts"><button class="btn sh-go" data-sh-start>Reiniciar</button><button class="btn ghost" data-sh-close>Voltar ao Enzolingo</button></div></div>`;
 }
 async function shEnd() {
@@ -290,7 +290,7 @@ async function shEnd() {
   const total = s.qs.length, perfect = s.right === total, owned = rewardsHas("silvio"), first = perfect && !owned, R = REWARDS.silvio;
   const gb = lgAward(s.right * (owned ? 2 : 1) + (perfect && owned ? 50 : 0));
   shMusic(.12);
-  const chest = s.right >= 5 && typeof chestGive === "function" ? chestGive(s.right >= 15 ? 2 : 1) : 0;
+  const chRar = perfect ? "epico" : s.right >= 15 ? "raro" : "comum", chest = s.right >= 5 && typeof chestGive === "function" ? chestGive(1, null, chRar) : 0;
   if (perfect) { shSnd("maoe.mp3", { fb: () => shBeep("ok") }); await rewardsGive("silvio") }
   try { if (profile && user) { const old = (profile.settings && profile.settings.show) || {}, show = { best: Math.max(old.best || 0, s.right), plays: (old.plays || 0) + 1 }; if (!perfect) saveProfile({ settings: { ...(profile.settings || {}), show } }); else saveProfile({ settings: { ...(profile.settings || {}), rewards: { ...shReward(), silvio: true }, show } }) } } catch (e) { }
   const msg = perfect ? (first ? "Você acertou TUDO! O prêmio é seu." : "Gabaritou de novo! Que show.") : s.right >= total - 3 ? "Passou raspando! Tente de novo para levar o prêmio." : s.right >= total / 2 ? "Foi bem! Falta pouco para o prêmio." : "O hipopótamo apresentador acredita em você. Tente de novo!";

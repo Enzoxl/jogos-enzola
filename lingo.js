@@ -117,10 +117,10 @@ const LG_IDX = { en: 1, es: 2 };
 const lgKey = () => "lingo:" + (user ? user.id : "anon");
 const lgToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` };
 function lgLoad() {
-  const base = { lang: "en", xp: 0, streak: 0, last: "", day: "", dayXp: 0, done: {}, best: {}, sfx: true, goiabas: 0, skins: {}, skin: "classico", rev: 0, chests: 0, album: {} };
+  const base = { lang: "en", xp: 0, streak: 0, last: "", day: "", dayXp: 0, done: {}, best: {}, sfx: true, goiabas: 0, skins: {}, skin: "classico", rev: 0, chests: 0, album: {}, cx: {}, free: { day: "", n: 0 } };
   const local = lsGet(lgKey()) || {}, remote = (profile && profile.settings && profile.settings.lingo) || {};
   const newer = (remote.rev || 0) !== (local.rev || 0) ? (remote.rev || 0) > (local.rev || 0) : (remote.xp || 0) > (local.xp || 0);
-  const s = { ...base, ...(newer ? remote : local) }; s.skins = { ...(s.skins || {}) }; s.album = { ...(s.album || {}) };
+  const s = { ...base, ...(newer ? remote : local) }; s.skins = { ...(s.skins || {}) }; s.album = { ...(s.album || {}) }; s.cx = { ...(s.cx || {}) };
   if (s.day !== lgToday()) { s.day = lgToday(); s.dayXp = 0 }
   // ofensiva quebra se passou mais de um dia sem treinar
   if (s.last && s.last !== lgToday()) { const y = new Date(); y.setDate(y.getDate() - 1); const ys = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, "0")}-${String(y.getDate()).padStart(2, "0")}`; if (s.last !== ys) s.streak = 0 }
@@ -365,8 +365,8 @@ function lgFinish(failed) {
   if (xp) {
     const was = lg.dayXp; lg.xp += xp; lg.dayXp += xp;
     if (lg.last !== lgToday()) { lg.streak = (lg.streak || 0) + 1; lg.last = lgToday() }
-    if (was < LG_GOAL && lg.dayXp >= LG_GOAL) { msg += " Meta de hoje batida! 🎯 +10 Enzola Coins"; gb += 10; if (typeof chestGive === "function" && chestGive(1)) msg += " 🎁 E um baú da sorte!" }
-    else if (!failed && !s.meta.rush && !s.wrong && Math.random() < .3 && typeof chestGive === "function" && chestGive(1)) msg += " 🎁 Lição perfeita rendeu um baú da sorte!"
+    if (was < LG_GOAL && lg.dayXp >= LG_GOAL) { msg += " Meta de hoje batida! 🎯 +10 Enzola Coins"; gb += 10; if (typeof chestGive === "function" && chestGive(1, null, "raro")) msg += " 🎁 E um baú raro!" }
+    else if (!failed && !s.meta.rush && !s.wrong && Math.random() < .3 && typeof chestGive === "function" && chestGive(1)) msg += " 🎁 Lição perfeita rendeu um baú comum!"
   }
   if (gb) lg.goiabas = (lg.goiabas || 0) + gb;
   if (typeof grpLog === "function") grpLog(xp);
@@ -447,7 +447,7 @@ document.addEventListener("input", e => { if (lgS && e.target.id === "lg-in") lg
 function renderLingo() {
   const el = $("#idiomas"); if (!el) return;
   if (typeof rewardsCheck === "function") rewardsCheck();
-  const seg = `<div class="mg-seg" role="tablist" aria-label="Minigames"><button role="tab" aria-selected="${mgTab === "game"}" data-mg="game">🦛 Enzolingo</button><button role="tab" aria-selected="${mgTab === "cert"}" data-mg="cert">🏅 Certificados</button><button role="tab" aria-selected="${mgTab === "album"}" data-mg="album">📖 Álbum${typeof lg !== "undefined" && lg && lg.chests > 0 ? ` <span class="mg-dot">${lg.chests}</span>` : ""}</button></div>`;
+  const seg = `<div class="mg-seg" role="tablist" aria-label="Minigames"><button role="tab" aria-selected="${mgTab === "game"}" data-mg="game">🦛 Enzolingo</button><button role="tab" aria-selected="${mgTab === "cert"}" data-mg="cert">🏅 Certificados</button><button role="tab" aria-selected="${mgTab === "album"}" data-mg="album">📖 Álbum${typeof chestBadge === "function" && user && chestBadge() > 0 ? ` <span class="mg-dot">${chestBadge()}</span>` : ""}</button></div>`;
   if (mgTab === "cert" && typeof certHTML === "function") { lg = lgLoad(); el.innerHTML = seg + certHTML(); certPreview() }
   else if (mgTab === "album" && typeof albumHTML === "function") { lg = lgLoad(); el.innerHTML = seg + albumHTML() }
   else { renderLingo0(); el.insertAdjacentHTML("afterbegin", seg) }
