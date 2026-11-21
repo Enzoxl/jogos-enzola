@@ -44,7 +44,27 @@ const ALBUM = [
   { id: "h38", name: "Ataque Aquático", img: "album/h38.webp", rar: 1 },
   { id: "h39", name: "Bocejo na Lagoa", img: "album/h39.webp", rar: 1 },
   { id: "h40", name: "Coroa Verde", img: "album/h40.webp", rar: 1 },
-  // próximas fotos: { id: "h41", name: "Nome", img: "album/h41.webp", rar: 1 },   // rar: 1 comum · 0.4 rara · 0.15 lendária
+  { id: "h41", name: "Língua de Fora Total", img: "album/h41.webp", rar: 1 },
+  { id: "h42", name: "Olhar Submarino", img: "album/h42.webp", rar: 1 },
+  { id: "h43", name: "Soneca na Pedra", img: "album/h43.webp", rar: 1 },
+  { id: "h44", name: "Passeio no Gramado", img: "album/h44.webp", rar: 1 },
+  { id: "h45", name: "Hora de Beber Água", img: "album/h45.webp", rar: 1 },
+  { id: "h46", name: "Filhote Curioso", img: "album/h46.webp", rar: 1 },
+  { id: "h47", name: "Mãe e Filhote Mergulhando", img: "album/h47.webp", rar: 1 },
+  { id: "h48", name: "Colo de Mãe", img: "album/h48.webp", rar: 1 },
+  { id: "h49", name: "Dupla na Água", img: "album/h49.webp", rar: 1 },
+  { id: "h50", name: "Passeio no Zoológico", img: "album/h50.webp", rar: 1 },
+  { id: "h51", name: "Sonequinha a Dois", img: "album/h51.webp", rar: 1 },
+  { id: "h52", name: "Merenda de Melancia", img: "album/h52.webp", rar: 1 },
+  { id: "h53", name: "Bebê de Braços Cruzados", img: "album/h53.webp", rar: 1 },
+  { id: "h54", name: "Olhos de Fora", img: "album/h54.webp", rar: 1 },
+  { id: "h55", name: "Banho Coletivo", img: "album/h55.webp", rar: 1 },
+  { id: "h56", name: "Caminhada na Terra Vermelha", img: "album/h56.webp", rar: 1 },
+  { id: "h57", name: "Beijo de Hipopótamos", img: "album/h57.webp", rar: 1 },
+  { id: "h58", name: "Preguiça na Areia", img: "album/h58.webp", rar: 1 },
+  { id: "h59", name: "Sorriso de Perfil", img: "album/h59.webp", rar: 1 },
+  { id: "h60", name: "Filhote Pigmeu", img: "album/h60.webp", rar: 1 },
+  // próximas fotos: { id: "h61", name: "Nome", img: "album/h61.webp", rar: 1 },   // rar: 1 comum · 0.4 rara · 0.15 lendária
 ];
 const CHEST_PRICE = 60, CHEST_PRICE_5 = 270, CHEST_DRAWS = 3;
 let mgTab = "game";
