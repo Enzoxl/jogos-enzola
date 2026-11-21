@@ -73,10 +73,10 @@ const ALBUM = [
 ];
 const CH_ORDER = ["comum", "raro", "epico", "lendario"], FREE_PER_DAY = 2;
 const CH_R = {
-  comum:    { name: "Baú comum",    price: 60,   draws: 3, odds: [40, 50, 10], coins: [[5, 40], [10, 30], [20, 18], [35, 8], [60, 3], [100, 1]],        skinExp: .5,  w: ["#c98a4b", "#9a5e2c", "#6e3d1a"], m: ["#8a93a6", "#e3e8f2", "#7c869b"], band: ["#fff0a0", "#ffc936", "#c9850a"], col: "#b8794a" },
-  raro:     { name: "Baú raro",     price: 150,  draws: 3, odds: [34, 46, 20], coins: [[10, 28], [20, 30], [35, 22], [60, 12], [100, 6], [200, 2]],    skinExp: .25, w: ["#6f9bf0", "#4468c4", "#2a4590"], m: ["#9fb0d4", "#eef3ff", "#8393b8"], band: ["#fff0a0", "#ffc936", "#c9850a"], col: "#5d86e6" },
-  epico:    { name: "Baú épico",    price: 400,  draws: 4, odds: [30, 40, 30], coins: [[35, 26], [60, 30], [100, 26], [200, 14], [300, 4]],            skinExp: 0,   w: ["#b97ae8", "#8546c0", "#53288a"], m: ["#c9b4e8", "#f6eeff", "#a58cc9"], band: ["#ffe9a0", "#ffb938", "#b8730a"], col: "#a561dd" },
-  lendario: { name: "Baú lendário", price: 1000, draws: 5, odds: [26, 32, 42], coins: [[100, 30], [200, 34], [300, 24], [500, 12]],                    skinExp: -.4, w: ["#ffd04a", "#e8920f", "#a35a00"], m: ["#fff6c0", "#ffe27a", "#d9a21a"], band: ["#ff8aa0", "#ff3d66", "#b3123a"], col: "#ffb000", guaranteeSkin: true },
+  comum:    { name: "Baú comum",    price: 75,   draws: 3, odds: [40, 50, 10], coins: [[5, 40], [10, 30], [20, 18], [35, 8], [60, 3], [100, 1]],        skinExp: .5,  w: ["#c98a4b", "#9a5e2c", "#6e3d1a"], m: ["#8a93a6", "#e3e8f2", "#7c869b"], band: ["#fff0a0", "#ffc936", "#c9850a"], col: "#b8794a" },
+  raro:     { name: "Baú raro",     price: 190,  draws: 3, odds: [34, 46, 20], coins: [[10, 28], [20, 30], [35, 22], [60, 12], [100, 6], [200, 2]],    skinExp: .25, w: ["#6f9bf0", "#4468c4", "#2a4590"], m: ["#9fb0d4", "#eef3ff", "#8393b8"], band: ["#fff0a0", "#ffc936", "#c9850a"], col: "#5d86e6" },
+  epico:    { name: "Baú épico",    price: 500,  draws: 4, odds: [30, 40, 30], coins: [[35, 26], [60, 30], [100, 26], [200, 14], [300, 4]],            skinExp: 0,   w: ["#b97ae8", "#8546c0", "#53288a"], m: ["#c9b4e8", "#f6eeff", "#a58cc9"], band: ["#ffe9a0", "#ffb938", "#b8730a"], col: "#a561dd" },
+  lendario: { name: "Baú lendário", price: 1250, draws: 5, odds: [26, 32, 42], coins: [[100, 30], [200, 34], [300, 24], [500, 12]],                    skinExp: -.4, w: ["#ffd04a", "#e8920f", "#a35a00"], m: ["#fff6c0", "#ffe27a", "#d9a21a"], band: ["#ff8aa0", "#ff3d66", "#b3123a"], col: "#ffb000", guaranteeSkin: true },
 };
 const chR = r => CH_R[r] || CH_R.comum;
 let mgTab = "game";

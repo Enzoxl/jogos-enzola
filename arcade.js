@@ -5,7 +5,10 @@ const AR_GAMES = [
   { id: "soon2", emoji: "🎯", name: "Em breve", desc: "Mais um minigame chegando.", soon: true },
 ];
 let arSel = null;
-const SN = { N: 16, dayCap: 40 };
+// recompensa por nível: a pessoa recebe as moedas do MAIOR nível alcançado na partida (não soma)
+const SN = { N: 16, dayCap: 80, levels: [{ pts: 3, coins: 2 }, { pts: 8, coins: 5 }, { pts: 15, coins: 10 }, { pts: 25, coins: 16 }, { pts: 40, coins: 24 }, { pts: 60, coins: 35 }, { pts: 90, coins: 50 }] };
+const snLevel = pts => SN.levels.reduce((l, x, i) => pts >= x.pts ? i + 1 : l, 0);
+const snCoinsFor = pts => { const l = snLevel(pts); return l ? SN.levels[l - 1].coins : 0 };
 let sn = null, snRaf = 0, snHead = null, snKeysBound = false;
 snHead = new Image(); snHead.src = "hipopotamo.webp";
 
@@ -16,11 +19,11 @@ function arcadeHTML() {
     const st = snStats();
     return `<div class="ar-game">
       <div class="ar-hud"><button class="btn ghost sm" data-ar="back" aria-label="Voltar à lista de jogos">← Jogos</button>
-        <div class="ar-sc"><span>Pontos</span><b id="sn-score">0</b></div><div class="ar-sc"><span>Recorde</span><b id="sn-best">${st.best}</b></div>
+        <div class="ar-sc"><span>Pontos</span><b id="sn-score">0</b></div><div class="ar-sc"><span>Nível</span><b id="sn-lv">0</b></div><div class="ar-sc"><span>Recorde</span><b id="sn-best">${st.best}</b></div>
         <button class="iconbtn" data-sn="pause" aria-label="Pausar">⏸</button></div>
       <div class="ar-stage"><canvas id="sn-cv" aria-label="Jogo da cobra do hipopótamo" role="img"></canvas><div class="ar-ov" id="sn-ov"></div></div>
       <div class="ar-pad" aria-label="Controles"><button data-sn-dir="up" aria-label="Cima">▲</button><button data-sn-dir="left" aria-label="Esquerda">◀</button><button data-sn-dir="down" aria-label="Baixo">▼</button><button data-sn-dir="right" aria-label="Direita">▶</button></div>
-      <p class="muted ar-tip">Setas ou WASD no teclado · deslize no celular. A cada 2 pontos você ganha 1 Enzola Coin (até ${SN.dayCap} por dia). Melancia dourada vale 3!</p></div>`;
+      <p class="muted ar-tip">Setas ou WASD no teclado · deslize no celular. Quanto mais alto o nível, mais Enzola Coins (até ${SN.dayCap} por dia). Melancia dourada vale 3!</p></div>`;
   }
   return `<div class="sec-head"><div><h2 class="h">Outros jogos</h2><p class="muted">Escolha um minigame para jogar e ganhar Enzola Coins.</p></div></div>
     <div class="ar-grid">${AR_GAMES.map(g => `<button class="ar-card${g.soon ? " soon" : ""}" ${g.soon ? "disabled" : `data-ar="${g.id}"`}><span class="ar-em" aria-hidden="true">${g.emoji}</span><b>${g.name}</b><small>${g.desc}</small>${g.soon ? "" : `<span class="ar-play">Jogar ▶</span>`}</button>`).join("")}</div>`;
@@ -31,7 +34,7 @@ function arcadeMount() { if (arSel === "snake") { if (!sn) snNew(); snFit(); snU
 function snNew() {
   const N = SN.N, m = Math.floor(N / 2);
   const body = [{ x: m, y: m }, { x: m - 1, y: m }, { x: m - 2, y: m }];
-  sn = { body, prev: body.map(b => ({ ...b })), dir: { x: 1, y: 0 }, q: [], score: 0, state: "ready", acc: 0, t: 0, fruit: null, parts: [], ang: 0, shake: 0, coins: 0, newBest: false, pops: [], golden: false };
+  sn = { body, prev: body.map(b => ({ ...b })), dir: { x: 1, y: 0 }, q: [], score: 0, state: "ready", acc: 0, t: 0, fruit: null, parts: [], ang: 0, shake: 0, coins: 0, newBest: false, pops: [], golden: false, lv: 0, level: 0 };
   snFruit();
 }
 const snFree = (x, y) => !sn.body.some(b => b.x === x && b.y === y);
@@ -61,27 +64,29 @@ function snTick() {
   if (eat) {
     const g = sn.fruit.gold, add = g ? 3 : 1; sn.score += add;
     for (let i = 0; i < 12; i++) { const a = Math.random() * 6.283, v = .5 + Math.random() * 1.6; sn.parts.push({ x: nh.x + .5, y: nh.y + .5, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 1, c: g ? "#ffd84a" : (i % 2 ? "#ff5c7a" : "#4ade80") }) }
-    sn.pops.push({ x: nh.x + .5, y: nh.y, t: 1, txt: "+" + add, gold: g }); snFruit(); snUI();
+    sn.pops.push({ x: nh.x + .5, y: nh.y, t: 1, txt: "+" + add, gold: g });
+    const lv = snLevel(sn.score); if (lv > sn.lv) { sn.lv = lv; sn.pops.push({ x: SN.N / 2, y: 2.2, t: 1.6, txt: "Nível " + lv + "! +" + SN.levels[lv - 1].coins + " 🪙", gold: true, big: true }) }
+    snFruit(); snUI();
     if (!sn.fruit) snOver(true);
   }
 }
 function snOver(won) {
   sn.state = "over"; sn.shake = 1; const st = snStats(); st.plays = (st.plays || 0) + 1;
   sn.newBest = sn.score > (st.best || 0); if (sn.newBest) st.best = sn.score;
-  const want = Math.floor(sn.score / 2), room = Math.max(0, SN.dayCap - (st.earned || 0)); sn.coins = Math.min(want, room); sn.capped = want > room;
+  sn.level = snLevel(sn.score); const want = snCoinsFor(sn.score), room = Math.max(0, SN.dayCap - (st.earned || 0)); sn.coins = Math.min(want, room); sn.capped = want > room;
   if (sn.coins > 0 && typeof lgAward === "function" && user) { st.earned += sn.coins; lgAward(sn.coins) } else lgSave(true);
   sn.won = !!won; snUI();
 }
 function snUI() {
   const ov = $("#sn-ov"); if (!ov || !sn) return;
-  const sc = $("#sn-score"); if (sc) sc.textContent = sn.score; const bs = $("#sn-best"); if (bs) bs.textContent = Math.max(snStats().best || 0, sn.score);
+  const sc = $("#sn-score"); if (sc) sc.textContent = sn.score; const lvE = $("#sn-lv"); if (lvE) lvE.textContent = snLevel(sn.score); const bs = $("#sn-best"); if (bs) bs.textContent = Math.max(snStats().best || 0, sn.score);
   const pb = document.querySelector('[data-sn="pause"]'); if (pb) pb.textContent = sn.state === "paused" ? "▶" : "⏸";
   if (sn.state === "play") { ov.className = "ar-ov"; ov.innerHTML = ""; return }
   ov.className = "ar-ov on";
-  if (sn.state === "ready") ov.innerHTML = `<div class="ar-box"><div class="ar-big">🦛</div><b>Cobra do Hipopótamo</b><p>Toque, deslize ou use uma seta para começar.</p><button class="btn" data-sn="start">Jogar</button></div>`;
+  if (sn.state === "ready") ov.innerHTML = `<div class="ar-box"><div class="ar-big">🦛</div><b>Cobra do Hipopótamo</b><p>Toque, deslize ou use uma seta para começar.</p><div class="ar-lv">${SN.levels.map((l, i) => `<span><i>Nv ${i + 1}</i>${l.pts}+ pts<b>${l.coins} 🪙</b></span>`).join("")}</div><button class="btn" data-sn="start">Jogar</button></div>`;
   else if (sn.state === "paused") ov.innerHTML = `<div class="ar-box"><b>Pausado</b><button class="btn" data-sn="resume">Continuar</button></div>`;
-  else ov.innerHTML = `<div class="ar-box"><b>${sn.won ? "Tabuleiro completo! 🏆" : "Fim de jogo"}</b><div class="ar-res"><div><span>Pontos</span><b>${sn.score}</b></div><div><span>Recorde</span><b>${Math.max(snStats().best || 0, sn.score)}</b></div></div>
-    ${sn.newBest && sn.score ? `<p class="ar-nb">🎉 Novo recorde!</p>` : ""}<p>${sn.coins ? `+${sn.coins} Enzola Coins` : sn.capped ? "Limite de moedas de hoje atingido." : "Faça 2 pontos ou mais para ganhar moedas."}</p><button class="btn" data-sn="again">Jogar de novo</button></div>`;
+  else ov.innerHTML = `<div class="ar-box"><b>${sn.won ? "Tabuleiro completo! 🏆" : "Fim de jogo"}</b><div class="ar-res"><div><span>Pontos</span><b>${sn.score}</b></div><div><span>Nível</span><b>${sn.level || 0}</b></div><div><span>Recorde</span><b>${Math.max(snStats().best || 0, sn.score)}</b></div></div>
+    ${sn.newBest && sn.score ? `<p class="ar-nb">🎉 Novo recorde!</p>` : ""}<p>${sn.coins ? `+${sn.coins} Enzola Coins` : sn.capped ? "Limite de moedas de hoje atingido." : "Chegue a 3 pontos (nível 1) para ganhar moedas."}</p><button class="btn" data-sn="again">Jogar de novo</button></div>`;
 }
 function snFit() {
   const cv = $("#sn-cv"); if (!cv) return; const w = Math.min(cv.parentElement.clientWidth || 360, 460), d = Math.min(window.devicePixelRatio || 1, 2.5);
@@ -129,7 +134,7 @@ function snDraw(cv, k, now) {
   // partículas e +pontos
   sn.parts = sn.parts.filter(p => (p.life -= .035) > 0); for (const p of sn.parts) { p.x += p.vx * .03; p.y += p.vy * .03; c.globalAlpha = Math.max(0, p.life); c.fillStyle = p.c; c.beginPath(); c.arc(p.x * u, p.y * u, u * .1 * p.life + 1, 0, 7); c.fill() }
   c.globalAlpha = 1; sn.pops = sn.pops.filter(p => (p.t -= .025) > 0);
-  for (const p of sn.pops) { c.globalAlpha = Math.min(1, p.t * 1.6); c.fillStyle = p.gold ? "#ffd84a" : "#fff"; c.font = `700 ${u * .62}px "Chakra Petch",sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(p.txt, p.x * u, (p.y - (1 - p.t) * 1.4) * u) }
+  for (const p of sn.pops) { c.globalAlpha = Math.min(1, p.t * 1.6); c.fillStyle = p.gold ? "#ffd84a" : "#fff"; c.font = `700 ${u * (p.big ? .8 : .62)}px "Chakra Petch",sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(p.txt, p.x * u, (p.y - (1 - p.t) * 1.4) * u) }
   c.globalAlpha = 1;
 }
 

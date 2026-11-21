@@ -1689,3 +1689,4 @@ img.img-in.ok{opacity:1}
 .ar-tip{font-size:12.5px;margin:0;text-align:center}
 .cert-h{margin-top:28px}
 .mg-seg{width:100%}.mg-seg button{flex:1 1 0;white-space:nowrap;padding:8px 6px!important;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:5px}
+.ar-lv{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;width:100%}.ar-lv span{display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 2px;border-radius:9px;background:rgba(255,255,255,.08);font-size:10px;color:#aebbdd;line-height:1.2}.ar-lv i{font-style:normal;font-weight:700;color:#fff}.ar-lv b{color:var(--gold);font-size:11px}.ar-box{max-width:340px}
