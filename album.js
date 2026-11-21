@@ -102,8 +102,8 @@ function chestGive(n, why) {
   if (why) toast(`🎁 ${why}: você ganhou ${n === 1 ? "um baú da sorte" : n + " baús da sorte"}! Abra em Minigames › Álbum.`);
   return n;
 }
-const CHEST_COINS = [[5, 34], [10, 28], [20, 18], [35, 11], [60, 6], [100, 2.5], [200, 0.5]];
-const CHEST_ODDS = { photo: 55, coins: 33, skin: 12 };   // % por sorteio
+const CHEST_COINS = [[5, 44], [10, 28], [20, 14], [35, 8], [60, 4], [100, 1.7], [200, 0.3]];
+const CHEST_ODDS = { photo: 35, coins: 53, skin: 12 };   // % por sorteio
 const chestSkins = () => LG_SKINS.filter(k => !k.group && k.price > 0);   // fora a skin de metas (Free Fire) e a clássica
 function chestPick(list) { const t = list.reduce((a, x) => a + x[1], 0); let r = Math.random() * t; for (const x of list) { r -= x[1]; if (r <= 0) return x[0] } return list[0][0] }
 function chestDraw() {
