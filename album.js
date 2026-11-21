@@ -135,6 +135,7 @@ function chestOpen() {
     return d;
   });
   lgSave(true);
+  rewardsCheck();
   const done = ALBUM.length && albumOwned() === ALBUM.length, nf = got.filter(d => d.t === "photo" && d.fresh).length, coins = got.reduce((a, d) => a + (d.t === "coins" ? d.n : d.dup || 0), 0), sk = got.filter(d => d.t === "skin" && d.fresh);
   chestShow = { got, i: -1, done, nf, coins, sk, busy: false };
   albumOvl().innerHTML = `<div class="alb-box rv"><button class="iconbtn lgs-x" data-alb-close aria-label="Fechar">${ic("x")}</button>
@@ -261,3 +262,87 @@ document.addEventListener("click", e => {
   if (c("[data-lgs-buy-chest]")) { chestBuy(+c("[data-lgs-buy-chest]").dataset.lgsBuyChest); return }
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#alb-ovl")) albumClose() });
+
+/* ---------- conquistas: skins especiais e certificados ---------- */
+function lgAllDone() { lg = lg || lgLoad(); return Object.keys(LG_LANGS).every(k => LG_UNITS.every((_, u) => Array.from({ length: LG_LESSONS }, (_, l) => l).every(l => lg.done[`${k}-${u}-${l}`]))) }
+const lgDoneCount = () => { lg = lg || lgLoad(); let n = 0; for (const k of Object.keys(LG_LANGS)) LG_UNITS.forEach((_, u) => { for (let l = 0; l < LG_LESSONS; l++) if (lg.done[`${k}-${u}-${l}`]) n++ }); return [n, Object.keys(LG_LANGS).length * LG_UNITS.length * LG_LESSONS] };
+function rewardsCheck() {
+  if (!user || !loaded) return; lg = lg || lgLoad(); lg.cert = lg.cert || {}; let ch = false;
+  if (lgAllDone() && !lg.cert.lingo) { lg.cert.lingo = spDay(0); lg.skins = { ...(lg.skins || {}), ave: true }; ch = true; toast("🎓 Enzolingo concluído! Você ganhou a skin Enzola Pássaro e um certificado (aba Minigames).") }
+  if (ALBUM.length && albumOwned() === ALBUM.length && !lg.cert.album) { lg.cert.album = spDay(0); lg.cert.albumN = ALBUM.length; lg.skins = { ...(lg.skins || {}), colecionador: true }; ch = true; toast("📖 Álbum completo! Você ganhou a skin Colecionador e um certificado (aba Minigames).") }
+  if (ch) lgSave(true);
+}
+const CERT = {
+  lingo: { title: "Enzolingo", color: ["#58CC02", "#1c6b10"], accent: "#C8F26B", skin: "loja/h-ave.webp", line: () => "concluiu todas as lições do Enzolingo, em Inglês e Espanhol,", sub: () => `${lgDoneCount()[1]} lições concluídas com o hipopótamo` },
+  album: { title: "Álbum de Hipopótamos", color: ["#FFB000", "#8a4a10"], accent: "#FFE9A8", skin: "loja/h-colecionador.webp", line: () => "completou o Álbum de Hipopótamos do Jogos Enzola,", sub: () => `${(lg.cert && lg.cert.albumN) || ALBUM.length} fotos conquistadas nos baús da sorte` },
+};
+const certCode = (k) => { let h = 2166136261; for (const c of (user.id + k + ((lg.cert || {})[k] || ""))) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) } return "JE-" + k.slice(0, 2).toUpperCase() + "-" + (h >>> 0).toString(36).toUpperCase().padStart(7, "0").slice(-7) };
+const certDate = iso => { const [y, m, d] = String(iso).split("-").map(Number); return `${d} de ${["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"][m - 1]} de ${y}` };
+async function certCanvas(k) {
+  if (document.fonts && document.fonts.ready) await document.fonts.ready;
+  const C = CERT[k], W = 1754, H = 1240, cv = document.createElement("canvas"); cv.width = W; cv.height = H; const x = cv.getContext("2d");
+  const [c1, c2] = C.color, FT = "'Chakra Petch', system-ui, sans-serif", FB = "Figtree, system-ui, sans-serif";
+  const bg = x.createLinearGradient(0, 0, W, H); bg.addColorStop(0, "#0B1129"); bg.addColorStop(1, "#172A66"); x.fillStyle = bg; x.fillRect(0, 0, W, H);
+  const gl = x.createRadialGradient(W * .8, H * .25, 20, W * .8, H * .25, 800); gl.addColorStop(0, c1 + "55"); gl.addColorStop(1, c1 + "00"); x.fillStyle = gl; x.fillRect(0, 0, W, H);
+  x.save(); x.globalAlpha = .06; x.fillStyle = "#fff"; for (let i = -H; i < W; i += 90) { x.beginPath(); x.moveTo(i, H); x.lineTo(i + 40, H); x.lineTo(i + 40 + H, 0); x.lineTo(i + H, 0); x.fill() } x.restore();
+  const bd = x.createLinearGradient(0, 0, W, 0); bd.addColorStop(0, c1); bd.addColorStop(.5, C.accent); bd.addColorStop(1, c1);
+  x.lineWidth = 14; x.strokeStyle = bd; x.strokeRect(48, 48, W - 96, H - 96); x.lineWidth = 3; x.strokeStyle = C.accent + "99"; x.strokeRect(78, 78, W - 156, H - 156);
+  for (const [cx, cy] of [[78, 78], [W - 78, 78], [78, H - 78], [W - 78, H - 78]]) { x.fillStyle = C.accent; x.beginPath(); x.arc(cx, cy, 14, 0, 7); x.fill(); x.fillStyle = "#0B1129"; x.beginPath(); x.arc(cx, cy, 6, 0, 7); x.fill() }
+  const load = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = src });
+  const [logo, hip] = await Promise.all([load("logo.png"), load(C.skin)]);
+  if (logo) { const lh = 110, lw = logo.width * lh / logo.height; x.drawImage(logo, 130, 120, lw, lh) }
+  x.textAlign = "left"; x.fillStyle = "#AEBBDD"; x.font = `600 26px ${FB}`; x.fillText("JOGOS ENZOLA · MOVIMENTO ENZOLA", 130 + (logo ? logo.width * 110 / logo.height + 26 : 0), 190);
+  if (hip) { const hh = 780, hw = hip.width * hh / hip.height; x.save(); x.shadowColor = "rgba(0,0,0,.45)"; x.shadowBlur = 40; x.shadowOffsetY = 18; x.drawImage(hip, W - hw - 110, H - hh - 100, hw, hh); x.restore() }
+  x.textAlign = "left"; x.fillStyle = C.accent; x.font = `700 30px ${FB}`; x.fillText("CERTIFICADO DE CONCLUSÃO", 130, 330);
+  x.fillStyle = "#fff"; x.font = `700 96px ${FT}`; x.fillText(C.title, 130, 430);
+  x.fillStyle = "#C9D3F0"; x.font = `500 34px ${FB}`; x.fillText("Certificamos com muito orgulho que", 130, 520);
+  let nm = (typeof nick === "function" ? nick() : "") || "Jogador"; let fs = 120; x.font = `700 ${fs}px ${FT}`; while (x.measureText(nm).width > 940 && fs > 50) { fs -= 4; x.font = `700 ${fs}px ${FT}` }
+  const g2 = x.createLinearGradient(130, 0, 1070, 0); g2.addColorStop(0, "#fff"); g2.addColorStop(1, C.accent); x.fillStyle = g2; x.fillText(nm, 130, 650);
+  x.fillStyle = c1; x.fillRect(130, 678, Math.min(940, x.measureText(nm).width), 6);
+  x.fillStyle = "#C9D3F0"; x.font = `500 36px ${FB}`; x.fillText(C.line(), 130, 750); x.fillStyle = "#fff"; x.font = `700 36px ${FB}`; x.fillText(C.sub() + ".", 130, 800);
+  x.fillStyle = "#AEBBDD"; x.font = `500 30px ${FB}`; x.fillText(`Concedido em ${certDate((lg.cert || {})[k] || spDay(0))}`, 130, 880);
+  x.fillStyle = "#7F8DB5"; x.font = `500 24px ${FB}`; x.fillText(`@${typeof uname === "function" ? uname() : ""}  ·  Código ${certCode(k)}`, 130, 925);
+  // selo
+  const sx = 700, sy = 1090; x.save(); x.translate(sx, sy); x.rotate(-.12);
+  x.fillStyle = c1; x.beginPath(); for (let i = 0; i < 28; i++) { const a = i / 28 * 6.2832, r = i % 2 ? 78 : 90; x.lineTo(Math.cos(a) * r, Math.sin(a) * r) } x.fill();
+  x.fillStyle = "#0B1129"; x.beginPath(); x.arc(0, 0, 66, 0, 7); x.fill(); x.strokeStyle = C.accent; x.lineWidth = 4; x.beginPath(); x.arc(0, 0, 58, 0, 7); x.stroke();
+  x.fillStyle = C.accent; x.textAlign = "center"; x.textBaseline = "middle"; x.font = `700 20px ${FB}`; x.fillText("COMPLETO", 0, 22); x.font = "46px serif"; x.fillText(k === "lingo" ? "🎓" : "📖", 0, -18); x.restore();
+  x.textAlign = "left"; x.textBaseline = "alphabetic";
+  x.fillStyle = "#fff"; x.fillRect(130, 1060, 360, 3); x.fillStyle = "#AEBBDD"; x.font = `600 26px ${FB}`; x.fillText("Movimento Enzola", 130, 1100); x.font = `500 22px ${FB}`; x.fillStyle = "#7F8DB5"; x.fillText("Jogos Enzola · jogos-enzola.vercel.app", 130, 1136);
+  return cv;
+}
+function certBlob(cv, type, q) { return new Promise(r => cv.toBlob(r, type, q)) }
+async function certPdf(cv) {
+  const jpg = new Uint8Array(await (await certBlob(cv, "image/jpeg", .93)).arrayBuffer()), enc = new TextEncoder(), parts = [], off = []; let len = 0;
+  const put = b => { const u = typeof b === "string" ? enc.encode(b) : b; parts.push(u); len += u.length };
+  put("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n");
+  const obj = (n, body) => { off[n] = len; put(`${n} 0 obj\n${body}\nendobj\n`) };
+  obj(1, "<< /Type /Catalog /Pages 2 0 R >>"); obj(2, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+  obj(3, "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 842 595] /Resources << /XObject << /Im0 5 0 R >> >> /Contents 4 0 R >>");
+  const cs = "q 842 0 0 595 0 0 cm /Im0 Do Q"; obj(4, `<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`);
+  off[5] = len; put(`5 0 obj\n<< /Type /XObject /Subtype /Image /Width ${cv.width} /Height ${cv.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpg.length} >>\nstream\n`); put(jpg); put("\nendstream\nendobj\n");
+  const xr = len; put("xref\n0 6\n0000000000 65535 f \n"); for (let i = 1; i <= 5; i++) put(String(off[i]).padStart(10, "0") + " 00000 n \n");
+  put(`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xr}\n%%EOF`);
+  return new Blob(parts, { type: "application/pdf" });
+}
+function certHTML() {
+  rewardsCheck(); const [dn, dt] = lgDoneCount(), N = ALBUM.length, own = albumOwned();
+  const card = (k, ok, prog, hint) => `<div class="cert-card${ok ? " ok" : ""}"><div class="cert-pv" id="cp-${k}">${ok ? `<span class="muted">Gerando prévia…</span>` : `<div class="cert-lock">🔒<small>${hint}</small></div>`}</div>
+    <div class="cert-b"><b>Certificado · ${CERT[k].title}</b><small class="muted">${ok ? "Concedido em " + certDate(lg.cert[k]) : prog}</small>
+    ${ok ? `<div class="cert-a"><button class="btn sm" data-cert="${k}:png">${ic("image")}Baixar imagem</button><button class="btn ghost sm" data-cert="${k}:pdf">${ic("download")}Baixar PDF</button></div>` : ""}</div></div>`;
+  return `<div class="sec-head"><div><h2 class="h">Certificados</h2><p class="muted">Conclua o Enzolingo ou o álbum de hipopótamos para ganhar um certificado com o seu nome e uma skin exclusiva.</p></div></div>
+    <div class="cert-grid">${card("lingo", !!(lg.cert || {}).lingo, `${dn}/${dt} lições concluídas`, `${dn}/${dt} lições`)}${card("album", !!(lg.cert || {}).album, `${own}/${N} fotos no álbum`, `${own}/${N} fotos`)}</div>`;
+}
+async function certPreview() {
+  for (const k of ["lingo", "album"]) { if (!(lg.cert || {})[k]) continue; const box = $("#cp-" + k); if (!box) continue;
+    try { const cv = await certCanvas(k); const u = cv.toDataURL("image/jpeg", .8); const b2 = $("#cp-" + k); if (b2) b2.innerHTML = `<img src="${u}" alt="Prévia do certificado ${esc(CERT[k].title)}">` } catch (e) {} }
+}
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-cert]"); if (!b) return; const [k, t] = b.dataset.cert.split(":"); if (!(lg.cert || {})[k]) return;
+  const old = b.innerHTML; b.disabled = true; b.textContent = "Gerando…";
+  try { const cv = await certCanvas(k), nm = "certificado-" + k + "-" + ((typeof uname === "function" && uname()) || "enzola");
+    const blob = t === "pdf" ? await certPdf(cv) : await certBlob(cv, "image/png");
+    if (!(await shareOrDownload(blob, nm + (t === "pdf" ? ".pdf" : ".png"), "Meu certificado"))) toast(t === "pdf" ? "PDF salvo." : "Imagem salva.");
+  } catch (er) { toast("Não foi possível gerar o certificado agora.") }
+  b.disabled = false; b.innerHTML = old;
+});

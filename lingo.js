@@ -371,6 +371,7 @@ function lgFinish(failed) {
   if (gb) lg.goiabas = (lg.goiabas || 0) + gb;
   if (typeof grpLog === "function") grpLog(xp);
   lgSave(true);
+  if (typeof rewardsCheck === "function") rewardsCheck();
   const mm = Math.floor(secs / 60), ss = String(secs % 60).padStart(2, "0");
   box.innerHTML = `<div class="lg-end ${failed ? "fail" : ""}">
     ${failed ? "" : `<div class="lg-confetti" aria-hidden="true">${Array.from({ length: 26 }, (_, i) => `<i style="--x:${(Math.random() * 100).toFixed(0)}%;--d:${(Math.random() * .8).toFixed(2)}s;--c:${["#58CC02", "#1CB0F6", "#FF9600", "#CE82FF", "#FF4B4B", "#FFC800"][i % 6]}"></i>`).join("")}</div>`}
@@ -445,7 +446,9 @@ document.addEventListener("input", e => { if (lgS && e.target.id === "lg-in") lg
 /* aba Minigames: Enzolingo | Álbum */
 function renderLingo() {
   const el = $("#idiomas"); if (!el) return;
-  const seg = `<div class="mg-seg" role="tablist" aria-label="Minigames"><button role="tab" aria-selected="${mgTab === "game"}" data-mg="game">🦛 Enzolingo</button><button role="tab" aria-selected="${mgTab === "album"}" data-mg="album">📖 Álbum${typeof lg !== "undefined" && lg && lg.chests > 0 ? ` <span class="mg-dot">${lg.chests}</span>` : ""}</button></div>`;
-  if (mgTab === "album" && typeof albumHTML === "function") { lg = lgLoad(); el.innerHTML = seg + albumHTML() }
+  if (typeof rewardsCheck === "function") rewardsCheck();
+  const seg = `<div class="mg-seg" role="tablist" aria-label="Minigames"><button role="tab" aria-selected="${mgTab === "game"}" data-mg="game">🦛 Enzolingo</button><button role="tab" aria-selected="${mgTab === "cert"}" data-mg="cert">🏅 Certificados</button><button role="tab" aria-selected="${mgTab === "album"}" data-mg="album">📖 Álbum${typeof lg !== "undefined" && lg && lg.chests > 0 ? ` <span class="mg-dot">${lg.chests}</span>` : ""}</button></div>`;
+  if (mgTab === "cert" && typeof certHTML === "function") { lg = lgLoad(); el.innerHTML = seg + certHTML(); certPreview() }
+  else if (mgTab === "album" && typeof albumHTML === "function") { lg = lgLoad(); el.innerHTML = seg + albumHTML() }
   else { renderLingo0(); el.insertAdjacentHTML("afterbegin", seg) }
 }

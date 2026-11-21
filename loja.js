@@ -14,7 +14,9 @@ const LG_SKINS = [
   { id: "heroi", kind: "hip", name: "Super-herói", img: "loja/h-heroi.webp", price: 180 },
   { id: "rei", kind: "hip", name: "Rei Hipopótamo", img: "loja/h-rei.webp", price: 250 },
   { id: "dourado", kind: "hip", name: "Hipopótamo de ouro", img: "loja/h-dourado.webp", price: 400 },
-  { id: "ff", kind: "hip", name: "Enzola Free Fire", img: "loja/h-ff.webp", price: 0, group: true },
+  { id: "ff", kind: "hip", name: "Enzola Free Fire", img: "loja/h-ff.webp", price: 0, group: true, lock: "Meta de grupo · 2000 pts" },
+  { id: "ave", kind: "hip", name: "Enzola Pássaro", img: "loja/h-ave.webp", price: 0, group: true, lock: "Conclua todo o Enzolingo" },
+  { id: "colecionador", kind: "hip", name: "Colecionador", img: "loja/h-colecionador.webp", price: 0, group: true, lock: "Complete o álbum de hipopótamos" },
   { id: "c10", kind: "chr", name: "Goiabinha", img: "convite/c10.jpg", price: 60 },
   { id: "c1", kind: "chr", name: "Cão do zap", img: "convite/c1.jpg", price: 70 },
   { id: "c11", kind: "chr", name: "Cachorro sábio", img: "convite/c11.jpg", price: 70 },
@@ -63,7 +65,7 @@ function lgShopRender() {
       const own = skinHas(sk.id), on = lg.skin === sk.id || (!lg.skin && sk.id === "classico"), can = bal >= sk.price;
       return `<div class="lgs-card${on ? " on" : ""}"><div class="lgs-img${sk.kind === "chr" ? " chr" : ""}"><img src="${sk.img}" alt=""></div><b>${esc(sk.name)}</b>
         <div class="lgs-pack" title="O pacote inclui skin, avatar e banner"><img src="${skinAvatarSrc(sk.id)}" alt="" class="pk-av"><img src="loja/b-${sk.id}.webp" alt="" class="pk-ban" loading="lazy"></div>
-        ${on ? `<span class="lgs-eq">${ic("check")}Equipado</span>` : own ? `<button class="btn sm" data-lgs-equip="${sk.id}">Equipar</button>` : sk.group ? `<span class="lgs-lock" title="Alcance 2000 pontos no grupo">🔒 Meta de grupo · 2000 pts</span>` : `<button class="btn sm lgs-buy${can ? "" : " lack"}" data-lgs-buy="${sk.id}" aria-label="Comprar ${esc(sk.name)} por ${sk.price} Enzola Coins">${gbI()}${sk.price}</button>`}
+        ${on ? `<span class="lgs-eq">${ic("check")}Equipado</span>` : own ? `<button class="btn sm" data-lgs-equip="${sk.id}">Equipar</button>` : sk.group ? `<span class="lgs-lock">🔒 ${esc(sk.lock || "Conquista especial")}</span>` : `<button class="btn sm lgs-buy${can ? "" : " lack"}" data-lgs-buy="${sk.id}" aria-label="Comprar ${esc(sk.name)} por ${sk.price} Enzola Coins">${gbI()}${sk.price}</button>`}
         ${own ? `<button class="btn ghost sm lgs-av${profile && profile.avatar === "skin:" + sk.id && profile.banner === "skin:" + sk.id ? " on" : ""}" data-lgs-avatar="${sk.id}">${profile && profile.avatar === "skin:" + sk.id && profile.banner === "skin:" + sk.id ? "Pacote no perfil" : "Usar pacote no perfil"}</button>` : ""}</div>`;
     }).join("")}</div>
     <p class="muted lgs-how">Como ganhar Enzola Coins: lições (+5, +3 se perfeitas), desafio de 60 s (1 por acerto), meta diária (+10) e o Show do Enzolão (quanto mais acertos, mais Enzola Coins).</p></div>`;
