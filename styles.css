@@ -1567,3 +1567,19 @@ a.spn:hover .sp-logo,a.spn:focus-visible .sp-logo{opacity:1;transform:translateY
 .chest-w.open .chest{filter:drop-shadow(0 0 18px rgba(255,200,60,.6))}
 .alb-coin,.alb-sk{display:flex;flex-direction:column}.alb-cb{aspect-ratio:3/4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:radial-gradient(circle,#ffe58a,#c98a14);color:#4a2b00}.alb-cb b{font-size:24px}.alb-cb .gb-i{width:46px;height:46px}
 .alb-sb{aspect-ratio:3/4;display:grid;place-items:center;background:linear-gradient(160deg,#6C93FF,#A88BFA)}.alb-sb img{width:86%;height:86%;object-fit:contain}
+
+.tcw{width:70px;flex:none;display:flex;flex-direction:column;gap:4px;align-items:stretch}.tcw .tc{width:100%}.tcn{font-size:10px;line-height:1.2;font-weight:600;color:var(--muted);text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;min-height:2.4em}
+@media (max-width:520px){.tcw{width:58px}.tcn{font-size:9px}}
+
+/* baú: um prêmio por vez */
+.alb-box.rv{min-height:440px;display:flex;flex-direction:column;justify-content:center;overflow:hidden}.alb-box.rv .alb-stage{min-height:380px}
+.chest-w.pop{animation:cpopb .5s cubic-bezier(.3,1.6,.5,1)}@keyframes cpopb{from{transform:scale(.7)}to{transform:scale(1)}}
+.rv-burst{position:absolute;left:50%;top:46%;width:520px;height:520px;margin:-260px 0 0 -260px;pointer-events:none;border-radius:50%;opacity:0;background:conic-gradient(from 0deg,rgba(255,220,100,.0),rgba(255,220,100,.45),rgba(255,220,100,0) 8%,rgba(255,220,100,.45) 16%,rgba(255,220,100,0) 24%,rgba(255,220,100,.45) 32%,rgba(255,220,100,0) 40%,rgba(255,220,100,.45) 48%,rgba(255,220,100,0) 56%,rgba(255,220,100,.45) 64%,rgba(255,220,100,0) 72%,rgba(255,220,100,.45) 80%,rgba(255,220,100,0) 88%,rgba(255,220,100,.45) 96%);-webkit-mask:radial-gradient(circle,#000 20%,transparent 68%);mask:radial-gradient(circle,#000 20%,transparent 68%);animation:rvspin 10s linear infinite}
+.rv-burst.on{opacity:1;animation:rvspin 10s linear infinite,rvfade .5s both}.rv-burst.rare{filter:hue-rotate(-18deg) saturate(1.6)}.alb-stage{position:relative}
+@keyframes rvspin{to{transform:rotate(360deg)}}@keyframes rvfade{from{opacity:0}to{opacity:1}}
+.rv-step{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}.rv-card{position:relative;width:min(220px,58vw);animation:rvin .6s cubic-bezier(.2,1.3,.4,1) both}.rv-card .alb-c{animation:none;transform:none;border-width:3px;box-shadow:0 14px 40px rgba(0,0,0,.5)}.rv-card figcaption{font-size:14px;padding:8px}.rv-card .alb-tag{font-size:12px}
+.rv-card .alb-cb b{font-size:38px}.rv-card .alb-cb .gb-i{width:76px;height:76px}
+@keyframes rvin{0%{opacity:0;transform:translateY(90px) scale(.3) rotate(-14deg)}60%{opacity:1;transform:translateY(-8px) scale(1.08) rotate(3deg)}100%{transform:none}}
+.rv-card.rv-out,.chest-w.rv-out{animation:rvout .38s ease-in forwards}@keyframes rvout{to{opacity:0;transform:translateX(-120%) rotate(-18deg) scale(.7)}}
+.rv-lab{font-weight:800;font-size:18px;animation:rvfade .5s .25s both}.rv-dots{display:flex;gap:6px}.rv-dots i{width:9px;height:9px;border-radius:50%;background:var(--line-2)}.rv-dots i.on{background:#ffb000}.rv-go{min-width:170px}
+@media(prefers-reduced-motion:reduce){.rv-burst,.rv-card,.rv-lab,.chest-w.pop{animation:none!important}.rv-card.rv-out{opacity:0}}

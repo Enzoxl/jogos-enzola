@@ -370,7 +370,7 @@ function renderWishlist() {
 }
 
 /* ---------- tier list ---------- */
-function tc(g) { return `<button class="tc" draggable="true" data-tc="${g.id}" aria-pressed="${selected === g.id}" title="${esc(g.name)}" aria-label="${esc(g.name)}">${cover(g)}</button>` }
+function tc(g) { return `<div class="tcw"><button class="tc" draggable="true" data-tc="${g.id}" aria-pressed="${selected === g.id}" title="${esc(g.name)}" aria-label="${esc(g.name)}">${cover(g)}</button><span class="tcn">${esc(g.name)}</span></div>` }
 function renderTier() {
   $("#tiers").innerHTML = TIERS.map(([t, c]) => {
     const l = games.filter(g => g.tier === t).sort((a, b) => (a.tier_order || 0) - (b.tier_order || 0));
@@ -428,10 +428,10 @@ function drawCover(x, im, g, cx, cy, CW, CH, fs) {
 }
 async function tierCanvas() {
   if (document.fonts && document.fonts.ready) await document.fonts.ready;
-  const W = 1200, PAD = 40, LAB = 96, CW = 84, CH = 126, GAP = 10, HEAD = 150, FOOT = 64;
+  const W = 1200, PAD = 40, LAB = 96, CW = 84, CH = 126, NAMEH = 30, GAP = 10, HEAD = 150, FOOT = 64;
   const perRow = Math.floor((W - PAD * 2 - LAB - GAP) / (CW + GAP));
   const rows = TIERS.map(([t, c]) => ({ t, c, list: games.filter(g => g.tier === t).sort((a, b) => (a.tier_order || 0) - (b.tier_order || 0)) }));
-  const hs = rows.map(r => Math.max(1, Math.ceil(r.list.length / perRow)) * (CH + GAP) + GAP);
+  const hs = rows.map(r => Math.max(1, Math.ceil(r.list.length / perRow)) * (CH + NAMEH + GAP) + GAP);
   const H = HEAD + hs.reduce((a, b) => a + b + 12, 0) + FOOT, S = 2;
   const cv = document.createElement("canvas"); cv.width = W * S; cv.height = H * S;
   const x = cv.getContext("2d"); x.scale(S, S);
@@ -454,8 +454,13 @@ async function tierCanvas() {
     x.fillStyle = "#121A33"; x.font = "700 42px 'Chakra Petch', system-ui, sans-serif"; x.textAlign = "center"; x.textBaseline = "middle";
     x.fillText(r.t, PAD + LAB / 2, y + h / 2); x.textAlign = "left"; x.textBaseline = "alphabetic";
     r.list.forEach((g, k) => {
-      const cx = PAD + LAB + GAP + (k % perRow) * (CW + GAP), cy = y + GAP + Math.floor(k / perRow) * (CH + GAP);
+      const cx = PAD + LAB + GAP + (k % perRow) * (CW + GAP), cy = y + GAP + Math.floor(k / perRow) * (CH + NAMEH + GAP);
       x.save(); rr(x, cx, cy, CW, CH, 8); x.clip(); drawCover(x, imap[g.id], g, cx, cy, CW, CH); x.restore();
+      x.fillStyle = "#DCE4FA"; x.font = "600 11px Figtree, system-ui, sans-serif"; x.textAlign = "center";
+      const words = String(g.name).split(" "), ln = []; let cur = "";
+      for (const w of words) { const t = cur ? cur + " " + w : w; if (x.measureText(t).width > CW + 6 && cur) { ln.push(cur); cur = w } else cur = t }
+      ln.push(cur); let l2 = ln.slice(0, 2); if (ln.length > 2) { let t = l2[1]; while (t.length > 1 && x.measureText(t + "…").width > CW + 6) t = t.slice(0, -1); l2[1] = t + "…" } else if (l2[0] && x.measureText(l2[0]).width > CW + 6) { let t = l2[0]; while (t.length > 1 && x.measureText(t + "…").width > CW + 6) t = t.slice(0, -1); l2[0] = t + "…" }
+      l2.forEach((t, j) => x.fillText(t, cx + CW / 2, cy + CH + 13 + j * 12)); x.textAlign = "left";
     });
     y += h + 12;
   });
@@ -733,7 +738,7 @@ async function showPublic(u) {
   <div class="pub-grid">
     ${cur ? `<div class="blk"><div class="blk-h"><h3>${ic("play")}Jogando agora</h3></div><div class="now nohover"><div class="poster">${cover(cur)}</div><div class="now-b"><span class="k">Jogando agora</span><span class="t">${esc(cur.name)}</span><span class="m">${[cur.platform, cur.genre, cur.year].filter(Boolean).map(esc).join(" · ")}</span>${cur.review ? `<span class="q">“${esc(cur.review)}”</span>` : ""}</div></div></div>` : ""}
     ${favs.length ? `<div class="blk"><div class="blk-h"><h3>${ic("heart")}Favoritos</h3></div><div class="favgrid">${favs.map((g, i) => `<div class="fav"><div class="poster"><span class="rank">${i + 1}</span>${cover(g)}</div><div class="n">${esc(g.name)}</div><div class="r">${g.exp ? esc(g.exp) : ""}${g.rating != null ? " · " + rateTxt(g) : ""}</div></div>`).join("")}</div></div>` : ""}
-    ${tiers.length ? `<div class="blk"><div class="blk-h"><h3>${ic("layers")}Tier list</h3></div>${tiers.map(([t, c, l]) => `<div class="tier"><div class="lab" style="background:${c}">${t}</div><div class="zone">${l.map(g => `<div class="tc" title="${esc(g.name)}">${cover(g)}</div>`).join("")}</div></div>`).join("")}</div>` : ""}
+    ${tiers.length ? `<div class="blk"><div class="blk-h"><h3>${ic("layers")}Tier list</h3></div>${tiers.map(([t, c, l]) => `<div class="tier"><div class="lab" style="background:${c}">${t}</div><div class="zone">${l.map(g => `<div class="tcw"><div class="tc" title="${esc(g.name)}">${cover(g)}</div><span class="tcn">${esc(g.name)}</span></div>`).join("")}</div></div>`).join("")}</div>` : ""}
     ${fin.length ? `<div class="blk"><div class="blk-h"><h3>${ic("trophy")}Zerados · ${fin.length}</h3></div><div class="grid">${fin.map(g => `<div class="card"><div class="poster">${cover(g)}</div><div class="t">${esc(g.name)}</div><div class="meta">${g.rating != null ? "Nota " + rateTxt(g) : ""}</div></div>`).join("")}</div></div>` : ""}
   </div>`;
 }

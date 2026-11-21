@@ -136,22 +136,41 @@ function chestOpen() {
   });
   lgSave(true);
   const done = ALBUM.length && albumOwned() === ALBUM.length, nf = got.filter(d => d.t === "photo" && d.fresh).length, coins = got.reduce((a, d) => a + (d.t === "coins" ? d.n : d.dup || 0), 0), sk = got.filter(d => d.t === "skin" && d.fresh);
-  albumOvl().innerHTML = `<div class="alb-box"><button class="iconbtn lgs-x" data-alb-close aria-label="Fechar">${ic("x")}</button>
+  chestShow = { got, i: -1, done, nf, coins, sk, busy: false };
+  albumOvl().innerHTML = `<div class="alb-box rv"><button class="iconbtn lgs-x" data-alb-close aria-label="Fechar">${ic("x")}</button>
     <div class="alb-stage" id="alb-stage"><div class="chest-w shake">${chestSvg()}</div><p class="muted">Abrindo o baú…</p></div></div>`;
-  setTimeout(() => {
-    const st = $("#alb-stage"); if (!st) return;
-    const card = (d, i) => {
-      if (d.t === "photo") return `<figure class="alb-c${d.fresh ? " new" : ""}" style="--i:${i}"><img src="${esc(d.p.img)}" alt="${esc(d.p.name)}"><figcaption>${esc(d.p.name)}</figcaption><span class="alb-tag">${d.fresh ? "NOVA!" : "Repetida"}</span></figure>`;
-      if (d.t === "coins") return `<figure class="alb-c alb-coin" style="--i:${i}"><div class="alb-cb">${gbI("big")}<b>+${d.n}</b></div><figcaption>Enzola Coins</figcaption><span class="alb-tag">Moedas</span></figure>`;
-      return `<figure class="alb-c alb-sk${d.fresh ? " new" : ""}" style="--i:${i}"><div class="alb-sb"><img src="${esc(d.sk.img)}" alt=""></div><figcaption>${esc(d.sk.name)}${d.dup ? ` · +${d.dup}` : ""}</figcaption><span class="alb-tag">${d.fresh ? "SKIN NOVA!" : "Repetida"}</span></figure>`;
-    };
-    const parts = []; if (sk.length) parts.push(`${sk.length > 1 ? "skins novas" : "skin nova"}: ${sk.map(d => esc(d.sk.name)).join(", ")} (com avatar e banner!)`);
-    if (nf) parts.push(`${nf} foto${nf > 1 ? "s" : ""} nova${nf > 1 ? "s" : ""}`); if (coins) parts.push(`${coins} Enzola Coins`);
-    st.innerHTML = `<div class="chest-w open">${chestSvg("open")}</div><div class="alb-got">${got.map(card).join("")}</div>
-      <p class="alb-sum">${parts.length ? "Você ganhou " + parts.join(" · ") + "!" : "Só repetidas desta vez. Tente outro baú!"}${done ? " 🎉 Álbum completo!" : ""}</p>
-      <div class="alb-acts">${lg.chests > 0 ? `<button class="btn" data-alb-open>Abrir outro (${lg.chests})</button>` : ""}<button class="btn ghost" data-alb-close>Fechar</button></div>`;
+  setTimeout(() => { if ($("#alb-stage")) { $("#alb-stage").innerHTML = `<div class="chest-w open pop">${chestSvg("open")}</div><div class="rv-burst" aria-hidden="true"></div>`; setTimeout(chestNext, 750) } }, 1200);
+}
+let chestShow = null;
+const chestKind = d => d.t === "photo" ? (d.fresh ? "Foto nova!" : "Foto repetida") : d.t === "coins" ? "Enzola Coins" : d.fresh ? "Skin nova!" : "Skin repetida";
+function chestCard(d, big) {
+  if (d.t === "photo") return `<figure class="alb-c rv-c${d.fresh ? " new" : ""}"><img src="${esc(d.p.img)}" alt="${esc(d.p.name)}"><figcaption>${esc(d.p.name)}</figcaption><span class="alb-tag">${d.fresh ? "NOVA!" : "Repetida"}</span></figure>`;
+  if (d.t === "coins") return `<figure class="alb-c rv-c alb-coin"><div class="alb-cb">${gbI("big")}<b>+${d.n}</b></div><figcaption>Enzola Coins</figcaption><span class="alb-tag">Moedas</span></figure>`;
+  return `<figure class="alb-c rv-c alb-sk${d.fresh ? " new" : ""}"><div class="alb-sb"><img src="${esc(d.sk.img)}" alt=""></div><figcaption>${esc(d.sk.name)}${d.dup ? ` · +${d.dup} Coins` : ""}</figcaption><span class="alb-tag">${d.fresh ? "SKIN NOVA!" : "Repetida"}</span></figure>`;
+}
+function chestNext() {
+  const s = chestShow, st = $("#alb-stage"); if (!s || !st || s.busy) return;
+  s.busy = true;
+  const show = () => {
+    s.i++;
+    if (s.i >= s.got.length) return chestSummary();
+    const d = s.got[s.i], rare = d.t === "skin" && d.fresh || d.t === "coins" && d.n >= 60 || d.t === "photo" && d.fresh;
+    st.innerHTML = `<div class="rv-step"><div class="rv-burst on${rare ? " rare" : ""}" aria-hidden="true"></div><div class="rv-card">${chestCard(d)}</div>
+      <div class="rv-lab">${esc(chestKind(d))}</div><div class="rv-dots" aria-hidden="true">${s.got.map((_, k) => `<i class="${k <= s.i ? "on" : ""}"></i>`).join("")}</div>
+      <button class="btn rv-go" data-alb-next>${s.i === s.got.length - 1 ? "Ver resumo" : "Próximo prêmio"}</button></div>`;
     if (typeof lgBeep === "function") lgBeep("ok");
-  }, 1300);
+    s.busy = false; const b = $(".rv-go"); if (b) b.focus({ preventScroll: true });
+  };
+  const old = st.querySelector(".rv-card, .chest-w");
+  if (old && s.i >= 0) { old.classList.add("rv-out"); setTimeout(show, 380) } else show();
+}
+function chestSummary() {
+  const s = chestShow, st = $("#alb-stage"); if (!s || !st) return; s.busy = false;
+  const parts = []; if (s.sk.length) parts.push(`${s.sk.length > 1 ? "skins novas" : "skin nova"}: ${s.sk.map(d => esc(d.sk.name)).join(", ")} (com avatar e banner!)`);
+  if (s.nf) parts.push(`${s.nf} foto${s.nf > 1 ? "s" : ""} nova${s.nf > 1 ? "s" : ""}`); if (s.coins) parts.push(`${s.coins} Enzola Coins`);
+  st.innerHTML = `<div class="alb-got">${s.got.map((d, i) => `<div style="--i:${i};display:contents">${chestCard(d).replace("alb-c rv-c", "alb-c")}</div>`).join("")}</div>
+    <p class="alb-sum">${parts.length ? "Você ganhou " + parts.join(" · ") + "!" : "Só repetidas desta vez. Tente outro baú!"}${s.done ? " 🎉 Álbum completo!" : ""}</p>
+    <div class="alb-acts">${lg.chests > 0 ? `<button class="btn" data-alb-open>Abrir outro (${lg.chests})</button>` : ""}<button class="btn ghost" data-alb-close>Fechar</button></div>`;
 }
 function albumHTML() {
   albumLoad(); const own = albumOwned(), N = ALBUM.length, pct = N ? Math.round(own / N * 100) : 0;
@@ -234,6 +253,7 @@ document.addEventListener("click", e => {
   const c = s => e.target.closest(s); let b;
   if (b = c("[data-alb-go]")) { const g = b.dataset.albGo; albGo(g === "next" ? albPg + 1 : g === "prev" ? albPg - 1 : +g); return }
   if (b = c("[data-mg]")) { mgTab = b.dataset.mg; renderLingo(); return }
+  if (c("[data-alb-next]")) { chestNext(); return }
   if (c("[data-alb-open]") && !c("[data-alb-open]").disabled) { chestOpen(); return }
   if (c("[data-alb-close]") || e.target.id === "alb-ovl") { albumClose(); return }
   if (b = c("[data-alb-zoom]")) { const p = ALBUM.find(x => x.id === b.dataset.albZoom); if (!p) return; const n = (lg.album || {})[p.id] || 0;
