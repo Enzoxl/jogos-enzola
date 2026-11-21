@@ -352,13 +352,14 @@ async function certPdf(cv) {
   put(`trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xr}\n%%EOF`);
   return new Blob(parts, { type: "application/pdf" });
 }
-function certHTML() {
+function certHTML(keys = ["lingo", "album"]) {
   rewardsCheck(); const [dn, dt] = lgDoneCount(), N = ALBUM.length, own = albumOwned();
   const card = (k, ok, prog, hint) => `<div class="cert-card${ok ? " ok" : ""}"><div class="cert-pv" id="cp-${k}">${ok ? `<span class="muted">Gerando prévia…</span>` : `<div class="cert-lock">🔒<small>${hint}</small></div>`}</div>
     <div class="cert-b"><b>Certificado · ${CERT[k].title}</b><small class="muted">${ok ? "Concedido em " + certDate(lg.cert[k]) : prog}</small>
     ${ok ? `<div class="cert-a"><button class="btn sm" data-cert="${k}:png">${ic("image")}Baixar imagem</button><button class="btn ghost sm" data-cert="${k}:pdf">${ic("download")}Baixar PDF</button></div>` : ""}</div></div>`;
-  return `<div class="sec-head"><div><h2 class="h">Certificados</h2><p class="muted">Conclua o Enzolingo ou o álbum de hipopótamos para ganhar um certificado com o seu nome e uma skin exclusiva.</p></div></div>
-    <div class="cert-grid">${card("lingo", !!(lg.cert || {}).lingo, `${dn}/${dt} lições concluídas`, `${dn}/${dt} lições`)}${card("album", !!(lg.cert || {}).album, `${own}/${N} fotos no álbum`, `${own}/${N} fotos`)}</div>`;
+  const earned = keys.filter(k => (lg.cert || {})[k]); if (!earned.length) return "";     // certificados só aparecem depois de conquistados
+  return `<div class="sec-head cert-h"><div><h2 class="h">🏅 ${earned.length > 1 ? "Seus certificados" : "Seu certificado"}</h2><p class="muted">Conquista concluída! Baixe em imagem ou PDF.</p></div></div>
+    <div class="cert-grid">${earned.map(k => card(k, true)).join("")}</div>`;
 }
 async function certPreview() {
   for (const k of ["lingo", "album"]) { if (!(lg.cert || {})[k]) continue; const box = $("#cp-" + k); if (!box) continue;

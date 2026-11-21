@@ -447,8 +447,8 @@ document.addEventListener("input", e => { if (lgS && e.target.id === "lg-in") lg
 function renderLingo() {
   const el = $("#idiomas"); if (!el) return;
   if (typeof rewardsCheck === "function") rewardsCheck();
-  const seg = `<div class="mg-seg" role="tablist" aria-label="Minigames"><button role="tab" aria-selected="${mgTab === "game"}" data-mg="game">🦛 Enzolingo</button><button role="tab" aria-selected="${mgTab === "cert"}" data-mg="cert">🏅 Certificados</button><button role="tab" aria-selected="${mgTab === "album"}" data-mg="album">📖 Álbum${typeof chestBadge === "function" && user && chestBadge() > 0 ? ` <span class="mg-dot">${chestBadge()}</span>` : ""}</button></div>`;
-  if (mgTab === "cert" && typeof certHTML === "function") { lg = lgLoad(); el.innerHTML = seg + certHTML(); certPreview() }
-  else if (mgTab === "album" && typeof albumHTML === "function") { lg = lgLoad(); el.innerHTML = seg + albumHTML() }
-  else { renderLingo0(); el.insertAdjacentHTML("afterbegin", seg) }
+  const seg = `<div class="mg-seg" role="tablist" aria-label="Minigames"><button role="tab" aria-selected="${mgTab === "game"}" data-mg="game">🦛 Enzolingo</button><button role="tab" aria-selected="${mgTab === "album"}" data-mg="album">📖 Álbum${typeof chestBadge === "function" && user && chestBadge() > 0 ? ` <span class="mg-dot">${chestBadge()}</span>` : ""}</button><button role="tab" aria-selected="${mgTab === "arcade"}" data-mg="arcade">🎮 Outros jogos</button></div>`;
+  if (mgTab === "arcade" && typeof arcadeHTML === "function") { el.innerHTML = seg + arcadeHTML(); arcadeMount() }
+  else if (mgTab === "album" && typeof albumHTML === "function") { lg = lgLoad(); el.innerHTML = seg + albumHTML() + (typeof certHTML === "function" ? certHTML(["album"]) : ""); if (typeof certPreview === "function") certPreview() }
+  else { if (typeof snStop === "function") snStop(); renderLingo0(); el.insertAdjacentHTML("afterbegin", seg); if (!lgS && typeof certHTML === "function") { lg = lgLoad(); el.insertAdjacentHTML("beforeend", certHTML(["lingo"])); certPreview() } }
 }
