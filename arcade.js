@@ -6,11 +6,26 @@ const AR_GAMES = [
 ];
 let arSel = null;
 // recompensa por nível: a pessoa recebe as moedas do MAIOR nível alcançado na partida (não soma)
-const SN = { N: 16, dayCap: 80, levels: [{ pts: 3, coins: 2 }, { pts: 8, coins: 5 }, { pts: 15, coins: 10 }, { pts: 25, coins: 16 }, { pts: 40, coins: 24 }, { pts: 60, coins: 35 }, { pts: 90, coins: 50 }] };
+const SN = { N: 16, full: 8, dayCap: 80, levels: [{ pts: 3, coins: 2 }, { pts: 8, coins: 5 }, { pts: 15, coins: 10 }, { pts: 25, coins: 16 }, { pts: 40, coins: 24 }, { pts: 60, coins: 35 }, { pts: 90, coins: 50 }] };
 const snLevel = pts => SN.levels.reduce((l, x, i) => pts >= x.pts ? i + 1 : l, 0);
 const snCoinsFor = pts => { const l = snLevel(pts); return l ? SN.levels[l - 1].coins : 0 };
 let sn = null, snRaf = 0, snHead = null, snKeysBound = false;
 snHead = new Image(); snHead.src = "hipopotamo.webp";
+let snPat = null, snPatU = 0, snHeadCv = null;
+function snHeadSprite() {
+  if (snHeadCv || !(snHead.complete && snHead.naturalWidth)) return snHeadCv;
+  const t = document.createElement("canvas"); t.width = 350; t.height = 280; const x = t.getContext("2d");
+  x.drawImage(snHead, 130, 0, 350, 280, 0, 0, 350, 280);
+  x.globalCompositeOperation = "destination-in"; const g = x.createLinearGradient(0, 0, 110, 0); g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(.75, "#000"); x.fillStyle = g; x.fillRect(0, 0, 350, 280);
+  const g2 = x.createLinearGradient(0, 215, 0, 280); g2.addColorStop(0, "#000"); g2.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = g2; x.fillRect(0, 0, 350, 280);
+  return (snHeadCv = t);
+}
+// textura da pele do hipopótamo, recortada da própria foto (barriga/peito)
+function snSkin(c, u) {
+  if (!(snHead.complete && snHead.naturalWidth)) return "#7b8396";
+  if (!snPat || snPatU !== u) { const t = document.createElement("canvas"); t.width = t.height = Math.max(8, Math.round(u * 2.2)); const x = t.getContext("2d"); x.drawImage(snHead, 120, 290, 220, 220, 0, 0, t.width, t.height); snPat = c.createPattern(t, "repeat"); snPatU = u }
+  return snPat || "#7b8396";
+}
 
 const snStats = () => { lg = lg || lgLoad(); const s = lg.snake = lg.snake || { best: 0, day: "", earned: 0, plays: 0 }; if (s.day !== spDay(0)) { s.day = spDay(0); s.earned = 0 } return s };
 
@@ -33,8 +48,8 @@ function arcadeMount() { if (arSel === "snake") { if (!sn) snNew(); snFit(); snU
 /* ---------- lógica ---------- */
 function snNew() {
   const N = SN.N, m = Math.floor(N / 2);
-  const body = [{ x: m, y: m }, { x: m - 1, y: m }, { x: m - 2, y: m }];
-  sn = { body, prev: body.map(b => ({ ...b })), dir: { x: 1, y: 0 }, q: [], score: 0, state: "ready", acc: 0, t: 0, fruit: null, parts: [], ang: 0, shake: 0, coins: 0, newBest: false, pops: [], golden: false, lv: 0, level: 0 };
+  const body = [{ x: m, y: m }, { x: m - 1, y: m }];
+  sn = { body, prev: body.map(b => ({ ...b })), dir: { x: 1, y: 0 }, q: [], score: 0, state: "ready", acc: 0, t: 0, fruit: null, parts: [], ang: 0, shake: 0, coins: 0, newBest: false, pops: [], golden: false, lv: 0, level: 0, done: false };
   snFruit();
 }
 const snFree = (x, y) => !sn.body.some(b => b.x === x && b.y === y);
@@ -43,7 +58,7 @@ function snFruit() {
   if (!cells.length) { sn.fruit = null; return }
   const c = cells[Math.floor(Math.random() * cells.length)]; sn.fruit = { ...c, gold: sn.score >= 4 && Math.random() < .12, born: performance.now() };
 }
-const snSpeed = () => Math.max(72, 150 - sn.score * 2.2);
+const snSpeed = () => Math.max(125, 235 - sn.score * 2.2);      // devagar no começo; acelera pouco
 function snDir(d) {
   if (!sn || sn.state === "over") return;
   const last = sn.q.length ? sn.q[sn.q.length - 1] : sn.dir;
@@ -66,6 +81,7 @@ function snTick() {
     for (let i = 0; i < 12; i++) { const a = Math.random() * 6.283, v = .5 + Math.random() * 1.6; sn.parts.push({ x: nh.x + .5, y: nh.y + .5, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 1, c: g ? "#ffd84a" : (i % 2 ? "#ff5c7a" : "#4ade80") }) }
     sn.pops.push({ x: nh.x + .5, y: nh.y, t: 1, txt: "+" + add, gold: g });
     const lv = snLevel(sn.score); if (lv > sn.lv) { sn.lv = lv; sn.pops.push({ x: SN.N / 2, y: 2.2, t: 1.6, txt: "Nível " + lv + "! +" + SN.levels[lv - 1].coins + " 🪙", gold: true, big: true }) }
+    if (!sn.done && sn.body.length >= SN.full) { sn.done = true; sn.pops.push({ x: SN.N / 2, y: 4.2, t: 1.6, txt: "Corpo completo!", gold: false, big: true }) }
     snFruit(); snUI();
     if (!sn.fruit) snOver(true);
   }
@@ -116,20 +132,29 @@ function snDraw(cv, k, now) {
       c.fillStyle = "#ff4f6d"; c.beginPath(); c.arc(0, -r * .2, r * .8, 0, Math.PI); c.closePath(); c.fill();
       c.fillStyle = "#2a1020"; for (const [sx, sy] of [[-.4, .25], [0, .4], [.4, .25]]) { c.beginPath(); c.ellipse(sx * r, (sy - .2) * r, r * .07, r * .11, 0, 0, 7); c.fill() } }
     c.restore() }
-  // corpo
+  const sizeK = 1 + Math.min(.18, Math.max(0, sn.body.length - SN.full) * .012);   // depois de completo, cresce de tamanho a cada fruta
+  // corpo: tubo com a pele da foto + detalhes que "completam" o hipopótamo conforme cresce
   if (P.length > 1) {
     const path = () => { c.beginPath(); c.moveTo(P[P.length - 1].x, P[P.length - 1].y); for (let i = P.length - 2; i >= 0; i--) c.lineTo(P[i].x, P[i].y) };
+    const dirAt = i => { const a = P[Math.max(0, i - 1)], b = P[Math.min(P.length - 1, i + 1)], dx = a.x - b.x, dy = a.y - b.y, m = Math.hypot(dx, dy) || 1; return { x: dx / m, y: dy / m } };
+    const paw = (i, off, rx, ry) => { const d = dirAt(i), nx = -d.y, ny = d.x, p = P[i]; for (const sg of [-1, 1]) { c.save(); c.translate(p.x + nx * sg * u * off, p.y + ny * sg * u * off); c.rotate(Math.atan2(d.y, d.x)); c.fillStyle = snSkin(c, u); c.strokeStyle = "#39403a"; c.lineWidth = u * .06; c.beginPath(); c.ellipse(0, 0, u * rx, u * ry, 0, 0, 7); c.fill(); c.stroke(); c.fillStyle = "rgba(120,130,110,.16)"; c.fill(); c.fillStyle = "rgba(20,24,32,.55)"; for (const t of [-.5, 0, .5]) { c.beginPath(); c.arc(u * rx * .62, u * ry * t, u * .035, 0, 7); c.fill() } c.restore() } };
     c.lineCap = c.lineJoin = "round";
-    c.strokeStyle = "rgba(0,0,0,.28)"; c.lineWidth = u * .86; c.save(); c.translate(0, u * .07); path(); c.stroke(); c.restore();
-    c.strokeStyle = "#5f6676"; c.lineWidth = u * .84; path(); c.stroke();
-    c.strokeStyle = "#7b8396"; c.lineWidth = u * .6; path(); c.stroke();
-    c.strokeStyle = "rgba(190,200,220,.35)"; c.lineWidth = u * .22; c.save(); c.translate(0, -u * .1); path(); c.stroke(); c.restore();
+    const L = P.length;
+    if (L >= 4) paw(Math.min(2, L - 1), .5 * sizeK, .3, .18);                 // patinhas da frente
+    if (L >= 7) paw(L - 2, .48 * sizeK, .3, .18);                              // patinhas de trás
+    c.strokeStyle = "rgba(0,0,0,.3)"; c.lineWidth = u * .94 * sizeK; c.save(); c.translate(0, u * .07); path(); c.stroke(); c.restore();
+    c.strokeStyle = "#39403a"; c.lineWidth = u * .92 * sizeK; path(); c.stroke();
+    c.strokeStyle = snSkin(c, u); c.lineWidth = u * .84 * sizeK; path(); c.stroke();
+    c.strokeStyle = "rgba(120,130,110,.14)"; c.lineWidth = u * .84 * sizeK; path(); c.stroke();
+    c.strokeStyle = "rgba(210,220,200,.2)"; c.lineWidth = u * .3 * sizeK; c.save(); c.translate(0, -u * .14); path(); c.stroke(); c.restore();
+    for (let i = 1; i <= Math.min(3, L - 1); i++) { const d = dirAt(i), nx = -d.y, ny = d.x, p = P[i]; c.strokeStyle = "rgba(25,30,40,.4)"; c.lineWidth = u * .045; c.beginPath(); c.moveTo(p.x + nx * u * .38 + d.x * u * .05, p.y + ny * u * .38 + d.y * u * .05); c.quadraticCurveTo(p.x + d.x * u * .16, p.y + d.y * u * .16, p.x - nx * u * .38 + d.x * u * .05, p.y - ny * u * .38 + d.y * u * .05); c.stroke() }   // dobrinhas do pescoço
+    if (L >= 6) { const t = P[L - 1], d = dirAt(L - 1); c.fillStyle = "#4b5160"; c.strokeStyle = "#2f3441"; c.lineWidth = u * .04; c.beginPath(); c.ellipse(t.x - d.x * u * .5, t.y - d.y * u * .5, u * .12, u * .09, Math.atan2(d.y, d.x), 0, 7); c.fill(); c.stroke() }   // rabinho
   }
   // cabeça (foto do hipopótamo, girando suave)
   const h = P[0], d = sn.dir, target = Math.atan2(d.y, d.x); let diff = target - sn.ang; while (diff > Math.PI) diff -= 6.283; while (diff < -Math.PI) diff += 6.283; sn.ang += diff * .28;
   c.save(); c.translate(h.x + d.x * u * .12, h.y + d.y * u * .12); c.rotate(sn.ang); if (Math.cos(sn.ang) < 0) c.scale(1, -1);
-  const hw = u * 2.15, hh = hw * 280 / 350;
-  if (snHead.complete && snHead.naturalWidth) c.drawImage(snHead, 130, 0, 350, 280, -hw * .5, -hh * .5, hw, hh); else { c.fillStyle = "#8a93a6"; c.beginPath(); c.arc(0, 0, u * .6, 0, 7); c.fill() }
+  const hw = u * 2.15 * sizeK, hh = hw * 280 / 350;
+  const hs = snHeadSprite(); if (hs) c.drawImage(hs, -hw * .5, -hh * .5, hw, hh); else { c.fillStyle = "#8a93a6"; c.beginPath(); c.arc(0, 0, u * .6, 0, 7); c.fill() }
   c.restore();
   // partículas e +pontos
   sn.parts = sn.parts.filter(p => (p.life -= .035) > 0); for (const p of sn.parts) { p.x += p.vx * .03; p.y += p.vy * .03; c.globalAlpha = Math.max(0, p.life); c.fillStyle = p.c; c.beginPath(); c.arc(p.x * u, p.y * u, u * .1 * p.life + 1, 0, 7); c.fill() }
