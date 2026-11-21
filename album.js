@@ -73,22 +73,50 @@ const ALBUM = [
 ];
 const CHEST_PRICE = 60, CHEST_PRICE_5 = 270, CHEST_DRAWS = 3;
 let mgTab = "game";
-const chestSvg = (cls = "") => `<svg class="chest ${cls}" viewBox="0 0 120 100" aria-hidden="true"><g class="chest-lid"><path d="M12 44 Q12 12 60 12 Q108 12 108 44 Z" fill="#a8662f" stroke="#4a2810" stroke-width="3"/><rect x="50" y="12" width="20" height="32" fill="#f2bd2c" stroke="#4a2810" stroke-width="2"/><path d="M12 44 H108" stroke="#4a2810" stroke-width="3"/></g>
-  <rect x="12" y="44" width="96" height="46" rx="5" fill="#a8662f" stroke="#4a2810" stroke-width="3"/><rect x="50" y="44" width="20" height="46" fill="#f2bd2c" stroke="#4a2810" stroke-width="2"/><rect x="54" y="52" width="12" height="14" rx="3" fill="#fff4c2" stroke="#4a2810" stroke-width="2"/><circle cx="60" cy="59" r="2.2" fill="#4a2810"/></svg>`;
+let chestUid = 0;
+const chestSvg = (cls = "") => { const u = "c" + (++chestUid); return `<svg class="chest ${cls}" viewBox="0 0 140 120" aria-hidden="true"><defs>
+  <linearGradient id="${u}w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c98a4b"/><stop offset=".55" stop-color="#9a5e2c"/><stop offset="1" stop-color="#6e3d1a"/></linearGradient>
+  <linearGradient id="${u}m" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8a93a6"/><stop offset=".45" stop-color="#e3e8f2"/><stop offset="1" stop-color="#7c869b"/></linearGradient>
+  <linearGradient id="${u}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0a0"/><stop offset=".5" stop-color="#ffc936"/><stop offset="1" stop-color="#c9850a"/></linearGradient>
+  <radialGradient id="${u}l" cx=".5" cy=".6" r=".6"><stop offset="0" stop-color="#fff8c4"/><stop offset=".5" stop-color="#ffd24a" stop-opacity=".85"/><stop offset="1" stop-color="#ffb000" stop-opacity="0"/></radialGradient></defs>
+  <ellipse cx="70" cy="112" rx="56" ry="6" fill="rgba(0,0,0,.28)"/>
+  <g class="chest-in"><ellipse cx="70" cy="62" rx="52" ry="22" fill="url(#${u}l)"/><g class="chest-coins"><ellipse cx="46" cy="60" rx="9" ry="4.2" fill="#ffc936" stroke="#a86a06" stroke-width="1.4"/><ellipse cx="62" cy="55" rx="9" ry="4.2" fill="#ffd95e" stroke="#a86a06" stroke-width="1.4"/><ellipse cx="80" cy="57" rx="9" ry="4.2" fill="#ffc936" stroke="#a86a06" stroke-width="1.4"/><ellipse cx="95" cy="62" rx="9" ry="4.2" fill="#ffd95e" stroke="#a86a06" stroke-width="1.4"/><ellipse cx="70" cy="52" rx="9" ry="4.2" fill="#fff0a0" stroke="#a86a06" stroke-width="1.4"/></g></g>
+  <path d="M14 62 H126 V104 Q126 108 122 108 H18 Q14 108 14 104 Z" fill="url(#${u}w)" stroke="#3d200c" stroke-width="3" stroke-linejoin="round"/>
+  <g stroke="#3d200c" stroke-width="1.2" opacity=".55"><path d="M14 76 H126"/><path d="M14 91 H126"/><path d="M30 62 V108 M52 62 V108 M88 62 V108 M110 62 V108" opacity=".5"/></g>
+  <path d="M20 66 H44 M72 80 H104 M24 96 H50" stroke="#e9b27a" stroke-width="1.4" opacity=".5" stroke-linecap="round"/>
+  <g stroke="#3d200c" stroke-width="2"><rect x="14" y="60" width="16" height="48" rx="3" fill="url(#${u}m)"/><rect x="110" y="60" width="16" height="48" rx="3" fill="url(#${u}m)"/><rect x="14" y="98" width="112" height="10" rx="3" fill="url(#${u}m)"/></g>
+  <g fill="#4a5163"><circle cx="22" cy="68" r="1.8"/><circle cx="22" cy="84" r="1.8"/><circle cx="22" cy="102" r="1.8"/><circle cx="118" cy="68" r="1.8"/><circle cx="118" cy="84" r="1.8"/><circle cx="118" cy="102" r="1.8"/></g>
+  <g class="chest-lid"><path d="M12 62 V46 Q12 14 70 14 Q128 14 128 46 V62 Z" fill="url(#${u}w)" stroke="#3d200c" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M26 56 Q30 24 70 22" fill="none" stroke="#e9b27a" stroke-width="2" opacity=".45" stroke-linecap="round"/>
+    <g stroke="#3d200c" stroke-width="1.2" opacity=".5"><path d="M20 34 Q70 6 120 34" fill="none"/><path d="M13 48 H127"/></g>
+    <g stroke="#3d200c" stroke-width="2"><path d="M12 62 V46 Q12 30 22 22 L32 22 Q20 32 30 62 Z" fill="url(#${u}m)"/><path d="M128 62 V46 Q128 30 118 22 L108 22 Q120 32 110 62 Z" fill="url(#${u}m)"/><path d="M52 15 Q70 12 88 15 V62 H52 Z" fill="url(#${u}g)"/></g>
+    <rect x="12" y="56" width="116" height="8" rx="2" fill="url(#${u}m)" stroke="#3d200c" stroke-width="2"/>
+    <g fill="#4a5163"><circle cx="21" cy="46" r="1.8"/><circle cx="119" cy="46" r="1.8"/></g><path d="M56 22 V58 M84 22 V58" stroke="#a86a06" stroke-width="1.2" opacity=".6"/></g>
+  <g class="chest-lock"><rect x="58" y="62" width="24" height="26" rx="5" fill="url(#${u}g)" stroke="#3d200c" stroke-width="2.4"/><circle cx="70" cy="73" r="4.2" fill="#3d200c"/><path d="M68.4 75 h3.2 l1 8 h-5.2 z" fill="#3d200c"/><path d="M62 66 q8 -4 16 0" stroke="#fff6c8" stroke-width="1.6" fill="none" opacity=".8" stroke-linecap="round"/></g>
+</svg>` };
 function albumLoad() { lg = lg || lgLoad(); lg.album = lg.album || {}; if (ALBUM.length && !lg.bauWelcome) { lg.bauWelcome = true; lg.chests = (lg.chests || 0) + 1; lgSave(true) } return lg }
 const albumOwned = () => { albumLoad(); return ALBUM.filter(p => lg.album[p.id] > 0).length };
 function chestGive(n, why) {
-  if (!user || !ALBUM.length || !n) return 0;
+  if (!user || !n) return 0;
   albumLoad(); lg.chests = (lg.chests || 0) + n; lgSave(true);
   if (why) toast(`🎁 ${why}: você ganhou ${n === 1 ? "um baú da sorte" : n + " baús da sorte"}! Abra em Minigames › Álbum.`);
   return n;
 }
+const CHEST_COINS = [[5, 34], [10, 28], [20, 18], [35, 11], [60, 6], [100, 2.5], [200, 0.5]];
+const CHEST_ODDS = { photo: 55, coins: 33, skin: 12 };   // % por sorteio
+const chestSkins = () => LG_SKINS.filter(k => !k.group && k.price > 0);   // fora a skin de metas (Free Fire) e a clássica
+function chestPick(list) { const t = list.reduce((a, x) => a + x[1], 0); let r = Math.random() * t; for (const x of list) { r -= x[1]; if (r <= 0) return x[0] } return list[0][0] }
 function chestDraw() {
-  const tot = ALBUM.reduce((a, p) => a + (p.rar || 1), 0); let r = Math.random() * tot;
-  for (const p of ALBUM) { r -= p.rar || 1; if (r <= 0) return p } return ALBUM[ALBUM.length - 1];
+  let r = Math.random() * 100, kind = r < CHEST_ODDS.photo ? "photo" : r < CHEST_ODDS.photo + CHEST_ODDS.coins ? "coins" : "skin";
+  if (kind === "photo" && !ALBUM.length) kind = "coins";
+  if (kind === "skin") { const pool = chestSkins().filter(k => !skinHas(k.id)); if (pool.length) { const w = pool.map(k => [k, 1 / Math.sqrt(k.price)]); return { t: "skin", sk: chestPick(w) } } kind = "coins" }
+  if (kind === "coins") return { t: "coins", n: chestPick(CHEST_COINS) };
+  const tot = ALBUM.reduce((a, p) => a + (p.rar || 1), 0); let q = Math.random() * tot, hit = ALBUM[ALBUM.length - 1];
+  for (const p of ALBUM) { q -= p.rar || 1; if (q <= 0) { hit = p; break } }
+  return { t: "photo", p: hit };
 }
 function chestBuy(n) {
-  albumLoad(); if (!ALBUM.length) { toast("O álbum chega em breve!"); return }
+  albumLoad();
   const price = n === 5 ? CHEST_PRICE_5 : CHEST_PRICE;
   if ((lg.goiabas || 0) < price) { toast(`Faltam ${price - (lg.goiabas || 0)} Enzola Coins.`); return }
   lg.goiabas -= price; lg.chests = (lg.chests || 0) + n; lgSave(true);
@@ -97,19 +125,30 @@ function chestBuy(n) {
 function albumOvl() { let b = $("#alb-ovl"); if (!b) { b = document.createElement("div"); b.id = "alb-ovl"; b.className = "alb-ovl"; b.setAttribute("role", "dialog"); b.setAttribute("aria-modal", "true"); b.setAttribute("aria-label", "Baú da sorte"); document.body.append(b); document.documentElement.classList.add("lg-open") } return b }
 function albumClose() { const b = $("#alb-ovl"); if (b) b.remove(); if (!$("#lgs-ovl") && !$("#sh-ovl")) document.documentElement.classList.remove("lg-open"); if (tab === "idiomas") renderLingo() }
 function chestOpen() {
-  albumLoad(); if (!(lg.chests > 0) || !ALBUM.length) return;
-  lg.chests--; const got = Array.from({ length: CHEST_DRAWS }, chestDraw);
-  const fresh = got.map(p => !(lg.album[p.id] > 0) ? (lg.album[p.id] = 1, true) : (lg.album[p.id]++, false));
-  // se a mesma foto nova sair duas vezes no mesmo baú, só a primeira é "nova"
-  const seen = new Set(); got.forEach((p, i) => { if (fresh[i]) { if (seen.has(p.id)) fresh[i] = false; seen.add(p.id) } });
+  albumLoad(); if (!(lg.chests > 0)) return;
+  lg.chests--; lg.skins = lg.skins || {};
+  const got = Array.from({ length: CHEST_DRAWS }, () => {
+    const d = chestDraw();
+    if (d.t === "photo") { const had = lg.album[d.p.id] > 0; lg.album[d.p.id] = (lg.album[d.p.id] || 0) + 1; d.fresh = !had }
+    else if (d.t === "coins") lg.goiabas = (lg.goiabas || 0) + d.n;
+    else { if (skinHas(d.sk.id)) { d.dup = Math.round(d.sk.price / 2); lg.goiabas = (lg.goiabas || 0) + d.dup } else { lg.skins[d.sk.id] = true; d.fresh = true } }
+    return d;
+  });
   lgSave(true);
-  const done = albumOwned() === ALBUM.length;
+  const done = ALBUM.length && albumOwned() === ALBUM.length, nf = got.filter(d => d.t === "photo" && d.fresh).length, coins = got.reduce((a, d) => a + (d.t === "coins" ? d.n : d.dup || 0), 0), sk = got.filter(d => d.t === "skin" && d.fresh);
   albumOvl().innerHTML = `<div class="alb-box"><button class="iconbtn lgs-x" data-alb-close aria-label="Fechar">${ic("x")}</button>
     <div class="alb-stage" id="alb-stage"><div class="chest-w shake">${chestSvg()}</div><p class="muted">Abrindo o baú…</p></div></div>`;
   setTimeout(() => {
     const st = $("#alb-stage"); if (!st) return;
-    st.innerHTML = `<div class="chest-w open">${chestSvg("open")}</div><div class="alb-got">${got.map((p, i) => `<figure class="alb-c${fresh[i] ? " new" : ""}" style="--i:${i}"><img src="${esc(p.img)}" alt="${esc(p.name)}"><figcaption>${esc(p.name)}</figcaption><span class="alb-tag">${fresh[i] ? "NOVA!" : "Repetida"}</span></figure>`).join("")}</div>
-      <p class="alb-sum">${fresh.filter(Boolean).length ? `${fresh.filter(Boolean).length} foto${fresh.filter(Boolean).length > 1 ? "s" : ""} nova${fresh.filter(Boolean).length > 1 ? "s" : ""} no álbum!` : "Só repetidas desta vez. Tente outro baú!"}${done ? " 🎉 Álbum completo!" : ""}</p>
+    const card = (d, i) => {
+      if (d.t === "photo") return `<figure class="alb-c${d.fresh ? " new" : ""}" style="--i:${i}"><img src="${esc(d.p.img)}" alt="${esc(d.p.name)}"><figcaption>${esc(d.p.name)}</figcaption><span class="alb-tag">${d.fresh ? "NOVA!" : "Repetida"}</span></figure>`;
+      if (d.t === "coins") return `<figure class="alb-c alb-coin" style="--i:${i}"><div class="alb-cb">${gbI("big")}<b>+${d.n}</b></div><figcaption>Enzola Coins</figcaption><span class="alb-tag">Moedas</span></figure>`;
+      return `<figure class="alb-c alb-sk${d.fresh ? " new" : ""}" style="--i:${i}"><div class="alb-sb"><img src="${esc(d.sk.img)}" alt=""></div><figcaption>${esc(d.sk.name)}${d.dup ? ` · +${d.dup}` : ""}</figcaption><span class="alb-tag">${d.fresh ? "SKIN NOVA!" : "Repetida"}</span></figure>`;
+    };
+    const parts = []; if (sk.length) parts.push(`${sk.length > 1 ? "skins novas" : "skin nova"}: ${sk.map(d => esc(d.sk.name)).join(", ")} (com avatar e banner!)`);
+    if (nf) parts.push(`${nf} foto${nf > 1 ? "s" : ""} nova${nf > 1 ? "s" : ""}`); if (coins) parts.push(`${coins} Enzola Coins`);
+    st.innerHTML = `<div class="chest-w open">${chestSvg("open")}</div><div class="alb-got">${got.map(card).join("")}</div>
+      <p class="alb-sum">${parts.length ? "Você ganhou " + parts.join(" · ") + "!" : "Só repetidas desta vez. Tente outro baú!"}${done ? " 🎉 Álbum completo!" : ""}</p>
       <div class="alb-acts">${lg.chests > 0 ? `<button class="btn" data-alb-open>Abrir outro (${lg.chests})</button>` : ""}<button class="btn ghost" data-alb-close>Fechar</button></div>`;
     if (typeof lgBeep === "function") lgBeep("ok");
   }, 1300);
@@ -117,7 +156,7 @@ function chestOpen() {
 function albumHTML() {
   albumLoad(); const own = albumOwned(), N = ALBUM.length, pct = N ? Math.round(own / N * 100) : 0;
   if (!N) return `<div class="sec-head"><div><h2 class="h">Álbum de hipopótamos</h2><p class="muted">Junte todas as fotos abrindo baús da sorte.</p></div></div><div class="panel empty"><b>Em breve</b>As primeiras fotos de hipopótamos estão chegando ao álbum.</div>`;
-  return `<div class="sec-head"><div><h2 class="h">Álbum de hipopótamos</h2><p class="muted">Abra baús da sorte para ganhar fotos. Podem vir repetidas!</p></div></div>
+  return `<div class="sec-head"><div><h2 class="h">Álbum de hipopótamos</h2><p class="muted">Abra baús da sorte: fotos, Enzola Coins ou até skins. Fotos podem vir repetidas!</p></div></div>
     <div class="alb-top panel"><div class="alb-prog"><b>${own}/${N} fotos</b><div class="g-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${N}" aria-valuenow="${own}"><i style="width:${pct}%"></i></div>${own === N ? `<small>🎉 Álbum completo!</small>` : `<small class="muted">Faltam ${N - own}</small>`}</div>
       <div class="alb-ch">${chestSvg("sm")}<div><b>${lg.chests || 0} baú${(lg.chests || 0) === 1 ? "" : "s"}</b><small class="muted">Ganhe no Enzolingo e no Show</small></div></div>
       <div class="alb-btns"><button class="btn" data-alb-open${lg.chests > 0 ? "" : " disabled"}>Abrir baú</button><button class="btn ghost" data-lg-shop data-lgs-bau>${gbI()}Comprar baú</button></div></div>
