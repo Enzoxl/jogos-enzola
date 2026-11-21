@@ -216,6 +216,14 @@ function renderHome() {
       ${hm.tagOpen ? `<div class="hm-pick" role="group" aria-label="Marcar amigos">${frAccepted().length ? frAccepted().map(f => { const id = other(f), on = hm.tags.includes(id); return `<button class="hm-pk${on ? " on" : ""}" data-hm="tag" data-id="${id}" aria-pressed="${on}">${hmAv(id, "xs")}<span>${esc(pName(pOf(id)))}</span>${on ? ic("check") : ""}</button>` }).join("") : `<span class="muted">Adicione amigos para poder marcá-los.</span>`}</div>` : ""}
       <div class="hm-cb2"><div class="hm-l"><label class="btn ghost sm hm-file">${ic("image")}Foto<input type="file" id="hm-file" accept="image/*" hidden></label><button class="btn ghost sm" data-hm="tagtoggle" aria-expanded="${hm.tagOpen}">${ic("userplus")}Marcar</button></div><button class="btn sm" data-hm="post"${hm.busy ? " disabled" : ""}>${ic("send")}Publicar</button></div></div>
     <div class="hm-feed">${hm.posts.length ? hm.posts.map(hmPostHTML).join("") : `<div class="panel empty"><b>Nada por aqui ainda</b>Publique algo ou adicione amigos para ver as novidades deles.<br><a class="btn sm" href="#amigos">Encontrar amigos</a></div>`}</div>`;
+  if (hm.focus) hmFocusRun();
+}
+// vem de uma notificação de curtida/comentário: rola até o post, abre os comentários e destaca
+function hmFocusRun() {
+  const id = hm.focus; if (!id || !hm.loaded) return; hm.focus = null;
+  if (!hm.posts.some(p => p.id === id)) { toast("Esse post não está mais no feed."); return }
+  if (!hm.open.has(id)) { hm.open.add(id); renderHome() }
+  requestAnimationFrame(() => { const el = document.querySelector(`.hm-post[data-pid="${id}"]`); if (!el) return; el.scrollIntoView({ block: "center", behavior: "smooth" }); el.classList.add("hm-hl"); setTimeout(() => el.classList.remove("hm-hl"), 2600) });
 }
 function hmPromo() {
   return `<a class="hm-promo" href="#movimento"><span class="hm-pl"><img src="movimento/h1.webp" alt="" width="52" height="52"></span><span class="hm-pt"><b>Movimento Enzola</b><span>${ic("insta")}Conheça mais no nosso Instagram</span></span><span class="hm-go">${ic("chev")}</span></a>`;

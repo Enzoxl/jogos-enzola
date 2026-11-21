@@ -191,7 +191,7 @@ function nActions(n) {
   if (n.kind === "suggest") return `${gameHref(n.payload) ? `<a class="btn ghost sm" href="#${gameHref(n.payload)}">Ver jogo</a>` : ""}<button class="btn ghost sm" data-nt="addwish" data-id="${n.id}">${ic("bookmark")}Quero</button>`;
   if (n.kind === "friend_request") { const r = fr.rows.find(f => f.requester === a && f.addressee === user.id && f.status === "pending"); return r ? `<button class="btn sm" data-fr="accept" data-id="${r.id}">${ic("check")}Aceitar</button>` : `<a class="btn ghost sm" href="#amigos">Ver amigos</a>` }
   if (n.kind === "friend_accept") return `<a class="btn ghost sm" href="#amigo/${a}">Ver perfil</a>`;
-  if (n.kind === "tag" || n.kind === "like" || n.kind === "comment") return `<button class="btn ghost sm" data-go="inicio">Ver no feed</button>`;
+  if (n.kind === "tag" || n.kind === "like" || n.kind === "comment") return `<button class="btn ghost sm" data-go="${n.payload && /^[0-9a-f-]{36}$/i.test(n.payload.post_id || "") ? "post/" + n.payload.post_id : "inicio"}">${n.kind === "comment" ? "Ver comentário" : "Ver no feed"}</button>`;
   return "";
 }
 async function loadNotifs() {

@@ -265,9 +265,9 @@ async function push(b: any) {
     title = `Mensagem de ${who}`; body = m ? String(m.body).slice(0, 140) : "Nova mensagem"; url = `#amigo/${n.actor}`; tag = `msg-${n.actor}`;
   }
   else if (n.kind === "friend_request") { title = "Novo pedido de amizade"; body = `${who} quer ser seu amigo no Jogos Enzola.`; url = "#amigos" }
-  else if (n.kind === "tag") { title = `${who} marcou você`; body = P.text ? `“${String(P.text).slice(0, 100)}”` : (P.in === "comment" ? "Num comentário." : "Numa publicação."); url = "#inicio"; tag = `tag-${n.id}` }
-  else if (n.kind === "like") { title = `${who} curtiu sua publicação ❤️`; body = "Toque para ver o feed."; url = "#inicio"; tag = `like-${n.actor}` }
-  else if (n.kind === "comment") { title = `${who} comentou na sua publicação`; body = P.text ? `“${String(P.text).slice(0, 100)}”` : "Novo comentário."; url = "#inicio"; tag = `comment-${n.id}` }
+  else if (n.kind === "tag") { title = `${who} marcou você`; body = P.text ? `“${String(P.text).slice(0, 100)}”` : (P.in === "comment" ? "Num comentário." : "Numa publicação."); url = P.post_id ? `#post/${P.post_id}` : "#inicio"; tag = `tag-${n.id}` }
+  else if (n.kind === "like") { title = `${who} curtiu sua publicação ❤️`; body = "Toque para ver o feed."; url = P.post_id ? `#post/${P.post_id}` : "#inicio"; tag = `like-${n.actor}` }
+  else if (n.kind === "comment") { title = `${who} comentou na sua publicação`; body = P.text ? `“${String(P.text).slice(0, 100)}”` : "Novo comentário."; url = P.post_id ? `#post/${P.post_id}` : "#inicio"; tag = `comment-${n.id}` }
   else if (n.kind === "friend_accept") { title = "Pedido aceito"; body = `${who} aceitou sua amizade.`; url = `#amigo/${n.actor}` }
   const keys = await vapidKeys();
   const res = await Promise.all(subs.map((s: any) => sendPush(s, { title, body, url, tag, nid: n.id }, keys).catch(() => 0)));

@@ -840,7 +840,8 @@ function route() {
   showAuth(false); show(h);
 }
 function show(h) {
-  const [t, ...rest] = h.split("/"); routeArg = rest.join("/");
+  let [t, ...rest] = h.split("/"); routeArg = rest.join("/");
+  if (t === "post" && /^[0-9a-f-]{36}$/i.test(routeArg)) { if (typeof hm !== "undefined") hm.focus = routeArg; t = "inicio"; routeArg = "" }   // link de notificação: abre o post
   const prev = tab;
   tab = (t === "jogo" && routeArg) || (t === "amigo" && routeArg) ? t : TABS.includes(t) ? t : "inicio";
   const hl = tab === "movimento" ? "inicio" : tab === "amigo" ? "amigos" : CAT_SUBS.includes(tab) ? "catalogo" : tab;

@@ -1592,3 +1592,5 @@ a.spn:hover .sp-logo,a.spn:focus-visible .sp-logo{opacity:1;transform:translateY
 .alb-rar{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.alb-rc{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px;border:1px solid var(--line);border-radius:14px;background:var(--tile);text-align:center;opacity:.6;min-width:0}.alb-rc.has{opacity:1;border-color:var(--rc);box-shadow:0 0 14px color-mix(in srgb,var(--rc) 35%,transparent)}.alb-rc b{color:var(--rc);font-size:13px}.alb-rc small{font-size:11px;color:var(--muted)}.alb-rc .chest{width:48px;height:41px}
 @media(max-width:420px){.alb-rar{grid-template-columns:repeat(2,1fr)}}
 .alb-buy{align-self:flex-start}
+
+.hm-post.hm-hl{animation:hmhl 2.4s ease-out}@keyframes hmhl{0%,60%{box-shadow:0 0 0 3px var(--accent,#7c8cff),0 0 24px color-mix(in srgb,var(--accent,#7c8cff) 45%,transparent)}100%{box-shadow:none}}@media(prefers-reduced-motion:reduce){.hm-post.hm-hl{animation:none;outline:2px solid var(--accent,#7c8cff)}}
