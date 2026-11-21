@@ -135,12 +135,25 @@ const AU_TIERS = [
 const AU_COLORS = ["verde", "azul", "roxo", "laranja", "dourado", "vermelho", "rosa", "branco"];
 const auTier = v => { let t = AU_TIERS[0]; for (const x of AU_TIERS) if (v >= x.min) t = x; return t };
 const auKey = () => "aura:" + user.id + ":" + spDay(0);
-function auGet() { try { return JSON.parse(localStorage.getItem(auKey()) || "null") } catch (e) { return null } }
-function auSet(o) { try { localStorage.setItem(auKey(), JSON.stringify(o)) } catch (e) {} }
+const auSeed = () => { let h = 2166136261; for (const c of user.id + "|aura|" + spDay(0)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) } return h >>> 0 };
+const auRng = seed => () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296 };
+function auCalc() {            // resultado do dia: sempre o mesmo para a mesma pessoa até 00:00 (Brasília)
+  const r = auRng(auSeed()), v = Math.floor(r() * 101), t = auTier(v);
+  return { v, m: Math.floor(r() * t.msgs.length), n: 1 + Math.floor(r() * 99), col: AU_COLORS[Math.floor(r() * AU_COLORS.length)] };
+}
+function auGet() {
+  const st = (profile && profile.settings && profile.settings.aura) || {}, remote = st.day === spDay(0) ? st : null;
+  let loc = null; try { loc = JSON.parse(localStorage.getItem(auKey()) || "null") } catch (e) {}
+  if (!remote && !loc) return null;
+  return { ...auCalc(), posted: !!((remote && remote.posted) || (loc && loc.posted)) };
+}
+function auSet(o) {
+  try { localStorage.setItem(auKey(), JSON.stringify({ measured: 1, posted: !!o.posted })) } catch (e) {}
+  try { if (profile && typeof saveProfile === "function") saveProfile({ settings: { ...(profile.settings || {}), aura: { day: spDay(0), posted: !!o.posted } } }) } catch (e) {}
+}
 function auMeasure() {
   if (auGet()) return;
-  const v = Math.floor(Math.random() * 101), t = auTier(v);
-  auSet({ v, m: Math.floor(Math.random() * t.msgs.length), n: 1 + Math.floor(Math.random() * 99), col: AU_COLORS[Math.floor(Math.random() * AU_COLORS.length)], posted: false });
+  auSet({ posted: false });
   hm.auraFresh = true; renderHome();
   const n = $("#au-n"), f = $("#au-f"), a = auGet(); if (!a || !n) return;
   requestAnimationFrame(() => { if (f) f.style.width = a.v + "%" });
