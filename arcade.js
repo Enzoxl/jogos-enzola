@@ -1,7 +1,7 @@
 /* Jogos Enzola — aba "Outros jogos": lista de minigames. Primeiro: Cobra do Hipopótamo (estilo Snake). */
 const AR_GAMES = [
   { id: "snake", emoji: "🍉", name: "Cobra do Hipopótamo", desc: "Guie o hipopótamo, coma melancias e cresça sem bater na parede nem em si mesmo." },
-  { id: "soon1", emoji: "🫧", name: "Em breve", desc: "Mais um minigame chegando.", soon: true },
+  { id: "cards", emoji: "🃏", name: "Duelo de Cartas", desc: "49 cartas de hipopótamos, personagens e skins. Escolha o atributo certo e vença a CPU em 5 rodadas." },
   { id: "soon2", emoji: "🎯", name: "Em breve", desc: "Mais um minigame chegando.", soon: true },
 ];
 let arSel = null;
@@ -30,6 +30,7 @@ function snSkin(c, u) {
 const snStats = () => { lg = lg || lgLoad(); const s = lg.snake = lg.snake || { best: 0, day: "", earned: 0, plays: 0 }; if (s.day !== spDay(0)) { s.day = spDay(0); s.earned = 0 } return s };
 
 function arcadeHTML() {
+  if (arSel === "cards") return `<div id="cg-root"></div>`;
   if (arSel === "snake") {
     const st = snStats();
     return `<div class="ar-game">
@@ -38,12 +39,12 @@ function arcadeHTML() {
         <button class="iconbtn" data-sn="pause" aria-label="Pausar">⏸</button></div>
       <div class="ar-stage"><canvas id="sn-cv" aria-label="Jogo da cobra do hipopótamo" role="img"></canvas><div class="ar-ov" id="sn-ov"></div></div>
       <div class="ar-pad" aria-label="Controles"><button data-sn-dir="up" aria-label="Cima">▲</button><button data-sn-dir="left" aria-label="Esquerda">◀</button><button data-sn-dir="down" aria-label="Baixo">▼</button><button data-sn-dir="right" aria-label="Direita">▶</button></div>
-      <p class="muted ar-tip">Setas ou WASD no teclado · deslize no celular. Quanto mais alto o nível, mais Enzola Coins (até ${SN.dayCap} por dia). Melancia dourada vale 3!</p></div>`;
+      <div class="ar-how-row"><button class="btn ghost sm" data-ar-how="snake">❓ Como jogar</button></div><p class="muted ar-tip">Setas ou WASD no teclado · deslize no celular. Quanto mais alto o nível, mais Enzola Coins (até ${SN.dayCap} por dia). Melancia dourada vale 3!</p></div>`;
   }
   return `<div class="sec-head"><div><h2 class="h">Outros jogos</h2><p class="muted">Escolha um minigame para jogar e ganhar Enzola Coins.</p></div></div>
-    <div class="ar-grid">${AR_GAMES.map(g => `<button class="ar-card${g.soon ? " soon" : ""}" ${g.soon ? "disabled" : `data-ar="${g.id}"`}><span class="ar-em" aria-hidden="true">${g.emoji}</span><b>${g.name}</b><small>${g.desc}</small>${g.soon ? "" : `<span class="ar-play">Jogar ▶</span>`}</button>`).join("")}</div>`;
+    <div class="ar-grid">${AR_GAMES.map(g => g.soon ? `<div class="ar-card soon"><span class="ar-em" aria-hidden="true">${g.emoji}</span><b>${g.name}</b><small>${g.desc}</small></div>` : `<div class="ar-card"><span class="ar-em" aria-hidden="true">${g.emoji}</span><b>${g.name}</b><small>${g.desc}</small><div class="ar-cacts"><button class="btn sm" data-ar="${g.id}">Jogar ▶</button><button class="btn ghost sm" data-ar-how="${g.id}">❓ Como jogar</button></div></div>`).join("")}</div>`;
 }
-function arcadeMount() { if (arSel === "snake") { if (!sn) snNew(); snFit(); snUI(); snLoop() } else { snStop() } }
+function arcadeMount() { if (arSel === "snake") { if (!sn) snNew(); snFit(); snUI(); snLoop() } else { snStop(); if (arSel === "cards" && typeof cgMount === "function") cgMount() } }
 
 /* ---------- lógica ---------- */
 function snNew() {
@@ -186,9 +187,28 @@ if (!snKeysBound) {
   window.addEventListener("resize", () => { if ($("#sn-cv")) snFit() });
   document.addEventListener("click", e => {
     let b;
-    if (b = e.target.closest("[data-ar]")) { const v = b.dataset.ar; if (v === "back") { arSel = null; snStop(); if (sn && sn.state === "play") sn.state = "paused" } else { arSel = v; if (v === "snake") snNew() } renderLingo(); return }
+    if (b = e.target.closest("[data-ar]")) { const v = b.dataset.ar; if (v === "back") { arSel = null; snStop(); if (sn && sn.state === "play") sn.state = "paused" } else { arSel = v; if (v === "snake") snNew(); if (v === "cards") cg.view = "menu" } renderLingo(); return }
+    if (b = e.target.closest("[data-ar-how]")) { arHow(b.dataset.arHow); return }
     if (b = e.target.closest("[data-sn-dir]")) { snDir(SN_V[b.dataset.snDir]); return }
     if (b = e.target.closest("[data-sn]")) { const a = b.dataset.sn; if (!sn) return;
       if (a === "start") snStart(); else if (a === "resume") snPause(false); else if (a === "pause") snPause(sn.state === "play"); else if (a === "again") { snNew(); snUI(); snStart() } }
   });
 }
+
+/* ---------- "Como jogar" (vale para todos os minigames) ---------- */
+const AR_HELP = {
+  snake: { title: "Cobra do Hipopótamo", body: `
+    <h3>Objetivo</h3><p>Guie o hipopótamo pelo tabuleiro, coma melancias e chegue o mais longe que puder sem bater.</p>
+    <h3>Como jogar</h3><ul><li><b>Computador:</b> setas ou WASD. Espaço pausa e continua.</li><li><b>Celular:</b> deslize o dedo no tabuleiro ou use os 4 botões.</li><li>O hipopótamo anda sozinho, você só escolhe a direção. Não dá para voltar para trás.</li></ul>
+    <h3>Regras</h3><ul><li>Cada melancia vale <b>1 ponto</b> e faz o corpo crescer. A <b>dourada</b> (com um “E”) vale <b>3</b>.</li><li>O corpo vai se completando: pescoço, patinhas e rabinho. Com 8 segmentos o corpo está completo e, daí em diante, ele cresce de tamanho a cada fruta.</li><li>A partida acaba se bater na parede ou no próprio corpo. A velocidade sobe aos poucos.</li></ul>
+    <h3>Enzola Coins</h3><p>Você ganha as moedas do <b>maior nível</b> da partida (não soma). Limite de ${SN.dayCap} moedas por dia.</p>
+    <table class="ar-tb"><tr><th>Nível</th><th>Pontos</th><th>Moedas</th></tr>${SN.levels.map((l, i) => `<tr><td>${i + 1}</td><td>${l.pts}+</td><td>${l.coins}</td></tr>`).join("")}</table>` },
+  cards: { title: "Duelo de Cartas", body: `
+    <h3>Objetivo</h3><p>Vença mais rodadas que a CPU em uma partida de <b>5 rodadas</b>. Quem ganhar mais rodadas vence a partida (3 rodadas já garantem a vitória).</p>
+    <h3>As cartas</h3><ul><li>Cada carta tem 4 atributos de 0 a 100: <b>💪 Força</b>, <b>🥰 Fofura</b>, <b>🍀 Sorte</b> e <b>🧠 Esperteza</b>.</li><li>Raridades: Comum, Rara, Épica e Lendária. As raras costumam ter valores maiores, mas toda carta tem algum ponto forte.</li><li>Há ${CG_CARDS.length} cartas: personagens, bichos, fotos de hipopótamos do álbum e as skins de hipopótamo. Toque em “Ver as cartas” no menu para conferir todas.</li><li>O <b>Coringa</b> (o hipopótamo principal) vale <b>100 em todos os atributos</b>: ganha qualquer rodada. Só existe um no baralho e pode cair para você ou para a CPU.</li></ul>
+    <h3>Como é uma partida</h3><ol><li>Você e a CPU recebem <b>5 cartas</b> sorteadas. Cada carta só pode ser jogada uma vez.</li><li><b>Rodadas 1, 3 e 5: você ataca.</b> Toque numa carta da sua mão e depois na barra do atributo que quer usar. A CPU responde com uma carta dela.</li><li><b>Rodadas 2 e 4: a CPU ataca.</b> Ela escolhe o atributo e joga uma carta virada para baixo. Você escolhe uma carta da sua mão e toca em “Jogar esta carta”.</li><li>As duas cartas viram e vence quem tiver o <b>maior valor naquele atributo</b>. Valores iguais empatam a rodada.</li></ol>
+    <h3>Dicas</h3><ul><li>Ao atacar, escolha o atributo em que a carta é mais forte.</li><li>Ao defender, você só sabe o atributo: gaste cartas fracas nas rodadas que parecem perdidas e guarde as fortes.</li><li>Guarde o Coringa para uma rodada importante, mas não esqueça de usar.</li></ul>
+    <h3>Dificuldade e Enzola Coins</h3><p>No modo Fácil a CPU joga quase ao acaso; no Normal ela escolhe bem o atributo; no Difícil ela guarda as melhores cartas para a hora certa. Só a vitória paga moedas, conforme o <b>nível da vitória</b>, multiplicado pela dificuldade (Fácil ×1, Normal ×1,5, Difícil ×2). Limite de ${CG_REWARD.dayCap} moedas por dia.</p>
+    <table class="ar-tb"><tr><th>Nível</th><th>Rodadas ganhas</th><th>Moedas (×1)</th></tr><tr><td>1</td><td>3 (vitória apertada)</td><td>${CG_REWARD.levels[0]}</td></tr><tr><td>2</td><td>4</td><td>${CG_REWARD.levels[1]}</td></tr><tr><td>3</td><td>5 (vitória perfeita)</td><td>${CG_REWARD.levels[2]}</td></tr></table><p class="muted">Empate rende 2 moedas (×dificuldade).</p>` },
+};
+function arHow(id) { const h = AR_HELP[id]; if (!h) return; modalShell(`<h2>❓ ${h.title}</h2><p class="sub">Como jogar</p><div class="ar-help">${h.body}</div>`, false) }
