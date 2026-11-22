@@ -1817,3 +1817,9 @@ button.cg-st{cursor:pointer;transition:background .15s,transform .12s}button.cg-
 .pz-board.peek .pz-full{opacity:1}
 .alb-fact{margin:10px 4px 0;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07);font-size:14px;line-height:1.45;text-align:left}
 .alb-box.zoom{display:block;max-width:min(560px,100%);margin:0}
+.tier-btns{display:flex;gap:8px;flex-wrap:wrap}
+.tier .lab.lg{font-size:22px}.tier .lab.md{font-size:14px}.tier .lab.xl{font-size:11px}.tier .lab.md,.tier .lab.xl{line-height:1.1;text-align:center;padding:0 3px;overflow:hidden}
+@media (max-width:520px){.tier .lab.lg{font-size:17px}.tier .lab.md{font-size:11px}.tier .lab.xl{font-size:9px}}.tier .lab span{position:relative;z-index:1;max-width:100%;overflow-wrap:anywhere}
+.tn-form{display:grid;gap:8px;margin-top:10px}.tn-row{display:grid;grid-template-columns:44px 1fr;gap:10px;align-items:center}
+.tn-sw{display:grid;place-items:center;height:40px;border-radius:10px;color:#121A33;font:700 20px var(--f-head)}
+.tn-row input{width:100%;min-width:0}.tn-act{display:flex;gap:8px;justify-content:flex-end;margin-top:6px;flex-wrap:wrap}

@@ -6,6 +6,8 @@ const VERSION = "3.4";
 const STATUS = ["Finalizado", "Jogando", "Não iniciado", "Não comprado"];
 const EXPS = ["Perfeito", "Ótimo", "Muito bom", "Bom", "Ok", "Meh", "Chumbos"];
 const EXPCOL = { "Perfeito": "#2E8B6A", "Ótimo": "#4C9F7A", "Muito bom": "#6FA8DC", "Bom": "#4B6B9E", "Ok": "#C9A227", "Meh": "#D98A3D", "Chumbos": "#B14A47" };
+const tierNm = (t, names) => { const n = ((names || (profile && profile.settings && profile.settings.tierNames)) || {})[t]; return (typeof n === "string" && n.trim()) ? n.trim().slice(0, 14) : t };
+const labCls = n => n.length > 8 ? " xl" : n.length > 5 ? " md" : n.length > 3 ? " lg" : "";
 const TIERS = [["S", "#F28B82"], ["A", "#F6B26B"], ["B", "#F5DC78"], ["C", "#A8D5A2"], ["D", "#9CC0F5"]];
 const PLATS = ["PC", "PlayStation", "Xbox", "Switch", "Outro"];
 const PLATCOL = { "PC": "#6C93FF", "PlayStation": "#4F8BE8", "Xbox": "#4ADE9B", "Switch": "#FF7A7A", "Outro": "#A88BFA" };
@@ -374,7 +376,7 @@ function tc(g) { return `<div class="tcw"><button class="tc" draggable="true" da
 function renderTier() {
   $("#tiers").innerHTML = TIERS.map(([t, c]) => {
     const l = games.filter(g => g.tier === t).sort((a, b) => (a.tier_order || 0) - (b.tier_order || 0));
-    return `<div class="tier"><div class="lab" style="background:${c}">${t}</div><div class="zone" data-tier="${t}">${l.map(tc).join("") || `<span class="zhint">Solte um jogo aqui</span>`}</div></div>`;
+    return `<div class="tier"><div class="lab${labCls(tierNm(t))}" style="background:${c}"><span>${esc(tierNm(t))}</span></div><div class="zone" data-tier="${t}">${l.map(tc).join("") || `<span class="zhint">Solte um jogo aqui</span>`}</div></div>`;
   }).join("");
   $("#tchips").innerHTML = [["played", "Jogados"], ["", "Todos"], ["Não iniciado", "Não iniciados"]].map(([v, l]) => `<button class="chip" data-t="${esc(v)}" aria-pressed="${tStatus === v}">${l}</button>`).join("") +
     (selected ? `<button class="chip warn" data-t="__clear">${ic("x")}Tirar da tier</button>` : "");
@@ -384,6 +386,16 @@ function renderTier() {
   $("#pool").innerHTML = pool.length ? sorted(pool, "n").map(tc).join("") : `<div class="meta" style="padding:8px">Nenhum jogo para classificar neste filtro.</div>`;
   $("#tier .sel-hint").hidden = !selected;
 }
+function tierRenameOpen() {
+  modalShell(`<h2>Nomes das tiers</h2><p class="sub">Troque S, A, B, C e D por qualquer nome (até 14 letras). Deixe vazio para voltar ao original.</p>
+    <form id="tn-form" class="tn-form">${TIERS.map(([t, c]) => `<label class="tn-row"><span class="tn-sw" style="background:${c}">${t}</span><input type="text" maxlength="14" data-tn="${t}" value="${esc(tierNm(t) === t ? "" : tierNm(t))}" placeholder="${t}" autocomplete="off"></label>`).join("")}
+    <div class="tn-act"><button type="button" class="btn ghost" id="tn-reset">Restaurar padrão</button><button type="submit" class="btn">Salvar</button></div></form>`);
+}
+document.addEventListener("submit", async e => {
+  if (e.target.id !== "tn-form") return; e.preventDefault();
+  const tierNames = {}; $$("#tn-form [data-tn]").forEach(i => { const v = i.value.trim().slice(0, 14); if (v && v !== i.dataset.tn) tierNames[i.dataset.tn] = v });
+  closeModal(); await saveSettings({ tierNames }); renderTier();
+});
 function setTier(id, tier, beforeId) {
   const g = gameById(id); if (!g) return;
   if (!tier) { if (g.tier) save(id, { tier: null, tier_order: null }); return }
@@ -452,7 +464,7 @@ async function tierCanvas() {
     x.fillStyle = "rgba(20,29,61,.92)"; rr(x, PAD, y, W - PAD * 2, h, 14); x.fill();
     x.save(); rr(x, PAD, y, W - PAD * 2, h, 14); x.clip(); x.fillStyle = r.c; x.fillRect(PAD, y, LAB, h); x.restore();
     x.fillStyle = "#121A33"; x.font = "700 42px 'Chakra Petch', system-ui, sans-serif"; x.textAlign = "center"; x.textBaseline = "middle";
-    x.fillText(r.t, PAD + LAB / 2, y + h / 2); x.textAlign = "left"; x.textBaseline = "alphabetic";
+    { const nm = tierNm(r.t); x.font = `700 ${nm.length > 8 ? 20 : nm.length > 4 ? 28 : 42}px 'Chakra Petch', system-ui, sans-serif`; x.fillText(nm, PAD + LAB / 2, y + h / 2, LAB - 14) } x.textAlign = "left"; x.textBaseline = "alphabetic";
     r.list.forEach((g, k) => {
       const cx = PAD + LAB + GAP + (k % perRow) * (CW + GAP), cy = y + GAP + Math.floor(k / perRow) * (CH + NAMEH + GAP);
       x.save(); rr(x, cx, cy, CW, CH, 8); x.clip(); drawCover(x, imap[g.id], g, cx, cy, CW, CH); x.restore();
@@ -738,7 +750,7 @@ async function showPublic(u) {
   <div class="pub-grid">
     ${cur ? `<div class="blk"><div class="blk-h"><h3>${ic("play")}Jogando agora</h3></div><div class="now nohover"><div class="poster">${cover(cur)}</div><div class="now-b"><span class="k">Jogando agora</span><span class="t">${esc(cur.name)}</span><span class="m">${[cur.platform, cur.genre, cur.year].filter(Boolean).map(esc).join(" · ")}</span>${cur.review ? `<span class="q">“${esc(cur.review)}”</span>` : ""}</div></div></div>` : ""}
     ${favs.length ? `<div class="blk"><div class="blk-h"><h3>${ic("heart")}Favoritos</h3></div><div class="favgrid">${favs.map((g, i) => `<div class="fav"><div class="poster"><span class="rank">${i + 1}</span>${cover(g)}</div><div class="n">${esc(g.name)}</div><div class="r">${g.exp ? esc(g.exp) : ""}${g.rating != null ? " · " + rateTxt(g) : ""}</div></div>`).join("")}</div></div>` : ""}
-    ${tiers.length ? `<div class="blk"><div class="blk-h"><h3>${ic("layers")}Tier list</h3></div>${tiers.map(([t, c, l]) => `<div class="tier"><div class="lab" style="background:${c}">${t}</div><div class="zone">${l.map(g => `<div class="tcw"><div class="tc" title="${esc(g.name)}">${cover(g)}</div><span class="tcn">${esc(g.name)}</span></div>`).join("")}</div></div>`).join("")}</div>` : ""}
+    ${tiers.length ? `<div class="blk"><div class="blk-h"><h3>${ic("layers")}Tier list</h3></div>${tiers.map(([t, c, l]) => `<div class="tier"><div class="lab${labCls(tierNm(t, p.tier_names))}" style="background:${c}"><span>${esc(tierNm(t, p.tier_names))}</span></div><div class="zone">${l.map(g => `<div class="tcw"><div class="tc" title="${esc(g.name)}">${cover(g)}</div><span class="tcn">${esc(g.name)}</span></div>`).join("")}</div></div>`).join("")}</div>` : ""}
     ${fin.length ? `<div class="blk"><div class="blk-h"><h3>${ic("trophy")}Zerados · ${fin.length}</h3></div><div class="grid">${fin.map(g => `<div class="card"><div class="poster">${cover(g)}</div><div class="t">${esc(g.name)}</div><div class="meta">${g.rating != null ? "Nota " + rateTxt(g) : ""}</div></div>`).join("")}</div></div>` : ""}
   </div>`;
 }
@@ -907,6 +919,8 @@ document.addEventListener("click", async e => {
   if (c("#wl-refresh")) { refreshPrices(true); return }
   if (c("#wl-pdf")) { exportWishlistPDF(); return }
   if (c("#tier-img")) { exportTier(); return }
+  if (c("#tier-ren")) { tierRenameOpen(); return }
+  if (c("#tn-reset")) { $$("#tn-form input").forEach(i => i.value = ""); return }
   if (c("#csv-out")) { exportCSV(); return }
   if (c("#csv-in")) { $("#csv-file").click(); return }
   if (b = c("[data-bought]")) { save(b.dataset.bought, { wishlist: false, status: "Não iniciado" }); toast("Movido para o catálogo como “Não iniciado”."); return }
