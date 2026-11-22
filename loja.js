@@ -3,7 +3,7 @@
    Goiabas vêm das lições, do desafio de 60 s, da meta diária e do Show do Enzolão.
    ===================================================================== */
 const LG_SKINS = [
-  { id: "classico", kind: "hip", name: "Hipopótamo clássico", img: "hipopotamo.webp", price: 0 },
+  { id: "classico", kind: "hip", name: "Enzola", img: "hipopotamo.webp", price: 0 },
   { id: "festeiro", kind: "hip", name: "Festeiro", img: "loja/h-festeiro.webp", price: 50 },
   { id: "chef", kind: "hip", name: "Chef", img: "loja/h-chef.webp", price: 75 },
   { id: "fone", kind: "hip", name: "DJ de fone", img: "loja/h-fone.webp", price: 100 },
@@ -17,7 +17,7 @@ const LG_SKINS = [
   { id: "ff", kind: "hip", name: "Enzola Free Fire", img: "loja/h-ff.webp", price: 0, group: true, lock: "Meta de grupo · 2000 pts" },
   { id: "ave", kind: "hip", name: "Enzola Pássaro", img: "loja/h-ave.webp", price: 0, group: true, lock: "Conclua todo o Enzolingo" },
   { id: "colecionador", kind: "hip", name: "Colecionador", img: "loja/h-colecionador.webp", price: 0, group: true, lock: "Complete o álbum de hipopótamos" },
-  { id: "c10", kind: "chr", name: "Goiabinha", img: "convite/c10.jpg", price: 75 },
+  { id: "c10", kind: "chr", name: "Zé goiaba", img: "convite/c10.jpg", price: 75 },
   { id: "c1", kind: "chr", name: "Cão do zap", img: "convite/c1.jpg", price: 90 },
   { id: "c11", kind: "chr", name: "Cachorro sábio", img: "convite/c11.jpg", price: 90 },
   { id: "c17", kind: "chr", name: "Gatinho", img: "convite/c17.jpg", price: 90 },
@@ -27,9 +27,13 @@ const LG_SKINS = [
   { id: "c13", kind: "chr", name: "Vaca esperta", img: "convite/c13.jpg", price: 110 },
   { id: "c3", kind: "chr", name: "Leão", img: "convite/c3.jpg", price: 125 },
   { id: "c15", kind: "chr", name: "Veadinho", img: "convite/c15.jpg", price: 125 },
-  { id: "c4", kind: "chr", name: "Canguru sarado", img: "convite/c4.jpg", price: 140 },
-  { id: "c6", kind: "chr", name: "Pássaro de óculos", img: "convite/c6.jpg", price: 150 },
-  { id: "c12", kind: "chr", name: "Boné azul", img: "convite/c12.jpg", price: 160 },
+  { id: "c4", kind: "chr", name: "Canguru Roger", img: "convite/c4.jpg", price: 140 },
+  { id: "c6", kind: "chr", name: "Pica-pau", img: "convite/c6.jpg", price: 150 },
+  { id: "c12", kind: "chr", name: "paiN Alpha", img: "convite/c12.jpg", price: 160 },
+  { id: "x-pato", kind: "chr", name: "Pato Josefo", img: "cards/x-pato.webp", price: 90 },
+  { id: "x-hamster", kind: "chr", name: "Hamster na câmera", img: "cards/x-hamster.webp", price: 110 },
+  { id: "x-lagartixa", kind: "chr", name: "Calango do Mica", img: "cards/x-lagartixa.webp", price: 125 },
+  { id: "x-padre", kind: "chr", name: "Hulk Padre", img: "cards/x-padre.webp", price: 150 },
   { id: "c16", kind: "chr", name: "CJ", img: "convite/c16.jpg", price: 175 },
 ];
 const skinAvatarSrc = id => { const s = LG_SKINS.find(x => x.id === id); return s ? (s.kind === "hip" ? `loja/a-${s.id}.webp` : s.img) : null };
