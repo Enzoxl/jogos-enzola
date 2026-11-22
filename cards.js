@@ -31,7 +31,7 @@ const CG_DEF = [
   ["h44", "Hipo no gramado", "pic", "cards/p-h44.webp", 1, ["for"]],
   ["festeiro", "Festeiro", "skin", "", 2, ["fof", "sor"]], ["chef", "Chef", "skin", "", 2, ["esp", "fof"]], ["fone", "DJ de fone", "skin", "", 2, ["sor", "esp"]],
   ["pirata", "Pirata", "skin", "", 2, ["for", "sor"]], ["cauboi", "Caubói", "skin", "", 3, ["for", "sor"]], ["mago", "Mago", "skin", "", 3, ["esp"]],
-  ["cavalheiro", "Cavalheiro", "skin", "", 3, ["esp", "fof"]], ["heroi", "Super-herói", "skin", "", 3, ["for"]], ["rei", "Rei Hipopótamo", "skin", "", 4, ["for", "esp"]],
+  ["cavalheiro", "Cavalheiro", "skin", "", 3, ["esp", "fof"]], ["heroi", "Super-herói", "skin", "", 3, ["for"]], ["cruzeirense", "Enzola Cruzeirense", "skin", "", 3, ["for", "sor"]], ["rei", "Enzola King", "skin", "", 4, ["for", "esp"]],
   ["dourado", "Hipopótamo de ouro", "skin", "", 4, ["sor", "fof"]], ["ff", "Enzola Free Fire", "skin", "", 4, ["for", "sor"]],
   ["ave", "Enzola Pássaro", "skin", "", 4, ["esp", "fof"]], ["colecionador", "Colecionador", "skin", "", 4, ["sor", "esp"]],
 ];
