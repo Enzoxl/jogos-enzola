@@ -842,6 +842,7 @@ function route() {
 function show(h) {
   let [t, ...rest] = h.split("/"); routeArg = rest.join("/");
   if (t === "post" && /^[0-9a-f-]{36}$/i.test(routeArg)) { if (typeof hm !== "undefined") hm.focus = routeArg; t = "inicio"; routeArg = "" }   // link de notificação: abre o post
+  if (t === "duelo") { mgTab = "arcade"; if (typeof arSel !== "undefined") arSel = "cards"; if (typeof cg !== "undefined") { cg.view = "menu"; cg.pv = null } t = "idiomas" }
   const prev = tab;
   tab = (t === "jogo" && routeArg) || (t === "amigo" && routeArg) ? t : TABS.includes(t) ? t : "inicio";
   const hl = tab === "movimento" ? "inicio" : tab === "amigo" ? "amigos" : CAT_SUBS.includes(tab) ? "catalogo" : tab;

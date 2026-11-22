@@ -268,6 +268,7 @@ async function push(b: any) {
   else if (n.kind === "tag") { title = `${who} marcou você`; body = P.text ? `“${String(P.text).slice(0, 100)}”` : (P.in === "comment" ? "Num comentário." : "Numa publicação."); url = P.post_id ? `#post/${P.post_id}` : "#inicio"; tag = `tag-${n.id}` }
   else if (n.kind === "like") { title = `${who} curtiu sua publicação ❤️`; body = "Toque para ver o feed."; url = P.post_id ? `#post/${P.post_id}` : "#inicio"; tag = `like-${n.actor}` }
   else if (n.kind === "comment") { title = `${who} comentou na sua publicação`; body = P.text ? `“${String(P.text).slice(0, 100)}”` : "Novo comentário."; url = P.post_id ? `#post/${P.post_id}` : "#inicio"; tag = `comment-${n.id}` }
+  else if (n.kind === "duel") { const ev = P.ev || "invite"; title = ev === "invite" ? `${who} te desafiou ⚔️` : ev === "accept" ? `${who} aceitou o duelo` : `${who} recusou o duelo`; body = ev === "invite" ? "Duelo de Cartas: bora jogar?" : ev === "accept" ? "Sua vez de jogar no Duelo de Cartas." : "Quem sabe da próxima."; url = "#duelo"; tag = `duel-${P.duel || n.id}` }
   else if (n.kind === "friend_accept") { title = "Pedido aceito"; body = `${who} aceitou sua amizade.`; url = `#amigo/${n.actor}` }
   const keys = await vapidKeys();
   const res = await Promise.all(subs.map((s: any) => sendPush(s, { title, body, url, tag, nid: n.id }, keys).catch(() => 0)));

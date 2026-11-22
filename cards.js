@@ -109,12 +109,14 @@ function cgFinish() {
 function cgHTML() {
   if (cg.view === "coll") return cgCollHTML();
   if (cg.view === "game") return cgGameHTML();
+  if (cg.view === "pvp") return cgPvHTML();
   const st = cgStats();
   return `<div class="cg-menu"><div class="ar-hud"><button class="btn ghost sm" data-ar="back">← Jogos</button><b class="cg-ttl">Duelo de Cartas</b></div>
     <div class="cg-hero"><div class="cg-fan">${["festeiro", "joker", "rei"].map((id, i) => cgCardHTML(cgById(id), { size: "sm", cls: "fan f" + i })).join("")}</div>
       <p class="muted">Monte sua mão de 5 cartas, escolha o atributo certo e vença 3 de 5 rodadas contra o computador.</p></div>
     <div class="cg-diff" role="group" aria-label="Dificuldade">${Object.keys(CG_DIFF).map(d => `<button class="chip" aria-pressed="${cg.diff === d}" data-cg="diff:${d}">${CG_DIFF[d]}<small> ×${CG_REWARD.mult[d]}</small></button>`).join("")}</div>
     <div class="cg-menu-a"><button class="btn" data-cg="play">Jogar</button><button class="btn ghost" data-ar-how="cards">❓ Como jogar</button><button class="btn ghost" data-cg="coll">🃏 Ver as ${CG_CARDS.length} cartas</button></div>
+    ${cgDuelsHTML()}
     <p class="muted ar-tip">Partidas: ${st.plays} · Vitórias: ${st.wins}${st.best ? ` · Melhor nível: ${st.best}` : ""} · Moedas hoje: ${st.earned}/${CG_REWARD.dayCap}</p></div>`;
 }
 function cgCollHTML() {
@@ -156,14 +158,17 @@ function cgEndHTML() {
     <button class="btn" data-cg="play">Jogar de novo</button><button class="btn ghost" data-cg="menu">Menu</button></div></div>`;
 }
 function cgRender() { const r = $("#cg-root"); if (r) r.innerHTML = cgHTML() }
-function cgMount() { if (cg.view === "game" && cg.phase === "end" && !cg.you) cg.view = "menu"; cgRender() }
+function cgMount() { if (cg.view === "game" && cg.phase === "end" && !cg.you) cg.view = "menu"; cgRender(); cgDuelsLoad() }
 
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-cg]"); if (!b || !$("#cg-root")) return;
   const [a, v] = b.dataset.cg.split(":");
   if (a === "diff") { cg.diff = v }
   else if (a === "play") cgNew();
-  else if (a === "menu") { cg.view = "menu" }
+  else if (a === "menu") { cg.view = "menu"; cg.pv = null; cgDuelsLoad() }
+  else if (a === "duel") { cgPicker(); return }
+  else if (/^d(pick|acc|dec|open|cancel|leave|sel|ok|next|forfeit)$/.test(a)) { cgDuelClick(a, v); return }
+  else if (cg.view === "pvp") { cgDuelClick("p" + a, v); return }
   else if (a === "coll") cg.view = "coll";
   else if (a === "zoom") { const c = cgById(v); if (c) modal2(`<button class="iconbtn mclose" data-close2 aria-label="Fechar">✕</button><div class="cg-zoom">${cgCardHTML(c, { size: "lg" })}</div>`, "cg-zm"); return }
   else if (cg.view === "game") {
@@ -175,3 +180,163 @@ document.addEventListener("click", e => {
   cgRender();
 });
 document.addEventListener("click", e => { if (e.target.closest("[data-close2]") || e.target.matches("[data-ovl2]")) closeModal2() });
+
+
+/* ---------- duelo com amigos (tempo real, tabela card_duels) ---------- */
+const CG_PV_MULT = 1.5;
+let cgD = { list: [], loaded: false, rt: false, timer: 0 };
+const cgMe = () => user && user.id;
+const cgOppName = d => { const o = d.host === cgMe() ? d.guest : d.host; return pName(pOf(o)) };
+function cgSeeded(seed) { const r = cgRng(seed), a = CG_CARDS.map(c => c.id); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]] } return a }
+function cgPvState(d) {
+  const me = cgMe(), isHost = d.host === me, ids = cgSeeded(d.seed), H = CG_REWARD.hand;
+  const hands = [ids.slice(0, H).map(cgById), ids.slice(H, 2 * H).map(cgById)], mine = hands[isHost ? 0 : 1];
+  const rounds = []; let sy = 0, so = 0, done = 0; const usedMine = new Set(); let oppUsed = 0;
+  for (let r = 1; r <= H; r++) {
+    const m = (d.moves || {})[r] || {}, atkIsMe = (r % 2 === 1) === isHost;
+    const A = m.a ? cgById(m.a.c) : null, D = m.d ? cgById(m.d.c) : null, o = { r, atkIsMe, att: m.a ? m.a.att : null, A, D, complete: !!(A && D), mc: atkIsMe ? A : D, oc: atkIsMe ? D : A };
+    if (o.mc) usedMine.add(o.mc.id); if (o.oc) oppUsed++;
+    if (o.complete) {
+      o.va = cgVal(A, o.att); o.vd = cgVal(D, o.att); const aw = o.va > o.vd, dw = o.vd > o.va;
+      o.res = aw || dw ? ((aw && atkIsMe) || (dw && !atkIsMe) ? "me" : "opp") : "draw";
+      if (o.res === "me") sy++; else if (o.res === "opp") so++; done++;
+    }
+    rounds.push(o);
+  }
+  return { rounds, sy, so, done, hand: mine.filter(c => !usedMine.has(c.id)), oppLeft: H - oppUsed };
+}
+async function cgDuelsLoad() {
+  if (!sb || !user || !(typeof caps !== "undefined" && caps.v3)) return;
+  if (typeof fr !== "undefined" && !fr.loaded && typeof loadFriends === "function") { await loadFriends() }
+  const { data, error } = await sb.from("card_duels").select("*").in("status", ["pending", "active"]).order("updated_at", { ascending: false });
+  if (error) return; cgD.list = data || []; cgD.loaded = true;
+  if (!cgD.rt) {
+    cgD.rt = true;
+    sb.channel("duels-" + cgMe()).on("postgres_changes", { event: "*", schema: "public", table: "card_duels" }, p => cgDuelUpd(p.new && p.new.id ? p.new : null)).subscribe();
+  }
+  cgRender();
+}
+function cgDuelUpd(row) {
+  if (!row) return cgDuelsLoad();
+  const old = cgD.list.find(x => x.id === row.id);
+  cgD.list = cgD.list.filter(x => x.id !== row.id); if (row.status === "pending" || row.status === "active") cgD.list.unshift(row);
+  if (old && old.status === "pending" && row.status === "active" && row.host === cgMe()) toast(`${cgOppName(row)} aceitou seu duelo! ⚔️`);
+  if (old && old.status === "pending" && row.status === "declined" && row.host === cgMe()) toast(`${cgOppName(row)} recusou o duelo.`);
+  if (cg.pv && cg.pv.id === row.id) cg.pv.d = row;
+  cgRender();
+}
+function cgDuelsHTML() {
+  const me = cgMe(); if (!me) return "";
+  const rows = cgD.list.map(d => {
+    const nm = esc(cgOppName(d)), mineHost = d.host === me;
+    if (d.status === "pending") return mineHost
+      ? `<div class="cg-dr"><span>⏳ Aguardando <b>${nm}</b> aceitar</span><button class="btn ghost sm" data-cg="dcancel:${d.id}">Cancelar</button></div>`
+      : `<div class="cg-dr hot"><span>⚔️ <b>${nm}</b> desafiou você!</span><span class="cg-da"><button class="btn sm" data-cg="dacc:${d.id}">Aceitar</button><button class="btn ghost sm" data-cg="ddec:${d.id}">Recusar</button></span></div>`;
+    const S = cgPvState(d), r = Math.min(S.done + 1, CG_REWARD.hand), o = S.rounds[r - 1];
+    const turn = o.complete || (o.atkIsMe ? !o.A : !!o.A && !o.D);
+    return `<div class="cg-dr${turn ? " hot" : ""}"><span>🃏 Duelo com <b>${nm}</b> · ${S.sy}×${S.so} · ${turn ? "<b>sua vez</b>" : "aguardando"}</span><span class="cg-da"><button class="btn sm" data-cg="dopen:${d.id}">Jogar</button><button class="btn ghost sm" data-cg="dleave:${d.id}">Desistir</button></span></div>`;
+  }).join("");
+  return `<div class="cg-duels"><button class="btn cg-vsb" data-cg="duel">⚔️ Desafiar um amigo</button>${rows ? `<div class="cg-dl">${rows}</div>` : ""}</div>`;
+}
+function cgPicker() {
+  if (!user || typeof frAccepted !== "function") return toast("Entre na sua conta para desafiar amigos.");
+  const go = () => {
+    const fl = frAccepted().map(f => pOf(other(f)));
+    const busy = new Set(cgD.list.map(d => d.host === cgMe() ? d.guest : d.host));
+    modal2(`<button class="iconbtn mclose" data-close2 aria-label="Fechar">✕</button><h2>⚔️ Desafiar um amigo</h2><p class="sub">O amigo recebe uma notificação. Vocês jogam 5 rodadas com mãos sorteadas, valendo Enzola Coins.</p>
+      ${fl.length ? `<div class="flist cg-fl">${fl.map(p => `<div class="fcard"><div class="fhead"><div class="av md">${avatar(p.avatar)}</div><div class="fi"><div class="fn">${esc(pName(p))}</div><div class="fu">@${esc(p.username || "")}</div></div></div><div class="fa">${busy.has(p.user_id) ? `<span class="muted">Em andamento</span>` : `<button class="btn sm" data-cg="dpick:${p.user_id}">Desafiar</button>`}</div></div>`).join("")}</div>` : `<div class="panel empty"><b>Nenhum amigo ainda</b>Adicione amigos na aba Amigos para desafiar.</div>`}`, "cg-pk");
+  };
+  if (!fr.loaded) loadFriends().then(go); else go();
+}
+async function cgChallenge(uid) {
+  if (!sb || !user) return;
+  const { data, error } = await sb.rpc("duel_create", { p_guest: uid });
+  if (error) { toast(/andamento/i.test(error.message) ? "Já existe um duelo em andamento com esse amigo." : "Não foi possível enviar o desafio."); return }
+  toast(`Desafio enviado para ${pName(pOf(uid))}! ⚔️`); closeModal2 && closeModal2();
+  await cgDuelsLoad(); cgGoMenu();
+}
+function cgGoMenu() { mgTab = "arcade"; if (typeof arSel !== "undefined") arSel = "cards"; cg.view = "menu"; cg.pv = null; if (location.hash.replace("#", "") === "idiomas") renderLingo(); else location.hash = "#idiomas" }
+function cgPvOpen(d) {
+  const S = cgPvState(d); cg.view = "pvp"; cg.pv = { id: d.id, d, r: Math.min(S.done + 1, CG_REWARD.hand + (d.status === "done" ? 1 : 0)), sel: null, fin: null };
+  clearInterval(cgD.timer); cgD.timer = setInterval(async () => {
+    if (cg.view !== "pvp" || !cg.pv || !$("#cg-root")) { clearInterval(cgD.timer); return }
+    const { data } = await sb.from("card_duels").select("*").eq("id", cg.pv.id).maybeSingle();
+    if (data && (data.updated_at !== cg.pv.d.updated_at || data.status !== cg.pv.d.status)) { cg.pv.d = data; cgRender() }
+  }, 7000);
+  cgRender();
+}
+async function cgDuelClick(a, v) {
+  const pv = cg.pv;
+  const rpc = async (fn, args) => { const { data, error } = await sb.rpc(fn, args); if (error) { toast("Não deu certo: " + (error.message || "tente de novo")); return null } return data };
+  if (a === "dpick") { const id = await rpc("duel_create", { p_guest: v }); if (id) { toast(`Desafio enviado para ${pName(pOf(v))}! ⚔️`); closeModal2(); await cgDuelsLoad() } return }
+  if (a === "dacc") { const d = await rpc("duel_respond", { p_id: v, p_accept: true }); if (d) { await cgDuelsLoad(); cgPvOpen(d) } return }
+  if (a === "ddec") { await rpc("duel_respond", { p_id: v, p_accept: false }); return cgDuelsLoad() }
+  if (a === "dcancel" || a === "dleave") { await rpc("duel_leave", { p_id: v }); return cgDuelsLoad() }
+  if (a === "dopen") { const d = cgD.list.find(x => x.id === v); if (d) cgPvOpen(d); return }
+  if (!pv) return;
+  const S = cgPvState(pv.d), H = CG_REWARD.hand, o = S.rounds[Math.min(pv.r, H) - 1];
+  if (a === "pcard") { const c = S.hand.find(x => x.id === v); if (c && pv.r <= H && !o.complete) { pv.sel = pv.sel === c ? null : c; pv.fx = "sel" } return cgRender() }
+  if (a === "patt" && pv.sel && o.atkIsMe && !o.A) {
+    const d = await rpc("duel_move", { p_id: pv.id, p_round: pv.r, p_card: pv.sel.id, p_att: v }); if (d) { pv.d = d; pv.sel = null }
+    return cgRender();
+  }
+  if (a === "pconfirm" && pv.sel && !o.atkIsMe && o.A && !o.D) {
+    const d = await rpc("duel_move", { p_id: pv.id, p_round: pv.r, p_card: pv.sel.id }); if (d) { pv.d = d; pv.sel = null }
+    return cgRender();
+  }
+  if (a === "pnext" && o.complete) { pv.r++; pv.sel = null; if (pv.r > H) cgPvFinish(); return cgRender() }
+  if (a === "pforfeit") { const d = await rpc("duel_leave", { p_id: pv.id }); if (d) { pv.d = d; pv.fin = { left: true, coins: 0 } } return cgRender() }
+  if (a === "prematch") return cgChallenge(pv.d.host === cgMe() ? pv.d.guest : pv.d.host).then(() => { cg.view = "menu"; cg.pv = null; cgRender() });
+}
+function cgPvFinish() {
+  const pv = cg.pv, d = pv.d, S = cgPvState(d); if (pv.fin) return;
+  const st = cgStats(); st.pv = st.pv || {}; const claimed = !!st.pv[d.id];
+  const oppLeft = d.forfeit && d.forfeit !== cgMe(), win = oppLeft || S.sy > S.so, draw = !oppLeft && S.sy === S.so;
+  const level = win ? (oppLeft ? 1 : S.sy >= 5 ? 3 : S.sy === 4 ? 2 : 1) : 0;
+  const base = win ? CG_REWARD.levels[level - 1] : draw ? 2 : 1, want = Math.round(base * CG_PV_MULT), room = Math.max(0, CG_REWARD.dayCap - (st.earned || 0));
+  const coins = claimed ? 0 : Math.min(want, room);
+  pv.fin = { win, draw, level, coins, capped: !claimed && want > room, oppLeft };
+  if (!claimed) { st.plays++; if (win) { st.wins++; st.best = Math.max(st.best || 0, level) } st.pv[d.id] = 1; const k = Object.keys(st.pv); if (k.length > 30) delete st.pv[k[0]];
+    if (coins > 0 && typeof lgAward === "function") { st.earned += coins; lgAward(coins) } else lgSave(true) }
+}
+function cgPvHTML() {
+  const pv = cg.pv; if (!pv) return "";
+  const d = pv.d, H = CG_REWARD.hand, S = cgPvState(d), opp = esc(cgOppName(d).slice(0, 12)), oppFull = esc(cgOppName(d));
+  const ended = d.status === "done" && d.forfeit || pv.r > H || d.status === "cancelled";
+  if (ended && !pv.fin) cgPvFinish();
+  const o = S.rounds[Math.min(pv.r, H) - 1];
+  const phase = ended ? "end" : o.complete ? "reveal" : o.atkIsMe ? (o.A ? "wait" : "pick") : (!o.A ? "wait" : "pick");
+  const att = o.att ? CG_ATT.find(x => x.k === o.att) : null, pill = att ? `<span class="cg-pill">${att.i} ${att.n}</span>` : "";
+  const myTurnAtk = phase === "pick" && o.atkIsMe;
+  const sel = pv.sel;
+  const mine = o.mc || (phase === "pick" && sel) || null;
+  const rv = phase === "reveal";
+  const ySlot = mine ? cgCardHTML(mine, { size: "md", cls: (pv.fx === "sel" ? "pop " : "") + (rv ? "flip " + (o.res === "me" ? "win" : o.res === "opp" ? "lose" : "") : ""), hl: o.att, pick: myTurnAtk && !o.mc }) : `<div class="cg-empty">Sua carta</div>`;
+  const cSlot = rv && o.oc ? cgCardHTML(o.oc, { size: "md", cls: "flip " + (o.res === "opp" ? "win" : o.res === "me" ? "lose" : ""), hl: o.att }) : !o.atkIsMe && o.A ? cgBackHTML("md") : `<div class="cg-empty">${opp}</div>`;
+  let msg = "", acts = "";
+  if (phase === "pick") {
+    if (o.atkIsMe) msg = sel ? `Escolha o atributo da <b>${esc(sel.name)}</b> (toque na barra).` : "<b>Sua vez de atacar!</b> Escolha uma carta da sua mão.";
+    else { msg = sel ? `Jogar <b>${esc(sel.name)}</b> contra ${pill}?` : `<b>${opp} atacou com ${pill}.</b> Escolha uma carta (a dele está virada).`; if (sel) acts = `<button class="btn" data-cg="confirm">Jogar esta carta</button>` }
+  } else if (phase === "wait") msg = o.atkIsMe ? `Carta jogada! Aguardando <b>${opp}</b> responder…` : `Aguardando <b>${opp}</b> escolher o ataque…`;
+  else if (rv) {
+    const t = o.res === "me" ? "Você venceu a rodada! 🎉" : o.res === "opp" ? `${opp} venceu a rodada.` : "Empate!";
+    msg = `<b>${t}</b> <span class="muted">${o.atkIsMe ? o.va : o.vd} × ${o.atkIsMe ? o.vd : o.va} em ${pill}</span>`;
+    acts = `<button class="btn" data-cg="next">${pv.r >= H ? "Ver resultado" : "Próxima rodada"}</button>`;
+  }
+  const hand = S.hand.map(c => `<button class="cg-hc${sel === c ? " sel" : ""}" data-cg="card:${c.id}" ${phase !== "pick" ? "disabled" : ""} aria-label="Carta ${esc(c.name)}">${cgCardHTML(c, { size: "sm" })}</button>`).join("");
+  pv.fx = "";
+  let end = "";
+  if (ended && pv.fin) {
+    const f = pv.fin, t = f.left ? "Você desistiu" : f.oppLeft ? `${oppFull} desistiu 🏳️` : f.win ? (f.level === 3 ? "Vitória perfeita! 🏆" : "Você venceu! 🎉") : f.draw ? "Empate" : `${oppFull} venceu`;
+    end = `<div class="ar-ov on cg-end"><div class="ar-box"><b>${t}</b><div class="ar-res"><div><span>Você</span><b>${S.sy}</b></div><div><span>${opp}</span><b>${S.so}</b></div></div>
+      <p>${f.coins ? `+${f.coins} Enzola Coins (×${CG_PV_MULT} de duelo)` : f.capped ? "Limite de moedas de hoje atingido." : ""}</p>
+      ${d.status === "cancelled" ? "" : `<button class="btn" data-cg="rematch">Desafiar de novo</button>`}<button class="btn ghost" data-cg="menu">Menu</button></div></div>`;
+  }
+  return `<div class="cg-game"><div class="ar-hud"><button class="btn ghost sm" data-cg="menu" aria-label="Voltar ao menu (o duelo continua)">← Menu</button>
+      <div class="ar-sc"><span>Rodada</span><b>${Math.min(pv.r, H)}/${H}</b></div><div class="ar-sc cg-scr"><span>Você × ${opp}</span><b>${S.sy} × ${S.so}</b></div><button class="iconbtn" data-ar-how="cards" aria-label="Como jogar">❓</button></div>
+    <div class="cg-cpuh" aria-label="Cartas de ${oppFull}">${Array(Math.max(0, S.oppLeft)).fill("<i></i>").join("")}<small>${opp} · ${S.oppLeft} carta${S.oppLeft === 1 ? "" : "s"}</small></div>
+    <div class="cg-arena"><div class="cg-slot"><small class="cg-who">${opp}</small>${cSlot}</div><div class="cg-vs">VS</div><div class="cg-slot"><small class="cg-who you">Você</small>${ySlot}</div></div>
+    <p class="cg-msg" aria-live="polite">${msg}</p><div class="cg-acts">${acts}</div>
+    ${phase === "pick" || phase === "wait" ? `<div class="cg-hl">Sua mão</div><div class="cg-hand">${hand}</div>` : ""}
+    ${!ended ? `<p class="ar-tip"><button class="link" data-cg="forfeit">Desistir do duelo</button></p>` : ""}${end}</div>`;
+}

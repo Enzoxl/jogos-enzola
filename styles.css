@@ -1748,3 +1748,13 @@ button.cg-st{cursor:pointer;transition:background .15s,transform .12s}button.cg-
 @media(prefers-reduced-motion:reduce){.cg-card.rj,.cg-card.flip,.cg-card.pop{animation:none}.cg-card.r4 .cg-art::after,.cg-card.rj .cg-art::after{animation:none}}
 .cg-slot{grid-template-rows:auto 1fr;align-content:center;gap:6px}.cg-who{font:700 10.5px var(--f-body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}.cg-who.you{color:var(--accent)}
 .cg-art img,.cg-art.skin img{background:transparent!important}
+
+/* duelo com amigos */
+.cg-duels{display:flex;flex-direction:column;gap:10px;margin:14px 0 4px;width:100%;max-width:440px;margin-inline:auto}
+.cg-vsb{width:100%;background:linear-gradient(135deg,#7c4dff,#ff5c7a);border:0;color:#fff;font-weight:700}
+.cg-dl{display:flex;flex-direction:column;gap:8px}
+.cg-dr{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:14px;background:var(--panel,rgba(255,255,255,.05));border:1px solid var(--line,rgba(255,255,255,.1));font-size:.9rem}
+.cg-dr.hot{border-color:#ffc53d;box-shadow:0 0 0 1px rgba(255,197,61,.25) inset}
+.cg-dr span:first-child{min-width:0;flex:1 1 180px}
+.cg-da{display:flex;gap:6px;flex:0 0 auto}
+.cg-fl{max-height:52vh;overflow:auto;margin-top:8px}
