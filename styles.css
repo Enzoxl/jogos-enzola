@@ -1791,3 +1791,11 @@ button.cg-st{cursor:pointer;transition:background .15s,transform .12s}button.cg-
 .rc-stage{background:#1d3a20;border-radius:14px;padding:6px;overflow:hidden;display:grid;justify-items:center}.rc-stage canvas{display:block;max-width:100%}
 .rc-win{width:90px;height:90px;object-fit:contain}.rc-pod{list-style:none;margin:8px 0;padding:0;display:grid;gap:4px;text-align:left}
 .rc-pod li{display:flex;gap:10px;padding:5px 10px;border-radius:10px;background:rgba(255,255,255,.05)}.rc-pod li.me{background:rgba(255,197,61,.18);outline:1px solid #ffc53d}
+
+/* cadê o enzola */
+.fh{display:flex;flex-direction:column;gap:10px;max-width:560px;margin-inline:auto}
+.fh-find{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:12px;background:var(--tile,rgba(255,255,255,.05));font-size:.88rem}.fh-find img{width:36px;height:42px;object-fit:contain}
+.fh-stage{position:relative;border-radius:14px;overflow:hidden;background:#1d2a4a;touch-action:manipulation}.fh-stage canvas{display:block;width:100%;cursor:crosshair}
+.fh-msg{position:absolute;left:50%;top:10px;transform:translateX(-50%);font-weight:800;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.6);pointer-events:none}
+.fh-msg.pop{animation:fhPop .6s ease-out}@keyframes fhPop{0%{opacity:1;transform:translateX(-50%) scale(1.4)}100%{opacity:0;transform:translateX(-50%) scale(1) translateY(-10px)}}
+.fh-hero{width:110px;height:130px;object-fit:contain}

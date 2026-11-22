@@ -3,6 +3,7 @@ const AR_GAMES = [
   { id: "snake", emoji: "🍉", name: "Cobra do Hipopótamo", desc: "Guie o hipopótamo, coma melancias e cresça sem bater na parede nem em si mesmo." },
   { id: "cards", emoji: "🃏", name: "Duelo de Cartas", desc: "49 cartas de hipopótamos, personagens e skins. Escolha o atributo certo e vença a CPU em 5 rodadas." },
   { id: "race", emoji: "🏁", name: "Corrida de Hipopótamos", desc: "Escolha o hipopótamo vencedor, aposte Enzola Coins e receba o dobro se ele ganhar." },
+  { id: "find", emoji: "🔎", name: "Cadê o Enzola?", desc: "Ache o hipopótamo escondido em cenários lotados de personagens, antes do tempo acabar." },
   { id: "soon2", emoji: "🎯", name: "Em breve", desc: "Mais um minigame chegando.", soon: true },
 ];
 let arSel = null;
@@ -33,6 +34,7 @@ const snStats = () => { lg = lg || lgLoad(); const s = lg.snake = lg.snake || { 
 function arcadeHTML() {
   if (arSel === "cards") return `<div id="cg-root"></div>`;
   if (arSel === "race") return `<div id="rc-root"></div>`;
+  if (arSel === "find") return `<div id="fh-root"></div>`;
   if (arSel === "snake") {
     const st = snStats();
     return `<div class="ar-game">
@@ -46,7 +48,7 @@ function arcadeHTML() {
   return `<div class="sec-head"><div><h2 class="h">Outros jogos</h2><p class="muted">Escolha um minigame para jogar e ganhar Enzola Coins.</p></div></div>
     <div class="ar-grid">${AR_GAMES.map(g => g.soon ? `<div class="ar-card soon"><span class="ar-em" aria-hidden="true">${g.emoji}</span><b>${g.name}</b><small>${g.desc}</small></div>` : `<div class="ar-card"><span class="ar-em" aria-hidden="true">${g.emoji}</span><b>${g.name}</b><small>${g.desc}</small><div class="ar-cacts"><button class="btn sm" data-ar="${g.id}">Jogar ▶</button><button class="btn ghost sm" data-ar-how="${g.id}">❓ Como jogar</button></div></div>`).join("")}</div>`;
 }
-function arcadeMount() { if (arSel === "snake") { if (!sn) snNew(); snFit(); snUI(); snLoop() } else { snStop(); if (arSel === "cards" && typeof cgMount === "function") cgMount(); if (arSel === "race" && typeof rcMount === "function") rcMount() } }
+function arcadeMount() { if (arSel === "snake") { if (!sn) snNew(); snFit(); snUI(); snLoop() } else { snStop(); if (arSel === "cards" && typeof cgMount === "function") cgMount(); if (arSel === "race" && typeof rcMount === "function") rcMount(); if (arSel === "find" && typeof fhMount === "function") fhMount() } }
 
 /* ---------- lógica ---------- */
 function snNew() {
@@ -189,7 +191,7 @@ if (!snKeysBound) {
   window.addEventListener("resize", () => { if ($("#sn-cv")) snFit() });
   document.addEventListener("click", e => {
     let b;
-    if (b = e.target.closest("[data-ar]")) { const v = b.dataset.ar; if (v === "back") { arSel = null; snStop(); if (sn && sn.state === "play") sn.state = "paused" } else { arSel = v; if (v === "snake") snNew(); if (v === "cards") cg.view = "menu"; if (v === "race") { rc.view = "bet"; rc.runners = null; rc.res = null } } renderLingo(); return }
+    if (b = e.target.closest("[data-ar]")) { const v = b.dataset.ar; if (v === "back") { arSel = null; snStop(); if (sn && sn.state === "play") sn.state = "paused" } else { arSel = v; if (v === "snake") snNew(); if (v === "cards") cg.view = "menu"; if (v === "find") { fh.view = "menu" } if (v === "race") { rc.view = "bet"; rc.runners = null; rc.res = null } } renderLingo(); return }
     if (b = e.target.closest("[data-ar-how]")) { arHow(b.dataset.arHow); return }
     if (b = e.target.closest("[data-sn-dir]")) { snDir(SN_V[b.dataset.snDir]); return }
     if (b = e.target.closest("[data-sn]")) { const a = b.dataset.sn; if (!sn) return;
@@ -199,6 +201,11 @@ if (!snKeysBound) {
 
 /* ---------- "Como jogar" (vale para todos os minigames) ---------- */
 const AR_HELP = {
+  find: { title: "Cadê o Enzola?", body: `
+    <h3>Objetivo</h3><p>Em cada fase aparece um cenário diferente (praia, cidade, floresta, festa, espaço ou campo) cheio de figurinhas. Ache o <b>Enzola</b>, o hipopótamo clássico, sem fantasia, e toque nele.</p>
+    <h3>Regras</h3><ul><li>São <b>${FH.rounds} fases</b>. A cada fase o tempo diminui, o cenário fica mais lotado e o Enzola fica menor.</li><li>Nas fases mais avançadas aparecem outros hipopótamos <b>com fantasia</b> e fotos de hipopótamos para confundir. Só o Enzola sem fantasia vale.</li><li>Cada toque errado custa <b>${FH.penalty} segundos</b>.</li><li>Você tem <b>1 dica por partida</b>: ela circula uma área grande onde o Enzola está e custa ${FH.hintCost} segundos.</li><li>Se o tempo acabar, a partida termina e o Enzola é mostrado.</li></ul>
+    <h3>Enzola Coins</h3><p>Você ganha moedas pelo número de fases que achou. Limite de ${FH.dayCap} moedas por dia.</p>
+    <table class="ar-tb"><tr><th>Fases achadas</th><th>Moedas</th></tr>${[1, 2, 3, 4, 5, 6, 7, 8].map(n => `<tr><td>${n}</td><td>${FH.coins[n]}</td></tr>`).join("")}</table>` },
   race: { title: "Corrida de Hipopótamos", body: `
     <h3>Objetivo</h3><p>Descubra qual hipopótamo vai cruzar a linha de chegada primeiro e aposte nele.</p>
     <h3>Como jogar</h3><ol><li>Cinco hipopótamos (skins da loja) entram na corrida. Toque no que você acha que vai ganhar.</li><li>Escolha o valor da aposta (de ${RC.min} a ${RC.max} Enzola Coins) e toque em <b>Largar!</b></li><li>Se o seu hipopótamo vencer, você recebe o <b>dobro</b> da aposta. Se perder, a aposta se vai.</li></ol>
