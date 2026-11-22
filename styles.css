@@ -1799,3 +1799,19 @@ button.cg-st{cursor:pointer;transition:background .15s,transform .12s}button.cg-
 .fh-msg{position:absolute;left:50%;top:10px;transform:translateX(-50%);font-weight:800;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.6);pointer-events:none}
 .fh-msg.pop{animation:fhPop .6s ease-out}@keyframes fhPop{0%{opacity:1;transform:translateX(-50%) scale(1.4)}100%{opacity:0;transform:translateX(-50%) scale(1) translateY(-10px)}}
 .fh-hero{width:110px;height:130px;object-fit:contain}
+
+/* ===== Quebra-cabeça ===== */
+.pz-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-top:12px}
+.pz-th{position:relative;padding:0;border:1px solid var(--line,#ddd);border-radius:10px;overflow:hidden;background:var(--card,#fff);cursor:pointer;text-align:left;color:inherit;font:inherit}
+.pz-th img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;background:transparent}
+.pz-th span{display:block;padding:3px 6px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pz-ok{position:absolute;top:3px;right:3px;font-style:normal;font-size:11px;color:#fff;background:rgba(0,0,0,.6);border-radius:8px;padding:0 5px;letter-spacing:1px}
+.pz{max-width:640px;margin:0 auto;position:relative;min-height:470px}
+.pz-name{text-align:center;margin:6px 0}
+.pz-board{position:relative;width:100%;border-radius:10px;overflow:hidden;background:#0002;touch-action:manipulation}
+.pz-tiles{position:absolute;inset:0;display:grid;gap:2px}
+.pz-t{border:0;padding:0;margin:0;background-color:#0003;cursor:pointer;border-radius:3px;min-width:0;min-height:0}
+.pz-t.sel{outline:3px solid #f5b400;outline-offset:-3px;z-index:1;filter:brightness(1.15)}
+.pz-t.ok{cursor:default;box-shadow:inset 0 0 0 2px #2ecc71}
+.pz-full{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;opacity:0;pointer-events:none;transition:opacity .15s}
+.pz-board.peek .pz-full{opacity:1}
