@@ -2,6 +2,7 @@
 const AR_GAMES = [
   { id: "snake", emoji: "🍉", name: "Cobra do Hipopótamo", desc: "Guie o hipopótamo, coma melancias e cresça sem bater na parede nem em si mesmo." },
   { id: "cards", emoji: "🃏", name: "Duelo de Cartas", desc: "49 cartas de hipopótamos, personagens e skins. Escolha o atributo certo e vença a CPU em 5 rodadas." },
+  { id: "race", emoji: "🏁", name: "Corrida de Hipopótamos", desc: "Escolha o hipopótamo vencedor, aposte Enzola Coins e receba o dobro se ele ganhar." },
   { id: "soon2", emoji: "🎯", name: "Em breve", desc: "Mais um minigame chegando.", soon: true },
 ];
 let arSel = null;
@@ -31,6 +32,7 @@ const snStats = () => { lg = lg || lgLoad(); const s = lg.snake = lg.snake || { 
 
 function arcadeHTML() {
   if (arSel === "cards") return `<div id="cg-root"></div>`;
+  if (arSel === "race") return `<div id="rc-root"></div>`;
   if (arSel === "snake") {
     const st = snStats();
     return `<div class="ar-game">
@@ -44,7 +46,7 @@ function arcadeHTML() {
   return `<div class="sec-head"><div><h2 class="h">Outros jogos</h2><p class="muted">Escolha um minigame para jogar e ganhar Enzola Coins.</p></div></div>
     <div class="ar-grid">${AR_GAMES.map(g => g.soon ? `<div class="ar-card soon"><span class="ar-em" aria-hidden="true">${g.emoji}</span><b>${g.name}</b><small>${g.desc}</small></div>` : `<div class="ar-card"><span class="ar-em" aria-hidden="true">${g.emoji}</span><b>${g.name}</b><small>${g.desc}</small><div class="ar-cacts"><button class="btn sm" data-ar="${g.id}">Jogar ▶</button><button class="btn ghost sm" data-ar-how="${g.id}">❓ Como jogar</button></div></div>`).join("")}</div>`;
 }
-function arcadeMount() { if (arSel === "snake") { if (!sn) snNew(); snFit(); snUI(); snLoop() } else { snStop(); if (arSel === "cards" && typeof cgMount === "function") cgMount() } }
+function arcadeMount() { if (arSel === "snake") { if (!sn) snNew(); snFit(); snUI(); snLoop() } else { snStop(); if (arSel === "cards" && typeof cgMount === "function") cgMount(); if (arSel === "race" && typeof rcMount === "function") rcMount() } }
 
 /* ---------- lógica ---------- */
 function snNew() {
@@ -187,7 +189,7 @@ if (!snKeysBound) {
   window.addEventListener("resize", () => { if ($("#sn-cv")) snFit() });
   document.addEventListener("click", e => {
     let b;
-    if (b = e.target.closest("[data-ar]")) { const v = b.dataset.ar; if (v === "back") { arSel = null; snStop(); if (sn && sn.state === "play") sn.state = "paused" } else { arSel = v; if (v === "snake") snNew(); if (v === "cards") cg.view = "menu" } renderLingo(); return }
+    if (b = e.target.closest("[data-ar]")) { const v = b.dataset.ar; if (v === "back") { arSel = null; snStop(); if (sn && sn.state === "play") sn.state = "paused" } else { arSel = v; if (v === "snake") snNew(); if (v === "cards") cg.view = "menu"; if (v === "race") { rc.view = "bet"; rc.runners = null; rc.res = null } } renderLingo(); return }
     if (b = e.target.closest("[data-ar-how]")) { arHow(b.dataset.arHow); return }
     if (b = e.target.closest("[data-sn-dir]")) { snDir(SN_V[b.dataset.snDir]); return }
     if (b = e.target.closest("[data-sn]")) { const a = b.dataset.sn; if (!sn) return;
@@ -197,6 +199,11 @@ if (!snKeysBound) {
 
 /* ---------- "Como jogar" (vale para todos os minigames) ---------- */
 const AR_HELP = {
+  race: { title: "Corrida de Hipopótamos", body: `
+    <h3>Objetivo</h3><p>Descubra qual hipopótamo vai cruzar a linha de chegada primeiro e aposte nele.</p>
+    <h3>Como jogar</h3><ol><li>Cinco hipopótamos (skins da loja) entram na corrida. Toque no que você acha que vai ganhar.</li><li>Escolha o valor da aposta (de ${RC.min} a ${RC.max} Enzola Coins) e toque em <b>Largar!</b></li><li>Se o seu hipopótamo vencer, você recebe o <b>dobro</b> da aposta. Se perder, a aposta se vai.</li></ol>
+    <h3>Forma e chance</h3><p>Cada hipopótamo tem uma <b>forma</b> de 1 a 5 estrelas e uma <b>chance</b> estimada de vitória. Quem tem mais estrelas corre mais, mas a corrida tem arrancadas e cansaço aleatórios, então até o mais fraco pode surpreender.</p>
+    <h3>Dicas</h3><ul><li>Sem sorte, o prêmio de 2× não compensa sempre: com 5 corredores o favorito ganha em torno de 1 de cada 4 corridas. Aposte só o que você aceita perder.</li><li>Os ganhos da corrida não entram nos pontos de grupo.</li><li>Quer outros corredores? Toque em <b>Outros corredores</b> antes de largar.</li></ul>` },
   snake: { title: "Cobra do Hipopótamo", body: `
     <h3>Objetivo</h3><p>Guie o hipopótamo pelo tabuleiro, coma melancias e chegue o mais longe que puder sem bater.</p>
     <h3>Como jogar</h3><ul><li><b>Computador:</b> setas ou WASD. Espaço pausa e continua.</li><li><b>Celular:</b> deslize o dedo no tabuleiro ou use os 4 botões.</li><li>O hipopótamo anda sozinho, você só escolhe a direção. Não dá para voltar para trás.</li></ul>

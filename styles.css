@@ -1775,3 +1775,19 @@ button.cg-st{cursor:pointer;transition:background .15s,transform .12s}button.cg-
 .xf-row{padding:10px;border-radius:14px;background:var(--tile,rgba(255,255,255,.05));border:1px solid var(--line,rgba(255,255,255,.1));margin-bottom:8px}
 .xf-hist{display:grid;gap:4px;font-size:.84rem;opacity:.85}.xf-fl{max-height:52vh;overflow:auto}
 .lgs-gift{margin-top:2px}
+
+/* corrida de hipopótamos */
+.rc{display:flex;flex-direction:column;gap:10px;max-width:560px;margin-inline:auto}
+.rc-h{margin:6px 0 0;font-size:.95rem}
+.rc-list{display:grid;gap:8px}
+.rc-r{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:14px;background:var(--tile,rgba(255,255,255,.05));border:1.5px solid var(--line,rgba(255,255,255,.1));color:inherit;font:inherit;text-align:left;cursor:pointer;transition:border-color .2s,transform .2s,background .2s}
+.rc-r:hover{transform:translateY(-1px)}.rc-r.on{border-color:#ffc53d;background:rgba(255,197,61,.1);box-shadow:0 0 0 2px rgba(255,197,61,.2)}
+.rc-n{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#fff;color:#1a2040;font-weight:800;font-size:.85rem;flex:0 0 auto}
+.rc-r img{width:46px;height:46px;object-fit:contain;flex:0 0 auto}
+.rc-i{display:grid;gap:2px;flex:1;min-width:0}.rc-i b{font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rc-f{color:#ffc53d;letter-spacing:1px;font-size:.8rem}.rc-f i{font-style:normal;opacity:.25}
+.rc-p{display:grid;justify-items:end}.rc-p b{font-size:1.05rem}.rc-p small{opacity:.65;font-size:.68rem}
+.rc-chips{display:flex;gap:8px;flex-wrap:wrap}.rc-note{margin:0;font-size:.85rem}
+.rc-stage{background:#1d3a20;border-radius:14px;padding:6px;overflow:hidden;display:grid;justify-items:center}.rc-stage canvas{display:block;max-width:100%}
+.rc-win{width:90px;height:90px;object-fit:contain}.rc-pod{list-style:none;margin:8px 0;padding:0;display:grid;gap:4px;text-align:left}
+.rc-pod li{display:flex;gap:10px;padding:5px 10px;border-radius:10px;background:rgba(255,255,255,.05)}.rc-pod li.me{background:rgba(255,197,61,.18);outline:1px solid #ffc53d}
