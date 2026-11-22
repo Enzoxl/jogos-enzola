@@ -30,7 +30,7 @@ const CG_DEF = [
   ["h13", "Bebê sentadinho", "pic", "cards/p-h13.webp", 2, ["fof"]], ["h04", "Hipo e o passarinho", "pic", "cards/p-h04.webp", 3, ["for", "esp"]],
   ["h44", "Hipo no gramado", "pic", "cards/p-h44.webp", 1, ["for"]],
   ["festeiro", "Festeiro", "skin", "", 2, ["fof", "sor"]], ["chef", "Chef", "skin", "", 2, ["esp", "fof"]], ["fone", "DJ de fone", "skin", "", 2, ["sor", "esp"]],
-  ["oculos", "Óculos escuros", "skin", "", 2, ["sor"]], ["cauboi", "Caubói", "skin", "", 3, ["for", "sor"]], ["mago", "Mago", "skin", "", 3, ["esp"]],
+  ["pirata", "Pirata", "skin", "", 2, ["for", "sor"]], ["cauboi", "Caubói", "skin", "", 3, ["for", "sor"]], ["mago", "Mago", "skin", "", 3, ["esp"]],
   ["cavalheiro", "Cavalheiro", "skin", "", 3, ["esp", "fof"]], ["heroi", "Super-herói", "skin", "", 3, ["for"]], ["rei", "Rei Hipopótamo", "skin", "", 4, ["for", "esp"]],
   ["dourado", "Hipopótamo de ouro", "skin", "", 4, ["sor", "fof"]], ["ff", "Enzola Free Fire", "skin", "", 4, ["for", "sor"]],
   ["ave", "Enzola Pássaro", "skin", "", 4, ["esp", "fof"]], ["colecionador", "Colecionador", "skin", "", 4, ["sor", "esp"]],

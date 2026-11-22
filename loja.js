@@ -7,7 +7,7 @@ const LG_SKINS = [
   { id: "festeiro", kind: "hip", name: "Festeiro", img: "loja/h-festeiro.webp", price: 50 },
   { id: "chef", kind: "hip", name: "Chef", img: "loja/h-chef.webp", price: 75 },
   { id: "fone", kind: "hip", name: "DJ de fone", img: "loja/h-fone.webp", price: 100 },
-  { id: "oculos", kind: "hip", name: "Óculos escuros", img: "loja/h-oculos.webp", price: 100 },
+  { id: "pirata", kind: "hip", name: "Pirata", img: "loja/h-pirata.webp", price: 100 },
   { id: "cauboi", kind: "hip", name: "Caubói", img: "loja/h-cauboi.webp", price: 125 },
   { id: "mago", kind: "hip", name: "Mago", img: "loja/h-mago.webp", price: 150 },
   { id: "cavalheiro", kind: "hip", name: "Cavalheiro", img: "loja/h-cavalheiro.webp", price: 190 },

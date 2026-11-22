@@ -121,6 +121,7 @@ function lgLoad() {
   const local = lsGet(lgKey()) || {}, remote = (profile && profile.settings && profile.settings.lingo) || {};
   const newer = (remote.rev || 0) !== (local.rev || 0) ? (remote.rev || 0) > (local.rev || 0) : (remote.xp || 0) > (local.xp || 0);
   const s = { ...base, ...(newer ? remote : local) }; s.skins = { ...(s.skins || {}) }; s.album = { ...(s.album || {}) }; s.cx = { ...(s.cx || {}) };
+  if (s.skins.oculos) { s.skins.pirata = s.skins.oculos; delete s.skins.oculos; } if (s.skin === "oculos") s.skin = "pirata";
   if (s.day !== lgToday()) { s.day = lgToday(); s.dayXp = 0 }
   // ofensiva quebra se passou mais de um dia sem treinar
   if (s.last && s.last !== lgToday()) { const y = new Date(); y.setDate(y.getDate() - 1); const ys = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, "0")}-${String(y.getDate()).padStart(2, "0")}`; if (s.last !== ys) s.streak = 0 }
