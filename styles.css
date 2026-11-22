@@ -1815,3 +1815,5 @@ button.cg-st{cursor:pointer;transition:background .15s,transform .12s}button.cg-
 .pz-t.ok{cursor:default;box-shadow:inset 0 0 0 2px #2ecc71}
 .pz-full{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;opacity:0;pointer-events:none;transition:opacity .15s}
 .pz-board.peek .pz-full{opacity:1}
+.alb-fact{margin:10px 4px 0;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07);font-size:14px;line-height:1.45;text-align:left}
+.alb-box.zoom{display:block;max-width:min(560px,100%);margin:0}

@@ -3,6 +3,74 @@
    Fotos saem de baús (3 sorteios por baú, podem repetir). Baús: loja (Enzola Coins) ou atividades.
    Para adicionar fotos: coloque o arquivo em album/ e acrescente uma linha em ALBUM.
    ===================================================================== */
+const ALBUM_FACTS = {
+  h01: "Hipopótamos passam até 16 horas por dia na água, que protege a pele do sol e do calor.",
+  h02: "À noite eles saem da água para pastar e podem andar vários quilômetros atrás de capim.",
+  h03: "Um macho adulto pesa em média de 1.500 a 1.800 kg, mais que um carro pequeno.",
+  h04: "A boca abre até cerca de 150°, e os caninos de baixo podem passar de 50 cm.",
+  h05: "Os parentes vivos mais próximos dos hipopótamos são as baleias e os golfinhos, não os cavalos nem os porcos.",
+  h06: "Um filhote nasce com 25 a 50 kg, geralmente dentro d'água.",
+  h07: "Machos marcam território espalhando fezes com o rabo, como se fosse um ventilador.",
+  h08: "Bocejar nem sempre é sono: também é uma forma de mostrar os dentes e a força.",
+  h09: "A pele solta um líquido avermelhado que funciona como protetor solar e ajuda contra bactérias. Não é suor nem sangue.",
+  h10: "Olhos, orelhas e narinas ficam no alto da cabeça, então ele respira e vigia quase todo submerso.",
+  h11: "Um filhote desmama por volta de 1 ano, mas pode ficar perto da mãe por vários anos.",
+  h12: "Hipopótamos não nadam de verdade: eles caminham e quicam no fundo dos rios.",
+  h13: "Filhotes mamam debaixo d'água, fechando narinas e orelhas.",
+  h14: "Um hipopótamo segura a respiração por cerca de 5 minutos.",
+  h15: "Eles se comunicam com roncos e grunhidos que viajam pela água e pelo ar ao mesmo tempo.",
+  h16: "Os dentes da frente servem de arma e exibição. Quem corta o capim são os lábios largos e musculosos.",
+  h17: "Dormindo na água, o hipopótamo sobe para respirar por reflexo, sem nem acordar.",
+  h18: "O hipopótamo é um dos mamíferos mais perigosos para humanos na África.",
+  h19: "Peixes pequenos limpam a pele dos hipopótamos, comendo algas e parasitas.",
+  h20: "Debaixo d'água, hipopótamos andam no fundo em câmera lenta, quase como se planassem.",
+  h21: "Em terra, correm a cerca de 30 km/h em trechos curtos.",
+  h22: "Vivem em grupos de cerca de 10 a 30 indivíduos, chamados de bandos.",
+  h23: "Uma membrana transparente cobre os olhos quando mergulham, como um óculos de natação natural.",
+  h24: "Cada grupo costuma ter um macho dominante que defende a área do bando.",
+  h25: "Um hipopótamo come cerca de 35 a 40 kg de capim por noite.",
+  h26: "A pele pode ter até 5 cm de espessura em algumas partes do corpo.",
+  h27: "As narinas se fecham sozinhas quando ele mergulha.",
+  h28: "A língua é grande e rosada, e aparece bem nos bocejos.",
+  h29: "Os lábios podem chegar a cerca de 50 cm de largura, e cortam o capim como um cortador de grama.",
+  h30: "Os caninos nunca param de crescer durante a vida do hipopótamo.",
+  h31: "Fora da água por muito tempo, a pele resseca e racha. Por isso ele vive molhado.",
+  h32: "Hipopótamos comem em terra firme, nunca dentro d'água.",
+  h33: "Eles passam boa parte do dia descansando na água rasa ou na margem.",
+  h34: "Brigas entre machos podem deixar cicatrizes enormes na pele.",
+  h35: "Na África, o hipopótamo-comum vive em rios e lagos ao sul do Saara.",
+  h36: "Na natureza, vivem entre 40 e 50 anos. Em zoológicos alguns passaram dos 50.",
+  h37: "Mesmo parecendo lentos, atacam rápido quando se sentem ameaçados.",
+  h38: "Entre machos, mostrar os dentes funciona como aviso: \"olha o tamanho do que eu tenho\".",
+  h39: "Plantas aquáticas como o aguapé crescem em rios e lagoas onde os hipopótamos vivem.",
+  h40: "A cor da pele varia de cinza a rosado, e fica avermelhada pelo líquido que ela produz.",
+  h41: "O nome vem do grego e quer dizer \"cavalo do rio\".",
+  h42: "Parados, parecem pedras: só o topo da cabeça aparece na superfície.",
+  h43: "Eles repetem as mesmas trilhas todas as noites, e as trilhas viram caminhos no capim.",
+  h44: "Hipopótamos andam em fila pelas trilhas até as áreas de pasto.",
+  h45: "Filhotes descansam em cima das costas da mãe quando estão na água.",
+  h46: "A mãe é muito protetora e enfrenta quem chega perto do filhote.",
+  h47: "A gestação dura cerca de 8 meses e a fêmea tem um filhote por vez.",
+  h48: "Os dentes de um hipopótamo são feitos de marfim, e já foram muito procurados por caçadores.",
+  h49: "Os hipopótamos-comuns são considerados vulneráveis à extinção, por causa da caça e da perda de habitat.",
+  h50: "Dormir encostado em outro hipopótamo é comum, o grupo todo costuma descansar junto.",
+  h51: "Em zoológicos, hipopótamos às vezes ganham melancia como petisco.",
+  h52: "Filhotes aprendem cedo a prender o ar e a abrir os olhos debaixo d'água.",
+  h53: "O líquido avermelhado da pele é chamado de \"suor de sangue\", mas não é sangue nem suor.",
+  h54: "A água ajuda o grupo a se refrescar, por isso é comum ver vários juntos em banhos coletivos.",
+  h55: "No fim da tarde, eles seguem das lagoas para os pastos por trilhas de terra.",
+  h56: "Encostar a boca pode ser um cumprimento ou o começo de uma disputa.",
+  h57: "Machos adultos podem ter território fixo na água e dividem o espaço com várias fêmeas.",
+  h58: "De perfil, a linha da boca vai quase até os olhos.",
+  h59: "Existe o hipopótamo-pigmeu, que pesa menos de 300 kg e vive em florestas da África Ocidental.",
+  h60: "O hipopótamo-pigmeu é ameaçado de extinção e é bem mais difícil de ver que o comum.",
+  h61: "A cabeça é enorme, e ele gosta de apoiá-la na margem ou na água para descansar.",
+  h62: "Os olhos e as orelhas no topo da cabeça permitem ficar atento ao ambiente quase todo submerso.",
+  h63: "Mesmo fora da água, o hipopótamo precisa voltar a ela antes do amanhecer para a pele não ressecar.",
+  h64: "Depois de uma noite de pasto, voltam para a água e descansam até a noite seguinte.",
+  h65: "O hipopótamo está entre os maiores mamíferos terrestres, atrás de elefantes e rinocerontes-brancos.",
+};
+const albFact = id => ALBUM_FACTS[id] || "";
 const ALBUM = [
   { id: "h01", name: "Mergulhador Rosado", img: "album/h01.webp", ar: 1.507, rar: 1 },
   { id: "h02", name: "Pôr do Sol na Savana", img: "album/h02.webp", ar: 1.53, rar: 1 },
@@ -286,7 +354,7 @@ document.addEventListener("click", e => {
   if (c("[data-alb-open]") && !c("[data-alb-open]").disabled) { chestOpen(c("[data-alb-open]").dataset.albOpen); return }
   if (c("[data-alb-close]") || e.target.id === "alb-ovl") { albumClose(); return }
   if (b = c("[data-alb-zoom]")) { const p = ALBUM.find(x => x.id === b.dataset.albZoom); if (!p) return; const n = (lg.album || {})[p.id] || 0;
-    albumOvl().innerHTML = `<div class="alb-box zoom"><button class="iconbtn lgs-x" data-alb-close aria-label="Fechar">${ic("x")}</button><img src="${esc(p.img)}" alt="${esc(p.name)}"><p><b>${esc(p.name)}</b><span class="muted"> · ${n} cópia${n > 1 ? "s" : ""}</span></p></div>`; return }
+    albumOvl().innerHTML = `<div class="alb-box zoom"><button class="iconbtn lgs-x" data-alb-close aria-label="Fechar">${ic("x")}</button><img src="${esc(p.img)}" alt="${esc(p.name)}"><p><b>${esc(p.name)}</b><span class="muted"> · ${n} cópia${n > 1 ? "s" : ""}</span></p><p class="alb-fact"><b>🦛 Curiosidade #${ALBUM.indexOf(p) + 1}</b><br>${esc(albFact(p.id))}</p></div>`; return }
   if (c("[data-lgs-buy-chest]")) { chestBuy(c("[data-lgs-buy-chest]").dataset.lgsBuyChest); return }
 });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#alb-ovl")) albumClose() });
