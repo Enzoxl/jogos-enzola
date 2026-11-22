@@ -1747,3 +1747,4 @@ button.cg-st{cursor:pointer;transition:background .15s,transform .12s}button.cg-
 .cg-zm{max-width:340px!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important}.cg-zm .mclose{position:absolute;right:-6px;top:-40px;color:#fff}.cg-zoom .cg-card{width:100%}
 @media(prefers-reduced-motion:reduce){.cg-card.rj,.cg-card.flip,.cg-card.pop{animation:none}.cg-card.r4 .cg-art::after,.cg-card.rj .cg-art::after{animation:none}}
 .cg-slot{grid-template-rows:auto 1fr;align-content:center;gap:6px}.cg-who{font:700 10.5px var(--f-body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}.cg-who.you{color:var(--accent)}
+.cg-art img,.cg-art.skin img{background:transparent!important}
