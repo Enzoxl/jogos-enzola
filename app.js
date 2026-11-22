@@ -842,6 +842,7 @@ function route() {
 function show(h) {
   let [t, ...rest] = h.split("/"); routeArg = rest.join("/");
   if (t === "post" && /^[0-9a-f-]{36}$/i.test(routeArg)) { if (typeof hm !== "undefined") hm.focus = routeArg; t = "inicio"; routeArg = "" }   // link de notificação: abre o post
+  if (t === "trocas") { mgTab = "album"; window.xfOpenInbox = true; t = "idiomas" }
   if (t === "duelo") { mgTab = "arcade"; if (typeof arSel !== "undefined") arSel = "cards"; if (typeof cg !== "undefined") { cg.view = "menu"; cg.pv = null } t = "idiomas" }
   const prev = tab;
   tab = (t === "jogo" && routeArg) || (t === "amigo" && routeArg) ? t : TABS.includes(t) ? t : "inicio";
@@ -851,7 +852,7 @@ function show(h) {
   for (const b of $$("nav.tabs button")) b.setAttribute("aria-selected", b.dataset.tab === hl);
   $("#who-btn").classList.toggle("on", tab === "perfil" || tab === "config");
   for (const s of $$("main.wrap > section")) s.hidden = s.id !== tab;
-  if (tab === "idiomas") { renderLingo(); window.scrollTo({ top: 0 }); return }
+  if (tab === "idiomas") { renderLingo(); window.scrollTo({ top: 0 }); if (window.xfOpenInbox) { window.xfOpenInbox = false; if (typeof xfStart === "function") { xf.st = { step: "inbox" }; xfRender(); xfLoad() } } return }
   closeMenus();
   if (tab === "amigos" && user) loadFriends();
   if (tab === "desejos" && loaded) refreshPrices(false);

@@ -206,6 +206,7 @@ function albumHTML() {
     <div class="alb-cx panel"><div class="alb-free"><div><b>🎁 Baús grátis de hoje: ${freeLeft()}/${FREE_PER_DAY}</b><small class="muted">${freeLeft() ? "Pegue um baú comum de graça" : "Novos baús grátis à meia-noite"}</small></div><button class="btn sm" data-alb-free${freeLeft() ? "" : " disabled"}>${freeLeft() ? "Pegar baú grátis" : "Volte amanhã"}</button></div>
       <div class="alb-rar">${CH_ORDER.map(r => { const K = chR(r), n = chestCount(r); return `<div class="alb-rc${n ? " has" : ""}" style="--rc:${K.col}">${chestSvg("sm", r)}<b>${K.name.replace("Baú ", "")}</b><small>${n} baú${n === 1 ? "" : "s"}</small><button class="btn sm${n ? "" : " ghost"}" data-alb-open="${r}"${n ? "" : " disabled"}>Abrir</button></div>` }).join("")}</div>
       <button class="btn ghost sm alb-buy" data-lg-shop>${gbI()}Comprar baús na loja</button></div>
+    ${typeof xfSectionHTML === "function" ? xfSectionHTML() : ""}
     ${albBookHTML()}`;
 }
 

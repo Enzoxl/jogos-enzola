@@ -117,10 +117,10 @@ const LG_IDX = { en: 1, es: 2 };
 const lgKey = () => "lingo:" + (user ? user.id : "anon");
 const lgToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` };
 function lgLoad() {
-  const base = { lang: "en", xp: 0, streak: 0, last: "", day: "", dayXp: 0, done: {}, best: {}, sfx: true, goiabas: 0, skins: {}, skin: "classico", rev: 0, chests: 0, album: {}, cx: {}, free: { day: "", n: 0 } };
+  const base = { lang: "en", xp: 0, streak: 0, last: "", day: "", dayXp: 0, done: {}, best: {}, sfx: true, goiabas: 0, skins: {}, skin: "classico", rev: 0, chests: 0, album: {}, cx: {}, xf: {}, free: { day: "", n: 0 } };
   const local = lsGet(lgKey()) || {}, remote = (profile && profile.settings && profile.settings.lingo) || {};
   const newer = (remote.rev || 0) !== (local.rev || 0) ? (remote.rev || 0) > (local.rev || 0) : (remote.xp || 0) > (local.xp || 0);
-  const s = { ...base, ...(newer ? remote : local) }; s.skins = { ...(s.skins || {}) }; s.album = { ...(s.album || {}) }; s.cx = { ...(s.cx || {}) };
+  const s = { ...base, ...(newer ? remote : local) }; s.skins = { ...(s.skins || {}) }; s.album = { ...(s.album || {}) }; s.cx = { ...(s.cx || {}) }; s.xf = { ...(s.xf || {}) };
   if (s.skins.oculos) { s.skins.pirata = s.skins.oculos; delete s.skins.oculos; } if (s.skin === "oculos") s.skin = "pirata";
   if (s.day !== lgToday()) { s.day = lgToday(); s.dayXp = 0 }
   // ofensiva quebra se passou mais de um dia sem treinar

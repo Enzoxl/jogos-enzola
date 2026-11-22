@@ -182,9 +182,10 @@ const NTXT = {
   tag: n => `<b>${esc(pName(pOf(n.actor)))}</b> marcou você ${n.payload.in === "comment" ? "num comentário" : "numa publicação"}${n.payload.text ? `<span class="nnote">“${esc(n.payload.text)}”</span>` : ""}`,
   like: n => `<b>${esc(pName(pOf(n.actor)))}</b> curtiu sua publicação`,
   comment: n => `<b>${esc(pName(pOf(n.actor)))}</b> comentou na sua publicação${n.payload.text ? `<span class="nnote">“${esc(n.payload.text)}”</span>` : ""}`,
+  transfer: n => { const w = `<b>${esc(pName(pOf(n.actor)))}</b>`, e = n.payload && n.payload.ev; return e === "accept" ? `${w} aceitou sua proposta 🎉` : e === "decline" ? `${w} recusou sua proposta` : e === "trade" ? `${w} propôs uma troca de fotos 🔁` : `${w} enviou um presente pra você 🎁` },
   duel: n => { const w = `<b>${esc(pName(pOf(n.actor)))}</b>`, e = n.payload && n.payload.ev; return e === "accept" ? `${w} aceitou seu duelo de cartas ⚔️` : e === "decline" ? `${w} recusou seu duelo de cartas` : `${w} desafiou você pro Duelo de Cartas ⚔️` },
 };
-const NICON = { poke: "hand", suggest: "gift", message: "message", friend_request: "userplus", friend_accept: "users", tag: "userplus", like: "heart", comment: "message", duel: "layers" };
+const NICON = { poke: "hand", suggest: "gift", message: "message", friend_request: "userplus", friend_accept: "users", tag: "userplus", like: "heart", comment: "message", duel: "layers", transfer: "gift" };
 function nActions(n) {
   const a = n.actor;
   if (n.kind === "poke") return `<button class="btn ghost sm" data-fr="poke" data-id="${a}">${ic("hand")}Cutucar de volta</button>`;
@@ -192,6 +193,7 @@ function nActions(n) {
   if (n.kind === "suggest") return `${gameHref(n.payload) ? `<a class="btn ghost sm" href="#${gameHref(n.payload)}">Ver jogo</a>` : ""}<button class="btn ghost sm" data-nt="addwish" data-id="${n.id}">${ic("bookmark")}Quero</button>`;
   if (n.kind === "friend_request") { const r = fr.rows.find(f => f.requester === a && f.addressee === user.id && f.status === "pending"); return r ? `<button class="btn sm" data-fr="accept" data-id="${r.id}">${ic("check")}Aceitar</button>` : `<a class="btn ghost sm" href="#amigos">Ver amigos</a>` }
   if (n.kind === "friend_accept") return `<a class="btn ghost sm" href="#amigo/${a}">Ver perfil</a>`;
+  if (n.kind === "transfer") return `<button class="btn ghost sm" data-go="trocas">Ver proposta</button>`;
   if (n.kind === "duel") return `<button class="btn ghost sm" data-go="duelo">${n.payload && n.payload.ev === "decline" ? "Ver jogo" : "Abrir duelo"}</button>`;
   if (n.kind === "tag" || n.kind === "like" || n.kind === "comment") return `<button class="btn ghost sm" data-go="${n.payload && /^[0-9a-f-]{36}$/i.test(n.payload.post_id || "") ? "post/" + n.payload.post_id : "inicio"}">${n.kind === "comment" ? "Ver comentário" : "Ver no feed"}</button>`;
   return "";
@@ -232,9 +234,10 @@ async function onNotif(n) {
   await loadProfiles([n.actor]);
   fr.notifs.unshift({ ...n, payload: n.payload || {} }); updateBell();
   const who = pName(pOf(n.actor));
-  const txt = { poke: `${who} cutucou você! 👉`, suggest: `${who} sugeriu ${n.payload && n.payload.name || "um jogo"} para você`, message: `Nova mensagem de ${who}`, friend_request: `${who} quer ser seu amigo`, friend_accept: `${who} aceitou seu pedido de amizade`, tag: `${who} marcou você`, like: `${who} curtiu sua publicação`, duel: n.payload && n.payload.ev === "accept" ? `${who} aceitou seu duelo de cartas ⚔️` : n.payload && n.payload.ev === "decline" ? `${who} recusou o duelo` : `${who} desafiou você pro Duelo de Cartas ⚔️`, comment: `${who} comentou na sua publicação` }[n.kind];
+  const txt = { poke: `${who} cutucou você! 👉`, suggest: `${who} sugeriu ${n.payload && n.payload.name || "um jogo"} para você`, message: `Nova mensagem de ${who}`, friend_request: `${who} quer ser seu amigo`, friend_accept: `${who} aceitou seu pedido de amizade`, tag: `${who} marcou você`, like: `${who} curtiu sua publicação`, transfer: n.payload && n.payload.ev === "accept" ? `${who} aceitou sua proposta 🎉` : n.payload && n.payload.ev === "decline" ? `${who} recusou sua proposta` : n.payload && n.payload.ev === "trade" ? `${who} propôs uma troca de fotos 🔁` : `${who} enviou um presente pra você 🎁`, duel: n.payload && n.payload.ev === "accept" ? `${who} aceitou seu duelo de cartas ⚔️` : n.payload && n.payload.ev === "decline" ? `${who} recusou o duelo` : `${who} desafiou você pro Duelo de Cartas ⚔️`, comment: `${who} comentou na sua publicação` }[n.kind];
   if (n.kind === "message" && chat && chat.uid === n.actor && $("#chat-list")) return;
   if (txt) { toast(txt); sysNotify("Jogos Enzola", txt) }
+  if (n.kind === "transfer" && typeof xfLoad === "function") xfLoad();
   if (n.kind === "poke") { const b = $("#bell"); b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake"); if (lsGet("pref-vibrate") !== false && navigator.vibrate) navigator.vibrate([90, 60, 90]) }
 }
 async function onMessage(m) {
@@ -260,6 +263,7 @@ function subscribeRT() {
       loadFriends();
     }).subscribe());
     if (caps.v3) {
+      if (typeof xfLoad === "function") xfLoad();
       rtChans.push(sb.channel("notif-" + me).on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${me}` }, p => onNotif(p.new)).subscribe());
       rtChans.push(sb.channel("msg-" + me).on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `recipient=eq.${me}` }, p => onMessage(p.new)).subscribe());
     }
@@ -356,6 +360,8 @@ function renderFriendPage() {
     ${v3 ? `<button class="btn" data-fr="chat" data-id="${uid}">${ic("message")}Mensagem${unread ? ` <span class="ubadge light">${unread}</span>` : ""}</button>
     <button class="btn ghost" data-fr="poke" data-id="${uid}">${ic("hand")}Cutucar</button>
     <button class="btn ghost" data-fr="duel" data-id="${uid}">⚔️ Desafiar</button>
+    <button class="btn ghost" data-fr="xfgift" data-id="${uid}">🎁 Presentear</button>
+    <button class="btn ghost" data-fr="xftrade" data-id="${uid}">🔁 Trocar fotos</button>
     <button class="btn ghost" data-fr="suggest" data-id="${uid}">${ic("gift")}Sugerir jogo</button>` : ""}
     <button class="btn ghost" data-fp-sub="comum">${ic("users")}Comparar</button>
     <button class="btn ghost danger-text" data-fr="unfriend" data-id="${rel0.id}" title="Remover amigo">${ic("trash")}<span>Remover amigo</span></button>
@@ -444,6 +450,8 @@ document.addEventListener("click", async e => {
   if (a === "search") return frSearch();
   if (a === "chat") { $("#npanel").hidden = true; return openChat(id) }
   if (a === "poke") return poke(id);
+  if (a === "xfgift") return xfStart("gift", { to: id });
+  if (a === "xftrade") return xfStart("trade", { to: id });
   if (a === "duel") { if (typeof cgChallenge === "function") return cgChallenge(id) }
   if (a === "suggest") return openSuggest(id, null);
   if (a === "sg-change") { openSuggest.game = null; $("#sg-game").innerHTML = sgGameHTML(); $("#sg-q").focus(); return }

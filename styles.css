@@ -1758,3 +1758,20 @@ button.cg-st{cursor:pointer;transition:background .15s,transform .12s}button.cg-
 .cg-dr span:first-child{min-width:0;flex:1 1 180px}
 .cg-da{display:flex;gap:6px;flex:0 0 auto}
 .cg-fl{max-height:52vh;overflow:auto;margin-top:8px}
+
+/* trocas e presentes */
+.xf-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.alb-box.xf{max-height:92vh;overflow:auto}.alb-box.xf h2{margin:0 28px 4px 0}
+.xf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;margin:10px 0}
+.xf-pick{display:grid;gap:4px;justify-items:center;text-align:center;padding:6px;border-radius:12px;background:var(--tile,rgba(255,255,255,.05));border:1px solid var(--line,rgba(255,255,255,.1));color:inherit;cursor:pointer;font:inherit}
+.xf-pick img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px}.xf-pick.chr img{aspect-ratio:1;border-radius:50%;width:72px}
+.xf-pick b{font-size:.74rem;line-height:1.15}.xf-pick small{font-size:.7rem;opacity:.75;display:flex;align-items:center;gap:3px}
+.xf-pick:hover:not(:disabled){border-color:#7c4dff}.xf-pick:disabled{opacity:.45;cursor:not-allowed}
+.xf-it{display:grid;gap:4px;justify-items:center;text-align:center;font-size:.75rem;max-width:130px}.xf-it img{width:100%;max-height:90px;object-fit:cover;border-radius:10px}.xf-it.skin img{object-fit:contain}.xf-it.chr img{width:70px;height:70px;border-radius:50%;object-fit:cover}
+.xf-it.big{max-width:150px}.xf-it.big img{max-height:120px}.xf-it.big.chr img{width:96px;height:96px}
+.xf-sum{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin:14px 0;text-align:center}.xf-sum>div{display:grid;gap:6px;justify-items:center}.xf-sum small{opacity:.7}
+.xf-sum.sm{margin:6px 0;gap:10px}.xf-ar{font-size:1.6rem;opacity:.8}.xf-who{display:grid;gap:4px;justify-items:center}
+.xf-note{font-size:.84rem;margin:6px 0}.xf-h{margin:14px 0 6px;font-size:.95rem}
+.xf-row{padding:10px;border-radius:14px;background:var(--tile,rgba(255,255,255,.05));border:1px solid var(--line,rgba(255,255,255,.1));margin-bottom:8px}
+.xf-hist{display:grid;gap:4px;font-size:.84rem;opacity:.85}.xf-fl{max-height:52vh;overflow:auto}
+.lgs-gift{margin-top:2px}
