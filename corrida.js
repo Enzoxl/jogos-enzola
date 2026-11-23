@@ -55,17 +55,17 @@ function rcHTML() {
   if (!rc.runners) rcDeal();
   const st = rcStats(), bal = rcBal();
   if (bal >= RC.min) rc.bet = Math.max(RC.min, Math.min(rc.bet, RC.max, bal));
-  if (rc.view === "race") return `<div class="rc"><div class="ar-hud"><button class="btn ghost sm" data-rc="skip">⏭ Pular</button><div class="ar-sc"><span>Aposta</span><b>${rc.bet}</b></div><div class="ar-sc"><span>Seu hipopótamo</span><b>#${rc.runners[rc.pick].num}</b></div></div>
+  if (rc.view === "race") return `<div class="rc"><div class="ar-hud"><button class="btn ghost sm" data-rcg="skip">⏭ Pular</button><div class="ar-sc"><span>Aposta</span><b>${rc.bet}</b></div><div class="ar-sc"><span>Seu hipopótamo</span><b>#${rc.runners[rc.pick].num}</b></div></div>
     <div class="rc-stage"><canvas id="rc-cv" aria-label="Corrida de hipopótamos" role="img"></canvas></div><p class="cg-msg" id="rc-msg" aria-live="polite">Preparar…</p>${rc.res && rc.view === "race" ? "" : ""}</div>`;
   const R = rc.runners, ok = rc.pick !== null && rc.bet >= RC.min && rc.bet <= bal;
   const res = rc.res ? rcResHTML() : "";
   return `<div class="rc"><div class="ar-hud"><button class="btn ghost sm" data-ar="back" aria-label="Voltar à lista de jogos">← Jogos</button><div class="ar-sc"><span>Seu saldo</span><b>${gbI()} ${bal}</b></div><button class="iconbtn" data-ar-how="race" aria-label="Como jogar">❓</button></div>
     <h3 class="rc-h">1. Escolha o vencedor</h3>
-    <div class="rc-list">${R.map((r, i) => `<button class="rc-r${rc.pick === i ? " on" : ""}" data-rc="pick:${i}" aria-pressed="${rc.pick === i}"><span class="rc-n">${r.num}</span><img src="${r.img}" alt=""><span class="rc-i"><b>${esc(r.name)}</b><small class="rc-f" aria-label="Forma ${r.form} de 5">${rcStar(r.form)}</small></span><span class="rc-p"><b>${Math.round(r.chance * 100)}%</b><small>chance</small></span></button>`).join("")}</div>
+    <div class="rc-list">${R.map((r, i) => `<button class="rc-r${rc.pick === i ? " on" : ""}" data-rcg="pick:${i}" aria-pressed="${rc.pick === i}"><span class="rc-n">${r.num}</span><img src="${r.img}" alt=""><span class="rc-i"><b>${esc(r.name)}</b><small class="rc-f" aria-label="Forma ${r.form} de 5">${rcStar(r.form)}</small></span><span class="rc-p"><b>${Math.round(r.chance * 100)}%</b><small>chance</small></span></button>`).join("")}</div>
     <h3 class="rc-h">2. Quanto apostar?</h3>
-    <div class="rc-chips" role="group" aria-label="Valor da aposta">${RC.chips.map(c => `<button class="chip" data-rc="bet:${c}" aria-pressed="${rc.bet === c}"${c > bal ? " disabled" : ""}>${c}</button>`).join("")}<button class="chip" data-rc="bet:max" aria-pressed="${rc.bet === Math.min(RC.max, bal) && !RC.chips.includes(rc.bet)}"${bal < RC.min ? " disabled" : ""}>Máx.</button></div>
+    <div class="rc-chips" role="group" aria-label="Valor da aposta">${RC.chips.map(c => `<button class="chip" data-rcg="bet:${c}" aria-pressed="${rc.bet === c}"${c > bal ? " disabled" : ""}>${c}</button>`).join("")}<button class="chip" data-rcg="bet:max" aria-pressed="${rc.bet === Math.min(RC.max, bal) && !RC.chips.includes(rc.bet)}"${bal < RC.min ? " disabled" : ""}>Máx.</button></div>
     <p class="muted rc-note">Se o seu hipopótamo ganhar você recebe <b>${rc.bet * RC.mult}</b> Enzola Coins (o dobro). Se perder, a aposta se vai.</p>
-    <div class="cg-menu-a"><button class="btn" data-rc="go"${ok ? "" : " disabled"}>🏁 Largar!</button><button class="btn ghost" data-rc="new">🔀 Outros corredores</button></div>
+    <div class="cg-menu-a"><button class="btn" data-rcg="go"${ok ? "" : " disabled"}>🏁 Largar!</button><button class="btn ghost" data-rcg="new">🔀 Outros corredores</button></div>
     ${bal < RC.min ? `<p class="muted ar-tip">Você precisa de pelo menos ${RC.min} Enzola Coins para apostar. Ganhe moedas nas lições, no Cobra e no Duelo de Cartas.</p>` : ""}
     <p class="muted ar-tip">Corridas: ${st.plays} · Vitórias: ${st.wins} · Sequência: ${st.streak} · Saldo das apostas: ${st.net > 0 ? "+" : ""}${st.net}</p>${res}</div>`;
 }
@@ -74,7 +74,7 @@ function rcResHTML() {
   const pod = r.order.map((i, k) => `<li class="${i === rc.pick ? "me" : ""}"><b>${k + 1}º</b><span>${esc(rc.runners[i].name)} <small>#${rc.runners[i].num}</small></span></li>`).join("");
   return `<div class="ar-ov on cg-end"><div class="ar-box"><b>${r.win ? "Seu hipopótamo ganhou! 🏆" : "Não foi dessa vez"}</b><p><img class="rc-win" src="${w.img}" alt=""><br>Venceu <b>${esc(w.name)}</b> (#${w.num})</p><ol class="rc-pod">${pod}</ol>
     <p>${r.win ? `+${r.pay} Enzola Coins (aposta ${rc.bet}×${RC.mult})` : `−${rc.bet} Enzola Coins`}</p>
-    <button class="btn" data-rc="again">Correr de novo</button><button class="btn ghost" data-rc="close">Fechar</button></div></div>`;
+    <button class="btn" data-rcg="again">Correr de novo</button><button class="btn ghost" data-rcg="close">Fechar</button></div></div>`;
 }
 function rcRender() { const r = $("#rc-root"); if (r) { r.innerHTML = rcHTML(); if (rc.view === "race") rcStart() } }
 function rcMount() { cancelAnimationFrame(rc.raf); if (rc.view === "race") rc.view = "bet"; rcRender() }
@@ -134,8 +134,8 @@ function rcFinish(sim) {
 
 /* ---------- eventos ---------- */
 document.addEventListener("click", e => {
-  const b = e.target.closest("[data-rc]"); if (!b || !$("#rc-root")) return;
-  const [a, v] = b.dataset.rc.split(":"), bal = rcBal();
+  const b = e.target.closest("[data-rcg]"); if (!b || !$("#rc-root")) return;
+  const [a, v] = b.dataset.rcg.split(":"), bal = rcBal();
   if (a === "pick") rc.pick = +v;
   else if (a === "bet") { rc.bet = v === "max" ? Math.min(RC.max, bal) : +v; if (rc.bet > bal) rc.bet = Math.max(RC.min, Math.min(RC.max, bal)) }
   else if (a === "new") { rcDeal() }
