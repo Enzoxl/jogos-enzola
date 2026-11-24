@@ -41,7 +41,24 @@ function rcChances(runners) {
   for (let k = 0; k < K; k++) w[rcSim(runners, 0.1, false).order[0]]++;
   return w.map(x => x / K);
 }
+// com a carteira no servidor, quem sorteia os corredores (e depois o vencedor) é o banco; a corrida na tela só mostra o resultado
+const rcServer = () => typeof W !== "undefined" && !W.missing && !!user;
+async function rcDealServer() {
+  if (rc.dealing) return; rc.dealing = true; rc.runners = null; rc.round = null; rc.pick = null; rc.res = null; rcRender();
+  const d = await walletCall("race_deal"); rc.dealing = false;
+  if (!d || !Array.isArray(d.runners)) { rc.failed = true; rcRender(); return }
+  rc.failed = false; rc.round = d.id;
+  rc.runners = d.runners.map((r, i) => ({ ...(RC_POOL.find(p => p.id === r.id) || RC_POOL[0]), form: r.form | 0, chance: +r.chance || 0, num: i + 1 }));
+  rcRender();
+}
+// simula até o vencedor da tela ser o que o servidor sorteou (se demorar, troca as raias de lugar)
+function rcSimFor(R, win) {
+  let sim; for (let k = 0; k < 120; k++) { sim = rcSim(R, 1 / 60, true); if (sim.order[0] === win) return sim }
+  const a = sim.order[0]; sim.frames = sim.frames.map(f => { const g = f.slice(); [g[a], g[win]] = [g[win], g[a]]; return g });
+  sim.order = sim.order.map(i => i === a ? win : i === win ? a : i); return sim;
+}
 function rcDeal() {
+  if (rcServer()) { rcDealServer(); return }
   const pool = RC_POOL.slice().sort(() => Math.random() - .5).slice(0, RC.n);
   let forms; do { forms = pool.map(() => 1 + Math.floor(Math.random() * 5)) } while (new Set(forms).size < 3);
   const runners = pool.map((p, i) => ({ ...p, form: forms[i], num: i + 1 }));
@@ -52,7 +69,8 @@ function rcDeal() {
 /* ---------- telas ---------- */
 const rcStar = n => "★".repeat(n) + `<i>${"★".repeat(5 - n)}</i>`;
 function rcHTML() {
-  if (!rc.runners) rcDeal();
+  if (!rc.runners && !rc.dealing && !rc.failed) rcDeal();
+  if (!rc.runners) return `<div class="rc"><div class="ar-hud"><button class="btn ghost sm" data-ar="back" aria-label="Voltar à lista de jogos">← Jogos</button></div>${rc.failed ? `<p class="muted ar-tip">Não foi possível sortear os corredores agora.</p><div class="cg-menu-a"><button class="btn" data-rcg="new">Tentar de novo</button></div>` : (typeof hippoLoad === "function" ? hippoLoad("Sorteando os corredores…") : "<p>Sorteando…</p>")}</div>`;
   const st = rcStats(), bal = rcBal();
   if (bal >= RC.min) rc.bet = Math.max(RC.min, Math.min(rc.bet, RC.max, bal));
   if (rc.view === "race") return `<div class="rc"><div class="ar-hud"><button class="btn ghost sm" data-rcg="skip">⏭ Pular</button><div class="ar-sc"><span>Aposta</span><b>${rc.bet}</b></div><div class="ar-sc"><span>Seu hipopótamo</span><b>#${rc.runners[rc.pick].num}</b></div></div>
@@ -82,7 +100,7 @@ function rcMount() { cancelAnimationFrame(rc.raf); if (rc.view === "race") rc.vi
 /* ---------- corrida (canvas) ---------- */
 function rcStart() {
   const cv = $("#rc-cv"); if (!cv) return;
-  const R = rc.runners, N = R.length, sim = rcSim(R, 1 / 60, true), dpr = Math.min(2, window.devicePixelRatio || 1);
+  const R = rc.runners, N = R.length, sim = rc.forced ? rcSimFor(R, rc.forced.winner) : rcSim(R, 1 / 60, true), dpr = Math.min(2, window.devicePixelRatio || 1);
   const W = Math.min(560, cv.parentElement.clientWidth || 360), LH = 58, HDR = 8, H = HDR + LH * N + 8;
   cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + "px"; cv.style.height = H + "px";
   const c = cv.getContext("2d"); c.scale(dpr, dpr);
@@ -124,9 +142,10 @@ function rcStart() {
   cancelAnimationFrame(rc.raf); rc.raf = requestAnimationFrame(frame);
 }
 function rcFinish(sim) {
-  const win = sim.order[0] === rc.pick, pay = win ? rc.bet * RC.mult : 0, st = rcStats();
+  const F = rc.forced, win = F ? F.winner === rc.pick : sim.order[0] === rc.pick, pay = F ? F.pay : win ? rc.bet * RC.mult : 0, st = rcStats();
   st.plays++; if (win) { st.wins++; st.streak++; st.best = Math.max(st.best || 0, st.streak) } else st.streak = 0; st.net += pay - rc.bet;
-  if (pay) lg.goiabas = (lg.goiabas || 0) + pay;      // direto na carteira: aposta não conta pontos de grupo
+  if (F) { rc.forced = null; rc.round = null; if (F.wallet) walletApply(F.wallet) }   // prêmio já foi pago pelo servidor; a próxima corrida sorteia novos corredores
+  else if (pay) lg.goiabas = (lg.goiabas || 0) + pay;      // direto na carteira: aposta não conta pontos de grupo
   lgSave(true);
   rc.res = { order: sim.order, win, pay }; rc.view = "bet";
   setTimeout(() => { if ($("#rc-root")) rcRender() }, 900);
@@ -139,11 +158,22 @@ document.addEventListener("click", e => {
   if (a === "pick") rc.pick = +v;
   else if (a === "bet") { rc.bet = v === "max" ? Math.min(RC.max, bal) : +v; if (rc.bet > bal) rc.bet = Math.max(RC.min, Math.min(RC.max, bal)) }
   else if (a === "new") { rcDeal() }
-  else if (a === "close") rc.res = null;
+  else if (a === "close") { rc.res = null; if (rcServer() && !rc.round) { rcDeal(); return } }
   else if (a === "again") { rc.res = null; rcDeal() }
   else if (a === "skip") { if (rc.skip) rc.skip(); return }
   else if (a === "go") {
     if (rc.pick === null || rc.bet < RC.min || rc.bet > bal) return;
+    if (rcServer()) {
+      if (rc.betting || !rc.round) return; rc.betting = true; b.disabled = true;
+      sb.rpc("race_bet", { p_round: rc.round, p_pick: rc.pick, p_bet: rc.bet }).then(({ data, error }) => {
+        rc.betting = false;
+        if (error) { toast(walletMsg(error)); rc.runners = null; rcRender(); return }
+        // a aposta sai do saldo na largada; o prêmio aparece quando a corrida termina
+        lg.goiabas = Math.max(0, (lg.goiabas || 0) - rc.bet);
+        rc.forced = { winner: data.winner | 0, pay: data.pay | 0, wallet: data.wallet, runners: rc.runners }; rc.res = null; rc.view = "race"; rcRender();
+      });
+      return;
+    }
     lg.goiabas = bal - rc.bet; lgSave(true); rc.res = null; rc.view = "race";
   }
   rcRender();

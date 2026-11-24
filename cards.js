@@ -101,7 +101,7 @@ function cgFinish() {
   if (win) { st.wins++; st.best = Math.max(st.best || 0, cg.level) }
   const base = win ? CG_REWARD.levels[cg.level - 1] : draw ? 2 : 0, want = Math.round(base * CG_REWARD.mult[cg.diff]), room = Math.max(0, CG_REWARD.dayCap - (st.earned || 0));
   cg.coins = Math.min(want, room); cg.capped = want > room;
-  if (cg.coins > 0 && user && typeof lgAward === "function") { st.earned += cg.coins; lgAward(cg.coins) } else lgSave(true);
+  if (cg.coins > 0 && user && typeof lgAward === "function") { st.earned += cg.coins; lgAward(cg.coins, "cards") } else lgSave(true);
   cg.phase = "end";
 }
 
@@ -297,7 +297,7 @@ function cgPvFinish() {
   const coins = claimed ? 0 : Math.min(want, room);
   pv.fin = { win, draw, level, coins, capped: !claimed && want > room, oppLeft };
   if (!claimed) { st.plays++; if (win) { st.wins++; st.best = Math.max(st.best || 0, level) } st.pv[d.id] = 1; const k = Object.keys(st.pv); if (k.length > 30) delete st.pv[k[0]];
-    if (coins > 0 && typeof lgAward === "function") { st.earned += coins; lgAward(coins) } else lgSave(true) }
+    if (coins > 0 && typeof lgAward === "function") { st.earned += coins; lgAward(coins, "cards") } else lgSave(true) }
 }
 function cgPvHTML() {
   const pv = cg.pv; if (!pv) return "";

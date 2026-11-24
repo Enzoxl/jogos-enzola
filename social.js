@@ -397,8 +397,9 @@ async function gClaim(gid, i) {
   const { data, error } = await sb.rpc("group_claim", { gid, p_tier: i });
   if (error || !data) { toast("Meta ainda não liberada ou já resgatada."); return }
   fr.gclaims.push({ group_id: gid, user_id: user.id, tier: i });
-  lgAward(t.coins);
-  if (t.skin) { lg = lg || lgLoad(); lg.skins = { ...(lg.skins || {}), [t.skin]: true }; lgSave(true) }
+  // as moedas (e a skin da meta máxima) entram pelo servidor junto com o resgate
+  if (typeof W !== "undefined" && !W.missing) await walletLoad(true);
+  else { lgAward(t.coins); if (t.skin) { lg = lg || lgLoad(); lg.skins = { ...(lg.skins || {}), [t.skin]: true }; lgSave(true) } }
   toast(t.skin ? `Meta máxima! +${t.coins} Enzola Coins e a skin “Enzola Free Fire” 🔥` : `+${t.coins} Enzola Coins resgatados!`);
   if (typeof lgBeep === "function") lgBeep("ok"); openGroup(gid);
 }

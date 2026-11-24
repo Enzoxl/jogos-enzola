@@ -246,7 +246,7 @@ async function pushKey() {
   const anon = env("SUPABASE_ANON_KEY"); if (anon) await setSecret("anon_key", anon);
   return json({ key: keys.pub });
 }
-const NAME = (p: any) => (p && (p.display_name || p.username)) || "Um amigo";
+const NAME = (p: any) => (p && (p.nickname || p.username)) || "Um amigo";
 // Chamado pelo gatilho do banco quando entra uma notificação nova
 async function push(b: any) {
   const hook = await getSecret("push_hook");
@@ -257,7 +257,7 @@ async function push(b: any) {
   if (!n) return json({ none: true });
   const subs = await rest(`push_subscriptions?user_id=eq.${n.user_id}&select=*`).then((r) => r.json());
   if (!Array.isArray(subs) || !subs.length) return json({ sent: 0 });
-  const [actor] = n.actor ? await rest(`profiles?user_id=eq.${n.actor}&select=username,display_name,avatar`).then((r) => r.json()) : [null];
+  const [actor] = n.actor ? await rest(`profiles?user_id=eq.${n.actor}&select=username,nickname,avatar`).then((r) => r.json()) : [null];
   const who = NAME(actor), P = n.payload || {};
   let title = "Jogos Enzola", body = "", url = "#perfil", tag = n.kind;
   if (n.kind === "poke") { title = `${who} te cutucou 👉`; body = "Bora jogar alguma coisa?"; url = `#amigo/${n.actor}`; tag = `poke-${n.actor}` }
@@ -377,6 +377,26 @@ async function admin(req: Request, b: any) {
 }
 
 // ---------------- excluir conta ----------------
+// apaga todos os arquivos de uma pasta do Storage (a pasta de cada pessoa tem o id dela)
+async function storageWipe(bucket: string, prefix: string) {
+  const h = { apikey: KEY(), Authorization: `Bearer ${KEY()}`, "content-type": "application/json" };
+  for (let round = 0; round < 20; round++) {
+    const names: string[] = [];
+    const walk = async (dir: string, depth: number) => {
+      const r = await fetch(`${SB()}/storage/v1/object/list/${bucket}`, { method: "POST", headers: h, body: JSON.stringify({ prefix: dir, limit: 1000, offset: 0 }) });
+      if (!r.ok) return;
+      const list = await r.json().catch(() => []);
+      for (const o of Array.isArray(list) ? list : []) {
+        const path = `${dir}/${o.name}`;
+        if (o.id) names.push(path); else if (depth < 3) await walk(path, depth + 1);   // sem id = subpasta
+      }
+    };
+    await walk(prefix, 0);
+    if (!names.length) return;
+    await fetch(`${SB()}/storage/v1/object/${bucket}`, { method: "DELETE", headers: h, body: JSON.stringify({ prefixes: names }) });
+    if (names.length < 1000) return;
+  }
+}
 async function excluirConta(req: Request) {
   const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
   const me = await fetch(`${SB()}/auth/v1/user`, { headers: { apikey: KEY(), Authorization: `Bearer ${token}` } });
@@ -392,6 +412,8 @@ async function excluirConta(req: Request) {
     del(`games?user_id=eq.${id}`),
     del(`push_subscriptions?user_id=eq.${id}`),
   ]);
+  // fotos enviadas (avatar/banner em "media", feed e stories em "social"): tudo que fica na pasta da pessoa
+  await Promise.all(["media", "social"].map((b) => storageWipe(b, id)));
   await del(`groups?owner=eq.${id}`);
   await del(`profiles?user_id=eq.${id}`);
   const r = await authAdmin(`users/${id}`, { method: "DELETE" });

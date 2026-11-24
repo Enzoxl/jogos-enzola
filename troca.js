@@ -26,8 +26,17 @@ function xfApplyRecv(t) {
   xfMark("r" + t.id); return true;
 }
 // acerta as contas de quem enviou: devolve se recusada/cancelada, recebe a foto pedida se aceita
+// com a carteira no servidor, devoluções e recebimentos são acertados pelo banco (uma vez só por proposta)
 function xfSettle() {
   if (!user || !lg) return;
+  if (typeof W !== "undefined" && !W.missing) {
+    if (xfSettle.busy) { xfSettle.again = true; return } xfSettle.busy = true;
+    walletCall("wallet_xf_settle", {}, { quiet: true }).then(d => {
+      xfSettle.busy = false; if (xfSettle.again) { xfSettle.again = false; xfSettle() }
+      if (d && Array.isArray(d.applied) && d.applied.length) { try { rewardsCheck() } catch (e) { } if (typeof tab !== "undefined" && tab === "idiomas" && !$("#xf-ovl") && !$("#lgs-ovl")) renderLingo() }
+    });
+    return;
+  }
   lg.xf = lg.xf || {}; let ch = false; const me = xfMe();
   for (const t of xf.list) {
     if (t.from_user === me && t.status !== "pending" && !lg.xf["s" + t.id]) {
@@ -148,6 +157,19 @@ async function xfSend() {
   if (g.t === "photo" && xfSpare(g.id) < 1) return toast("Essa foto não está mais repetida.");
   if (g.t === "skin" && (lg.goiabas || 0) < price) return toast("Você não tem Enzola Coins suficientes.");
   if (s.mode === "trade" && !s.want) return;
+  if (typeof W !== "undefined" && !W.missing) {
+    if (xfSend.busy) return; xfSend.busy = true;
+    const { data, error } = await sb.rpc("transfer_create", { p_to: s.to, p_kind: s.mode, p_give: g, p_want: s.mode === "trade" ? { t: "photo", id: s.want } : null });
+    if (error) { xfSend.busy = false; return toast(/demais|em aberto/i.test(error.message) ? error.message : "Não foi possível enviar agora.") }
+    const tid = data && (data.id || data);
+    const r = await walletCall("wallet_xf_reserve", { p_id: tid });   // o item sai do seu inventário pelo servidor
+    xfSend.busy = false;
+    if (!r) { await sb.rpc("transfer_cancel", { p_id: tid }); return }
+    if (data && data.id) xf.list.unshift(data); else xfLoad();
+    const nm = xfName(s.to);
+    toast(s.mode === "trade" ? `Proposta de troca enviada para ${nm}! 🔁` : `Presente enviado para ${nm}! 🎁`);
+    return xfClose();
+  }
   if (g.t === "photo") xfAdd(g, -1); else lg.goiabas -= price;
   lgSave(true);
   const { data, error } = await sb.rpc("transfer_create", { p_to: s.to, p_kind: s.mode, p_give: g, p_want: s.mode === "trade" ? { t: "photo", id: s.want } : null });
@@ -163,6 +185,13 @@ async function xfAnswer(id, ok) {
   const t = xf.list.find(x => x.id === id); if (!t) return;
   lg = lg || lgLoad();
   if (ok && t.kind === "trade" && (lg.album[t.want.id] || 0) < 2) return toast("Você não tem essa foto repetida.");
+  if (typeof W !== "undefined" && !W.missing) {
+    const d = await walletCall("wallet_xf_respond", { p_id: id, p_accept: ok });   // confere a foto pedida e já entrega o item
+    if (!d) return xfLoad();
+    if (d.transfer) xf.list = xf.list.map(x => x.id === id ? d.transfer : x);
+    if (ok) { try { rewardsCheck() } catch (e) { } toast(t.give.t === "skin" ? "Skin recebida! 🎁" : "Foto recebida! 📸") }
+    return xfRender();
+  }
   const { data, error } = await sb.rpc("transfer_respond", { p_id: id, p_accept: ok });
   if (error) return toast("Essa proposta não está mais disponível."), xfLoad();
   xf.list = xf.list.map(x => x.id === id ? data : x);

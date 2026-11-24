@@ -93,8 +93,15 @@ function bannerHTML(p, cur, extraCls = "") {
   if (cur && cur.cover_url) return `<div class="banner auto ${extraCls}"><div class="bgauto" style="background-image:url('${cssUrl(cur.cover_url)}')"></div><span class="logo wm" aria-hidden="true"></span>`;
   return `<div class="banner ${extraCls}"><span class="logo wm" aria-hidden="true"></span>`;
 }
-// tela de carregamento: o hipopótamo nadando de um lado para o outro
-const hippoLoad = (msg = "Carregando…", cls = "") => `<div class="hload ${cls}" role="status" aria-live="polite"><div class="hl-pool" aria-hidden="true"><div class="hl-swim"><img src="hipopotamo.webp" alt="" draggable="false"></div><i class="hl-b"></i><i class="hl-b"></i><i class="hl-b"></i><div class="hl-wave"></div></div><p>${esc(msg)}</p></div>`;
+// tela de carregamento: o filhote nadando na nossa direção, com a linha d'água no queixo, ondas, ondulações e bolhas
+const hippoLoad = (msg = "Carregando…", cls = "") => `<div class="hload ${cls}" role="status" aria-live="polite"><div class="hl-pool" aria-hidden="true">
+  <div class="hl-sky"></div><div class="hl-far"></div>
+  <div class="hl-rip"><i></i><i></i><i></i></div>
+  <div class="hl-swim"><img src="hipopotamo.webp" alt="" draggable="false"></div>
+  <div class="hl-front"><div class="hl-crest"></div><div class="hl-crest b"></div></div>
+  <div class="hl-wake"><i></i><i></i></div>
+  <i class="hl-b"></i><i class="hl-b"></i><i class="hl-b"></i><i class="hl-b"></i>
+  <i class="hl-drop"></i><i class="hl-drop"></i></div><p>${esc(msg)}</p></div>`;
 const skRows = n => Array.from({ length: n }, () => `<div class="row skrow"><span class="sk" style="width:18px;height:12px"></span><span class="sk" style="width:44px;aspect-ratio:2/3"></span><span><span class="sk" style="width:55%;height:14px"></span><span class="sk" style="width:35%;height:10px;margin-top:8px"></span></span><span class="sk" style="height:30px;border-radius:999px"></span><span class="sk" style="height:30px"></span><span class="sk" style="height:18px"></span><span></span></div>`).join("");
 const skGrid = n => Array.from({ length: n }, () => `<div><div class="sk" style="aspect-ratio:2/3;border-radius:10px"></div><div class="sk" style="height:12px;width:70%;margin-top:12px"></div></div>`).join("");
 const empty = (t, d, extra = "") => `<div class="panel empty" style="grid-column:1/-1"><b>${t}</b>${d}${extra}</div>`;
@@ -135,7 +142,8 @@ async function loadAll() {
   ]);
   if (g.error) { toast("Não foi possível carregar os jogos."); return }
   sb.from("bans").select("user_id").eq("user_id", user.id).maybeSingle().then(async r => { if (r.data) { await sb.auth.signOut(); toast("Esta conta foi suspensa."); showAuth(true, "Esta conta foi suspensa pelo administrador.") } });
-  games = g.data; profile = p.data || null; loaded = true; applyLocalPrefs(); render();
+  games = g.data; profile = p.data || null; settingsBase = clone(profile && profile.settings); loaded = true; applyLocalPrefs(); render();
+  if (typeof walletLoad === "function") walletLoad(true).then(() => { if (typeof walletRefresh === "function") walletRefresh() });
   if (!profile || profile.username !== uname() || (caps.v3 && !profile.tag)) await saveProfile({});
   if (tab === "desejos") refreshPrices(false);
 }
@@ -174,16 +182,83 @@ async function removeGame(id) {
   }
   render();
 }
-async function saveProfile(patch) {
+/* ---------- configurações em mais de um aparelho ----------
+   Cada salvamento busca a versão do servidor e junta as duas mudanças (mesclagem em três vias): o que ESTE aparelho
+   mudou desde a última sincronização entra por cima do que o OUTRO aparelho salvou. Números somam as diferenças
+   (XP, partidas), listas/objetos se juntam e, em conflito de texto, vale a mudança mais nova deste aparelho. */
+let settingsBase = null;
+const jsonEq = (a, b) => { if (a === b) return true; if (typeof a !== typeof b || a == null || b == null || typeof a !== "object") return false; if (Array.isArray(a) !== Array.isArray(b)) return false; const ka = Object.keys(a), kb = Object.keys(b); return ka.length === kb.length && ka.every(k => jsonEq(a[k], b[k])) };
+const isObj = x => x && typeof x === "object" && !Array.isArray(x);
+const MAXY = /best|recorde?|max|streak/i;   // recordes e ofensiva: vale o maior; o resto (XP, partidas) soma as diferenças
+function merge3(base, mine, theirs, key = "", up = "") {
+  if (jsonEq(mine, base)) return theirs;
+  if (jsonEq(theirs, base) || jsonEq(mine, theirs)) return mine;
+  if (isObj(mine) && isObj(theirs)) {
+    const out = {}, b = isObj(base) ? base : {};
+    for (const k of new Set([...Object.keys(mine), ...Object.keys(theirs)])) { const v = merge3(b[k], mine[k], theirs[k], k, key); if (v !== undefined) out[k] = v }
+    return out;
+  }
+  if (typeof mine === "number" && typeof theirs === "number") {
+    if (MAXY.test(key) || MAXY.test(up) || typeof base !== "number") return Math.max(mine, theirs);
+    const v = theirs + (mine - base); return mine >= 0 && theirs >= 0 ? Math.max(0, v) : v;
+  }
+  return mine;
+}
+const clone = x => x == null ? x : JSON.parse(JSON.stringify(x));
+// as moedas, skins, fotos e baús ficam na carteira do servidor: não vão mais para as configurações
+function settingsClean(st) {
+  st = { ...(st || {}) };
+  if (st.lingo && typeof W !== "undefined" && !W.missing) { const l = { ...st.lingo }; for (const k of ECON_KEYS) delete l[k]; st.lingo = l }
+  return st;
+}
+let spQ = Promise.resolve(), spPending = null;
+function saveProfile(patch) {
   const next = { ...(profile || {}), ...patch };
   profile = next;   // atualiza na hora: mudanças seguidas não se sobrescrevem
+  if (spPending) return spPending;   // já tem um salvamento na fila: ele vai levar esta mudança junto
+  spPending = spQ = spQ.then(() => { spPending = null; return saveProfileNow() }).catch(() => false);
+  return spPending;
+}
+async function saveProfileNow() {
+  const next = profile; if (!next || !user) return false;
   const row = { user_id: user.id, username: uname(), nickname: next.nickname ?? null, bio: next.bio ?? null, avatar: next.avatar ?? null, banner: next.banner ?? null, favorites: next.favorites || [], now_playing: next.now_playing ?? null, updated_at: new Date().toISOString() };
   if (caps.pub) row.is_public = !!next.is_public;
-  if (caps.v3) row.settings = next.settings || {};
+  let mine = settingsClean(next.settings);
+  if (caps.v3) {
+    const cur = await sb.from("profiles").select("settings").eq("user_id", user.id).maybeSingle();
+    if (!cur.error && cur.data) { const theirs = settingsClean(cur.data.settings); mine = merge3(settingsBase == null ? theirs : settingsClean(settingsBase), mine, theirs) }
+    if (mine.lingo) mine.lingo.rev = Math.max((mine.lingo.rev || 0), ((cur.data && cur.data.settings && cur.data.settings.lingo) || {}).rev || 0) + 1;
+    row.settings = mine;
+  }
   const { data, error } = await sb.from("profiles").upsert(row, { onConflict: "user_id" }).select().single();
-  if (error) { toast("Não foi possível salvar o perfil."); return false }
-  profile = data; if (!caps.v3) profile.settings = next.settings || {}; render(); return true;
+  if (error) { toast(/skin/i.test(error.message || "") ? "Você ainda não tem essa skin." : "Não foi possível salvar o perfil."); return false }
+  if (!caps.v3) data.settings = next.settings || {};
+  settingsBase = clone(data.settings);
+  // o que mudou enquanto salvava (feito depois de montar este envio) continua valendo por cima
+  const later = profile !== next ? profile : null;
+  profile = later ? { ...data, ...later, settings: merge3(next.settings, later.settings, data.settings) } : data;
+  settingsAdopt();
+  render(); return true;
 }
+// depois de juntar com o outro aparelho: o progresso do Enzolingo na tela passa a ser o mesclado
+function settingsAdopt() {
+  const l = profile && profile.settings && profile.settings.lingo;
+  if (!l || typeof lg === "undefined" || !lg) return;
+  Object.assign(lg, l); if (typeof walletMirror === "function") walletMirror(lg); lsSet(lgKey(), lg);
+}
+// voltou para o site (outro aparelho pode ter jogado): busca as configurações e a carteira de novo
+async function settingsPull() {
+  if (!user || !profile || !caps.v3) return;
+  const cur = await sb.from("profiles").select("settings").eq("user_id", user.id).maybeSingle();
+  if (cur.error || !cur.data) return;
+  const theirs = cur.data.settings || {}, mine = profile.settings || {};
+  if (jsonEq(settingsClean(theirs), settingsClean(settingsBase))) return;   // nada novo do outro lado
+  const merged = merge3(settingsClean(settingsBase == null ? theirs : settingsBase), settingsClean(mine), settingsClean(theirs));
+  if (jsonEq(merged, settingsClean(theirs))) { profile.settings = theirs; settingsBase = clone(theirs); settingsAdopt() }
+  else { profile.settings = merged; saveProfile({}) }
+  if (typeof tab !== "undefined" && tab === "idiomas" && !$("#lg-lesson") && typeof renderLingo === "function") renderLingo();
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden && user && loaded) { settingsPull(); if (typeof walletLoad === "function") walletLoad(true).then(() => { if (typeof walletRefresh === "function") walletRefresh() }) } });
 
 /* ---------- comemoração ao zerar ---------- */
 function celebrate(name) {
@@ -835,7 +910,7 @@ let newSignup = false;
 async function onSession(session, ev) {
   const was = user && user.id;
   user = session ? session.user : null; sessionKnown = true;
-  if (!user) { games = []; profile = null; loaded = false; socialReset(); route(); return }
+  if (!user) { games = []; profile = null; settingsBase = null; loaded = false; if (typeof walletReset === "function") walletReset(); if (typeof lg !== "undefined") lg = null; socialReset(); route(); return }
   if (was === user.id) return;
   loaded = false; route(); await loadAll(); socialStart();
   if (newSignup) { newSignup = false; setTimeout(() => offerRecoveryCode(true), 600) }

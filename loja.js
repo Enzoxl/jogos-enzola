@@ -45,12 +45,54 @@ function lgSkinImg() {
   return `<img class="lgh-img${own.kind === "chr" ? " chr" : ""}" src="${own.img}" alt="" draggable="false">`;
 }
 const gbI = (cls = "") => `<img class="gb-i ${cls}" src="loja/coin.webp" alt="Enzola Coins">`;
-/* ganhar Enzola Coins fora das lições (Show do Enzolão) */
+/* ---------- carteira no servidor ----------
+   Enzola Coins, skins, fotos do álbum e baús ficam na tabela "wallets" do Supabase. O site só mostra:
+   ganhar, comprar, abrir baú, apostar e trocar passam por funções do banco, com limites por jogada e por dia.
+   lg.goiabas / lg.skins / lg.album / lg.cx viram um espelho do que veio do servidor. */
+const W = { ok: false, data: null, loading: null, missing: false };
+const ECON_KEYS = ["goiabas", "skins", "album", "cx", "chests", "free", "bauWelcome", "xf", "freeLeft"];
+function walletMirror(s) {
+  const w = W.data; if (!w || !s) return s;
+  s.goiabas = w.coins | 0; s.skins = { ...(w.skins || {}) }; s.album = { ...(w.album || {}) }; s.cx = { ...(w.chests || {}) };
+  s.freeLeft = w.free_left; s.chests = 0; s.bauWelcome = true;
+  return s;
+}
+function walletApply(w) { if (!w || typeof w !== "object" || !("coins" in w)) return; W.data = w; W.ok = true; lg = lg || lgLoad(); walletMirror(lg); try { lsSet(lgKey(), lg) } catch (e) { } }
+const walletMsg = e => /does not exist|Could not find the function|schema cache/i.test((e && e.message) || "") ? "Falta rodar o migracao.sql no Supabase (carteira)." : String((e && e.message) || "Não deu certo agora. Tente de novo.").replace(/^.*?ERROR:\s*/, "");
+function walletLoad(force) {
+  if (!user || !sb) return Promise.resolve(null);
+  if (W.loading && !force) return W.loading;
+  W.loading = sb.rpc("wallet_get").then(({ data, error }) => {
+    if (error) { W.missing = /does not exist|Could not find the function|schema cache/i.test(error.message || ""); return null }
+    walletApply(data); return data;
+  }, () => null).finally(() => { setTimeout(() => { W.loading = null }, 0) });
+  return W.loading;
+}
+function walletReset() { W.ok = false; W.data = null; W.loading = null; W.missing = false }
+/* chama uma função da carteira; devolve a resposta (ou null com aviso) e já atualiza o saldo na tela */
+async function walletCall(fn, args, opts = {}) {
+  if (!user || !sb) return null;
+  const { data, error } = await sb.rpc(fn, args || {});
+  if (error) { if (!opts.quiet) toast(walletMsg(error)); return null }
+  const w = data && data.wallet ? data.wallet : data && typeof data === "object" && "coins" in data ? data : null;
+  if (w) walletApply(w);
+  return data;
+}
+const walletRefresh = () => { if (typeof tab !== "undefined" && tab === "idiomas" && !$("#lg-lesson") && !$("#alb-ovl") && !$("#sh-ovl") && typeof renderLingo === "function") renderLingo(); if ($("#lgs-ovl") && typeof lgShopRender === "function") lgShopRender() };
+/* ganhar Enzola Coins jogando (o servidor confere o limite de cada jogo) */
 function grpLog(pts) { try { if (sb && user && pts > 0) sb.rpc("group_log", { p_points: Math.min(100, Math.round(pts)) }).then(() => { if (typeof fr !== "undefined" && fr) fr.gloaded = false }, () => {}) } catch (e) {} }
-function lgAward(n) {
-  if (!user || !n) return 0;
-  grpLog(n);
-  lg = lg || lgLoad(); lg.goiabas = (lg.goiabas || 0) + n; lgSave(true); return n;
+function lgAward(n, source = "lingo", opts = {}) {
+  if (!user || !n || n < 0) return 0;
+  if (opts.group !== false) grpLog(n);
+  lg = lg || lgLoad();
+  if (W.missing) { lg.goiabas = (lg.goiabas || 0) + n; lgSave(true); return n }   // banco ainda sem a carteira
+  lg.goiabas = (lg.goiabas || 0) + n; lgSave(true);   // aparece na hora (e salva as estatísticas do jogo); o servidor confirma em seguida
+  walletCall("wallet_earn", { p_source: source, p_coins: Math.round(n) }, { quiet: true }).then(d => {
+    if (!d) { walletLoad(true).then(walletRefresh); return }
+    if (d.got < n) toast(d.got ? `Limite de moedas de hoje: entraram ${d.got} de ${n}.` : "Limite de moedas de hoje atingido neste jogo.");
+    walletRefresh();
+  });
+  return n;
 }
 
 let lgsTab = "hip";
@@ -76,10 +118,14 @@ function lgShopRender() {
     <p class="muted lgs-how">Como ganhar Enzola Coins: lições (+5, +3 se perfeitas), desafio de 60 s (1 por acerto), meta diária (+10) e o Show do Enzolão (quanto mais acertos, mais Enzola Coins).</p></div>`;
 }
 function lgShopOpen() { if (!user || !loaded) return; lg = lg || lgLoad(); lgShopRender() }
-function lgBuy(id) {
+async function lgBuy(id) {
   const sk = skinOf(id); lg = lg || lgLoad();
-  if (skinHas(id)) return;
-  if (sk.group) return;
+  if (skinHas(id) || sk.group || lgBuy.busy) return;
+  if (!W.missing) {
+    if ((lg.goiabas || 0) < sk.price) { toast(`Faltam ${sk.price - (lg.goiabas || 0)} Enzola Coins para essa skin.`); return }
+    lgBuy.busy = true; const d = await walletCall("wallet_buy_skin", { p_id: id }); lgBuy.busy = false; if (!d) return;
+    lg.skin = id; lgSave(true); toast(`Skin “${sk.name}” comprada e equipada! 🛍️`); if (typeof lgBeep === "function") lgBeep("ok"); lgShopRender(); return;
+  }
   if ((lg.goiabas || 0) < sk.price) { toast(`Faltam ${sk.price - (lg.goiabas || 0)} Enzola Coins para essa skin.`); return }
   lg.goiabas -= sk.price; lg.skins = { ...(lg.skins || {}), [id]: true }; lg.skin = id; lgSave(true);
   toast(`Skin “${sk.name}” comprada e equipada! 🛍️`); if (typeof lgBeep === "function") lgBeep("ok"); lgShopRender();

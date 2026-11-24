@@ -5,48 +5,7 @@
    Áudios em premios/audio/ (se faltar algum, o show segue sem ele).
    ===================================================================== */
 const SH_TOTAL = 20, SH_TIME = 25, SH_AUDIO = "premios/audio/";
-const SH_GEN = [
-  ["Qual é o maior planeta do Sistema Solar?", "Júpiter", ["Saturno", "Netuno", "Terra"]],
-  ["Qual é a capital da Austrália?", "Camberra", ["Sydney", "Melbourne", "Perth"]],
-  ["Quantos lados tem um hexágono?", "6", ["5", "7", "8"]],
-  ["Quem pintou a Mona Lisa?", "Leonardo da Vinci", ["Michelangelo", "Rafael", "Van Gogh"]],
-  ["Qual país venceu a Copa do Mundo de 2002?", "Brasil", ["Alemanha", "França", "Itália"]],
-  ["Qual é o maior oceano do mundo?", "Pacífico", ["Atlântico", "Índico", "Ártico"]],
-  ["Qual elemento químico tem o símbolo O?", "Oxigênio", ["Ouro", "Ósmio", "Ozônio"]],
-  ["Quantos jogadores de cada time ficam em campo numa partida de futebol?", "11", ["9", "10", "12"]],
-  ["Quem escreveu o romance “Dom Casmurro”?", "Machado de Assis", ["José de Alencar", "Clarice Lispector", "Monteiro Lobato"]],
-  ["Qual é o rio mais extenso do Brasil?", "Amazonas", ["São Francisco", "Paraná", "Tocantins"]],
-  ["Qual é a capital do Brasil?", "Brasília", ["Rio de Janeiro", "São Paulo", "Salvador"]],
-  ["Quantos ossos tem o corpo de um adulto, aproximadamente?", "206", ["156", "256", "306"]],
-  ["Qual planeta é conhecido como Planeta Vermelho?", "Marte", ["Vênus", "Mercúrio", "Júpiter"]],
-  ["Qual é o animal terrestre mais rápido?", "Guepardo", ["Leão", "Cavalo", "Avestruz"]],
-  ["Qual língua tem mais falantes nativos no mundo?", "Mandarim", ["Inglês", "Espanhol", "Hindi"]],
-  ["Quem comandou a esquadra que chegou ao Brasil em 1500?", "Pedro Álvares Cabral", ["Cristóvão Colombo", "Vasco da Gama", "Américo Vespúcio"]],
-  ["Qual é o menor país do mundo?", "Vaticano", ["Mônaco", "Malta", "San Marino"]],
-  ["A quantos graus Celsius a água ferve ao nível do mar?", "100", ["90", "110", "120"]],
-  ["Qual é o maior animal do planeta?", "Baleia-azul", ["Elefante-africano", "Girafa", "Tubarão-baleia"]],
-  ["Em que continente fica o Egito?", "África", ["Ásia", "Europa", "Oceania"]],
-  ["Quem foi o primeiro ser humano a pisar na Lua?", "Neil Armstrong", ["Buzz Aldrin", "Yuri Gagarin", "John Glenn"]],
-  ["Qual é o maior deserto quente do mundo?", "Saara", ["Gobi", "Atacama", "Kalahari"]],
-  ["Quanto é 12 × 12?", "144", ["124", "134", "154"]],
-  ["Qual é a raiz quadrada de 81?", "9", ["7", "8", "11"]],
-  ["Qual gás as plantas absorvem na fotossíntese?", "Gás carbônico", ["Oxigênio", "Nitrogênio", "Hélio"]],
-  ["Qual país tem o formato de uma bota no mapa?", "Itália", ["Grécia", "Espanha", "Portugal"]],
-  ["Qual empresa criou o Mario?", "Nintendo", ["Sega", "Sony", "Atari"]],
-  ["Qual é o nome do irmão do Mario?", "Luigi", ["Wario", "Toad", "Yoshi"]],
-  ["Qual criatura do Minecraft explode quando chega perto do jogador?", "Creeper", ["Enderman", "Zumbi", "Esqueleto"]],
-  ["O jogo “The Legend of Zelda” se passa em qual reino?", "Hyrule", ["Mordor", "Azeroth", "Tamriel"]],
-  ["Qual é o nome do protagonista da série Zelda?", "Link", ["Zelda", "Ganon", "Navi"]],
-  ["Qual mascote da Sega é um ouriço azul?", "Sonic", ["Tails", "Knuckles", "Crash"]],
-  ["Em GTA San Andreas, qual cidade fictícia é a casa do CJ?", "Los Santos", ["Vice City", "Liberty City", "San Fierro"]],
-  ["Qual console a Sony lançou em 1994?", "PlayStation", ["Dreamcast", "Nintendo 64", "Xbox"]],
-  ["Que empresa criou o console Xbox?", "Microsoft", ["Sony", "Nintendo", "Sega"]],
-  ["Qual Pokémon é o número 25 da Pokédex?", "Pikachu", ["Charmander", "Eevee", "Squirtle"]],
-  ["Em Among Us, como se chamam os traidores?", "Impostores", ["Assassinos", "Espiões", "Sabotadores"]],
-  ["Qual destes jogos foi criado pela FromSoftware?", "Elden Ring", ["Hades", "Celeste", "Cuphead"]],
-  ["Em Fortnite, como se chama a moeda do jogo?", "V-Bucks", ["Robux", "Gemas", "Moedas"]],
-  ["De que país era o criador do Tetris, Alexey Pajitnov?", "União Soviética (Rússia)", ["Japão", "Estados Unidos", "Polônia"]],
-];
+// SH_GEN (conhecimentos gerais) fica em show-banco.js
 const SH_LANG = [
   ["🇺🇸", "Complete: “She ___ to school every day.”", "goes", ["go", "going", "gone"]],
   ["🇺🇸", "Complete: “I have lived here ___ 2020.”", "since", ["for", "from", "during"]],
@@ -98,6 +57,22 @@ const SH_GENRES_ALL = ["Action", "Adventure", "RPG", "Shooter", "Strategy", "Puz
 const shShuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]] } return a };
 const shPick = (a, n) => shShuffle(a).slice(0, n);
 const shMC = (cat, q, answer, wrong, extra = {}) => ({ cat, q, answer, answers: [answer], options: shShuffle([answer, ...wrong.slice(0, 3)]), ...extra });
+
+/* ---------- memória do que já foi perguntado ----------
+   Em cada tema, o show escolhe primeiro as perguntas que você não vê há mais tempo (empates são sorteados),
+   então uma pergunta só volta depois de o banco daquele tema ter passado. */
+const shSeenKey = () => "sh-seen:" + (user ? user.id : "anon");
+const shHash = s => { let h = 5381; for (const c of String(s)) h = (h * 33 ^ c.charCodeAt(0)) >>> 0; return h.toString(36) };
+function shFresh(pool, n, textOf) {
+  const seen = lsGet(shSeenKey()) || {};
+  return shShuffle(pool).sort((a, b) => (seen[shHash(textOf(a))] || 0) - (seen[shHash(textOf(b))] || 0)).slice(0, n);
+}
+function shMarkSeen(qs) {
+  const seen = lsGet(shSeenKey()) || {}, t = Date.now();
+  for (const q of qs) if (q && q.q && !q.fixed) seen[shHash(q.q)] = t;
+  const ks = Object.keys(seen); if (ks.length > 700) ks.sort((a, b) => seen[a] - seen[b]).slice(0, ks.length - 700).forEach(k => delete seen[k]);
+  lsSet(shSeenKey(), seen);
+}
 
 /* ---------- prêmios ---------- */
 const shReward = () => (profile && profile.settings && profile.settings.rewards) || {};
@@ -158,14 +133,14 @@ function shGameQs() {
   return res;
 }
 function shLangQs() {
-  const pick = (f, n) => shShuffle(SH_LANG.filter(x => x[0] === f)).slice(0, n).map(([fl, q, a, w]) => shMC(`${fl} Idiomas`, q, a, w));
+  const pick = (f, n) => shFresh(SH_LANG.filter(x => x[0] === f), n, x => x[1]).map(([fl, q, a, w]) => shMC(`${fl} Idiomas`, q, a, w));
   return [...pick("🇺🇸", 3), ...pick("🇪🇸", 2)];
 }
 function shBuild() {
   const g = shGameQs().slice(0, 5), l = shLangQs();
-  const hip = shShuffle(SH_HIPPO).slice(0, 3).map(([q, a, w]) => shMC("🦛 Hipopótamos", q, a, w));
-  const mov = shShuffle(SH_MOV).slice(0, 2).map(([q, a, w]) => shMC("Movimento Enzola", q, a, w));
-  const gen = shShuffle(SH_GEN).map(([q, a, w]) => shMC("Conhecimentos gerais", q, a, w));
+  const hip = shFresh(SH_HIPPO, 3, x => x[0]).map(([q, a, w]) => shMC("🦛 Hipopótamos", q, a, w));
+  const mov = shFresh(SH_MOV, 2, x => x[0]).map(([q, a, w]) => shMC("Movimento Enzola", q, a, w));
+  const gen = shFresh(SH_GEN, 12, x => x[0]).map(([q, a, w]) => shMC("Conhecimentos gerais", q, a, w));
   const need = SH_TOTAL - SH_FINAL.length - l.length - g.length - hip.length - mov.length;
   const main = shShuffle([...l, ...g, ...hip, ...mov, ...gen.slice(0, need)]);
   return { qs: [...main, ...SH_FINAL.map(q => ({ ...q }))], games: g.length };
@@ -212,7 +187,7 @@ function shIntro() {
 }
 function shStart() {
   shStopAll();
-  const { qs, games: ng } = shBuild();
+  const { qs, games: ng } = shBuild(); shMarkSeen(qs);
   sh = { qs, i: 0, right: 0, wrong: 0, answered: false, sel: null, games: ng, end: 0, timer: null, log: [], snd: [], introT: null, playing: false };
   shEntrance();
 }
@@ -277,7 +252,9 @@ function shAnswer(i) {
 function shLose(q, i) {
   const s = sh; clearInterval(s.timer); shStopAll();
   shMusic(.1); shSnd("vcerrou.mp3", { fb: () => shBeep("bad") });
-  const gb = lgAward(s.right * (rewardsHas("silvio") ? 2 : 1));
+  const gb = lgAward(s.right * (rewardsHas("silvio") ? 2 : 1), "show");
+  // baú também para quem cai depois de 5 acertos (as mesmas regras do fim do show, sem o épico do gabarito)
+  const chRar = s.right >= 15 ? "raro" : "comum", chest = s.right >= 5 && typeof chestGive === "function" ? chestGive(1, null, chRar, "show") : 0;
   try { if (profile && user) { const old = (profile.settings && profile.settings.show) || {}, show = { best: Math.max(old.best || 0, s.right), plays: (old.plays || 0) + 1 }; saveProfile({ settings: { ...(profile.settings || {}), show } }) } } catch (e) { }
   shBox().innerHTML = `<div class="sh-end lose"><div class="sh-sad" aria-hidden="true">😢</div><h2>Que pena, você errou!</h2>
     <p>${i < 0 ? "O tempo acabou na pergunta " : "Você caiu na pergunta "}${s.i + 1} de ${s.qs.length}.</p>
@@ -288,9 +265,9 @@ function shLose(q, i) {
 async function shEnd() {
   const s = sh; clearInterval(s.timer); shStopAll();
   const total = s.qs.length, perfect = s.right === total, owned = rewardsHas("silvio"), first = perfect && !owned, R = REWARDS.silvio;
-  const gb = lgAward(s.right * (owned ? 2 : 1) + (perfect && owned ? 50 : 0));
+  const gb = lgAward(s.right * (owned ? 2 : 1) + (perfect && owned ? 50 : 0), "show");
   shMusic(.12);
-  const chRar = perfect ? "epico" : s.right >= 15 ? "raro" : "comum", chest = s.right >= 5 && typeof chestGive === "function" ? chestGive(1, null, chRar) : 0;
+  const chRar = perfect ? "epico" : s.right >= 15 ? "raro" : "comum", chest = s.right >= 5 && typeof chestGive === "function" ? chestGive(1, null, chRar, "show") : 0;
   if (perfect) { shSnd("maoe.mp3", { fb: () => shBeep("ok") }); await rewardsGive("silvio") }
   try { if (profile && user) { const old = (profile.settings && profile.settings.show) || {}, show = { best: Math.max(old.best || 0, s.right), plays: (old.plays || 0) + 1 }; if (!perfect) saveProfile({ settings: { ...(profile.settings || {}), show } }); else saveProfile({ settings: { ...(profile.settings || {}), rewards: { ...shReward(), silvio: true }, show } }) } } catch (e) { }
   const msg = perfect ? (first ? "Você acertou TUDO! O prêmio é seu." : "Gabaritou de novo! Que show.") : s.right >= total - 3 ? "Passou raspando! Tente de novo para levar o prêmio." : s.right >= total / 2 ? "Foi bem! Falta pouco para o prêmio." : "O hipopótamo apresentador acredita em você. Tente de novo!";

@@ -171,6 +171,7 @@ const chestSvg = (cls = "", rar = "comum") => { const u = "c" + (++chestUid), K 
 </svg>` };
 function albumLoad() {
   lg = lg || lgLoad(); lg.album = lg.album || {}; lg.cx = lg.cx || {}; let ch = false;
+  if (typeof W !== "undefined" && !W.missing) return lg;   // baú de boas-vindas e baús antigos: o servidor cuida
   if (lg.chests > 0) { lg.cx.comum = (lg.cx.comum || 0) + lg.chests; lg.chests = 0; ch = true }      // baús antigos viram comuns
   if (ALBUM.length && !lg.bauWelcome) { lg.bauWelcome = true; lg.cx.comum = (lg.cx.comum || 0) + 1; ch = true }
   if (ch) lgSave(true); return lg;
@@ -178,15 +179,28 @@ function albumLoad() {
 const albumOwned = () => { albumLoad(); return ALBUM.filter(p => lg.album[p.id] > 0).length };
 const chestCount = r => { lg = lg || lgLoad(); return (lg.cx && lg.cx[r]) || 0 };
 const chestTotal = () => CH_ORDER.reduce((a, r) => a + chestCount(r), 0);
-const freeLeft = () => { lg = lg || lgLoad(); const f = lg.free || {}; return Math.max(0, FREE_PER_DAY - (f.day === spDay(0) ? f.n || 0 : 0)) };
+const freeLeft = () => { lg = lg || lgLoad(); if (typeof W !== "undefined" && W.ok) return Math.max(0, W.data.free_left | 0); const f = lg.free || {}; return Math.max(0, FREE_PER_DAY - (f.day === spDay(0) ? f.n || 0 : 0)) };
 const chestBadge = () => { try { return chestTotal() + (user ? freeLeft() : 0) } catch (e) { return 0 } };
-function chestFree() {
+async function chestFree() {
   albumLoad(); if (!freeLeft()) { toast("Os baús grátis de hoje já foram pegos. Volte depois da meia-noite!"); return }
+  if (!W.missing) { if (chestFree.busy) return; chestFree.busy = true; const d = await walletCall("wallet_free_chest"); chestFree.busy = false; if (d) { toast(`🎁 Baú grátis pego! Restam ${freeLeft()} hoje.`); renderLingo() } return }
   const f = lg.free && lg.free.day === spDay(0) ? lg.free : { day: spDay(0), n: 0 }; f.n++; lg.free = f;
   lg.cx.comum = (lg.cx.comum || 0) + 1; lgSave(true); toast(`🎁 Baú grátis pego! Restam ${freeLeft()} hoje.`); renderLingo();
 }
-function chestGive(n, why, rar = "comum") {
-  if (!user || !n) return 0; albumLoad(); lg.cx[rar] = (lg.cx[rar] || 0) + n; lgSave(true);
+function chestGive(n, why, rar = "comum", source) {
+  if (!user || !n) return 0; albumLoad();
+  if (!W.missing) {
+    // o servidor confere o limite de baús por dia dessa origem
+    lg.cx[rar] = (lg.cx[rar] || 0) + n;
+    for (let i = 0; i < n; i++) walletCall("wallet_chest_earn", { p_source: source || "lingo_perfect", p_rar: rar }, { quiet: true }).then(d => {
+      if (d && !d.got) toast("Limite de baús de hoje atingido: esse não entrou.");
+      if (!d) walletLoad(true);
+      walletRefresh();
+    });
+    if (why) toast(`🎁 ${why}: você ganhou ${n === 1 ? "um " + chR(rar).name.toLowerCase() : n + " " + chR(rar).name.toLowerCase() + "s"}! Abra em Minigames › Álbum.`);
+    return n;
+  }
+  lg.cx[rar] = (lg.cx[rar] || 0) + n; lgSave(true);
   if (why) toast(`🎁 ${why}: você ganhou ${n === 1 ? "um " + chR(rar).name.toLowerCase() : n + " " + chR(rar).name.toLowerCase() + "s"}! Abra em Minigames › Álbum.`);
   return n;
 }
@@ -202,9 +216,10 @@ function chestDraw(rar = "comum", forceSkin = false) {
   for (const p of ALBUM) { q -= p.rar || 1; if (q <= 0) { hit = p; break } }
   return { t: "photo", p: hit };
 }
-function chestBuy(rar) {
+async function chestBuy(rar) {
   albumLoad(); const K = chR(rar);
   if ((lg.goiabas || 0) < K.price) { toast(`Faltam ${K.price - (lg.goiabas || 0)} Enzola Coins.`); return }
+  if (!W.missing) { if (chestBuy.busy) return; chestBuy.busy = true; const d = await walletCall("wallet_buy_chest", { p_rar: rar }); chestBuy.busy = false; if (!d) return; toast(`${K.name} comprado! 🎁`); if (typeof lgShopRender === "function" && $("#lgs-ovl")) lgShopRender(); return }
   lg.goiabas -= K.price; lg.cx[rar] = (lg.cx[rar] || 0) + 1; lgSave(true);
   toast(`${K.name} comprado! 🎁`); if (typeof lgShopRender === "function" && $("#lgs-ovl")) lgShopRender();
 }
@@ -216,8 +231,24 @@ function chestShopHTML(bal) {
 }
 function albumOvl() { let b = $("#alb-ovl"); if (!b) { b = document.createElement("div"); b.id = "alb-ovl"; b.className = "alb-ovl"; b.setAttribute("role", "dialog"); b.setAttribute("aria-modal", "true"); b.setAttribute("aria-label", "Baú da sorte"); document.body.append(b); document.documentElement.classList.add("lg-open") } return b }
 function albumClose() { const b = $("#alb-ovl"); if (b) b.remove(); if (!$("#lgs-ovl") && !$("#sh-ovl")) document.documentElement.classList.remove("lg-open"); if (tab === "idiomas") renderLingo() }
-function chestOpen(rar) {
+async function chestOpen(rar) {
   albumLoad(); if (!rar || !chestCount(rar)) rar = [...CH_ORDER].reverse().find(r => chestCount(r) > 0); if (!rar) return;
+  if (!W.missing) {
+    // o sorteio acontece no servidor; aqui só a animação
+    if (chestOpen.busy) return; chestOpen.busy = true;
+    const K = chR(rar);
+    albumOvl().innerHTML = `<div class="alb-box rv"><button class="iconbtn lgs-x" data-alb-close aria-label="Fechar">${ic("x")}</button>
+    <div class="alb-stage" id="alb-stage"><div class="chest-w shake">${chestSvg("", rar)}</div><p class="muted">Abrindo o ${K.name.toLowerCase()}…</p></div></div>`;
+    const t0 = Date.now(), d = await walletCall("wallet_open_chest", { p_rar: rar }); chestOpen.busy = false;
+    if (!d) { albumClose(); return }
+    const got = (d.got || []).map(x => x.t === "photo" ? { t: "photo", p: ALBUM.find(p => p.id === x.id) || { id: x.id, name: x.id, img: `album/${x.id}.webp` }, fresh: !!x.fresh }
+      : x.t === "coins" ? { t: "coins", n: x.n | 0 } : { t: "skin", sk: skinOf(x.id), fresh: !!x.fresh, dup: x.dup | 0 });
+    rewardsCheck();
+    const done = ALBUM.length && albumOwned() === ALBUM.length, nf = got.filter(x => x.t === "photo" && x.fresh).length, coins = got.reduce((a, x) => a + (x.t === "coins" ? x.n : x.dup || 0), 0), sk = got.filter(x => x.t === "skin" && x.fresh);
+    chestShow = { got, i: -1, done, nf, coins, sk, busy: false, rar: d.rar || rar };
+    setTimeout(() => { if ($("#alb-stage")) { $("#alb-stage").innerHTML = `<div class="chest-w open pop">${chestSvg("open", rar)}</div><div class="rv-burst" aria-hidden="true"></div>`; setTimeout(chestNext, 750) } }, Math.max(0, 1200 - (Date.now() - t0)));
+    return;
+  }
   lg.cx[rar]--; lg.skins = lg.skins || {}; const K = chR(rar);
   const got = Array.from({ length: K.draws }, (_, i) => {
     const d = chestDraw(rar, !!K.guaranteeSkin && i === 0);
@@ -364,8 +395,12 @@ function lgAllDone() { lg = lg || lgLoad(); return Object.keys(LG_LANGS).every(k
 const lgDoneCount = () => { lg = lg || lgLoad(); let n = 0; for (const k of Object.keys(LG_LANGS)) LG_UNITS.forEach((_, u) => { for (let l = 0; l < LG_LESSONS; l++) if (lg.done[`${k}-${u}-${l}`]) n++ }); return [n, Object.keys(LG_LANGS).length * LG_UNITS.length * LG_LESSONS] };
 function rewardsCheck() {
   if (!user || !loaded) return; lg = lg || lgLoad(); lg.cert = lg.cert || {}; let ch = false;
-  if (lgAllDone() && !lg.cert.lingo) { lg.cert.lingo = spDay(0); lg.skins = { ...(lg.skins || {}), ave: true }; ch = true; toast("🎓 Enzolingo concluído! Você ganhou a skin Enzola Pássaro e um certificado (aba Minigames).") }
-  if (ALBUM.length && albumOwned() === ALBUM.length && !lg.cert.album) { lg.cert.album = spDay(0); lg.cert.albumN = ALBUM.length; lg.skins = { ...(lg.skins || {}), colecionador: true }; ch = true; toast("📖 Álbum completo! Você ganhou a skin Colecionador e um certificado (aba Minigames).") }
+  const srv = typeof W !== "undefined" && !W.missing;
+  // skins de conquista: o servidor confere (álbum completo / lições) antes de entregar
+  if (lgAllDone() && !lg.cert.lingo) { lg.cert.lingo = spDay(0); ch = true; if (srv) { lgSave(true); setTimeout(() => walletCall("wallet_claim_skin", { p_id: "ave" }, { quiet: true }).then(walletRefresh), 1500) } else lg.skins = { ...(lg.skins || {}), ave: true }; toast("🎓 Enzolingo concluído! Você ganhou a skin Enzola Pássaro e um certificado (aba Minigames).") }
+  else if (srv && lg.cert.lingo && W.ok && !skinHas("ave") && !rewardsCheck.ave) { rewardsCheck.ave = 1; walletCall("wallet_claim_skin", { p_id: "ave" }, { quiet: true }).then(walletRefresh) }
+  if (ALBUM.length && albumOwned() === ALBUM.length && !lg.cert.album) { lg.cert.album = spDay(0); lg.cert.albumN = ALBUM.length; ch = true; if (srv) walletCall("wallet_claim_skin", { p_id: "colecionador" }, { quiet: true }).then(walletRefresh); else lg.skins = { ...(lg.skins || {}), colecionador: true }; toast("📖 Álbum completo! Você ganhou a skin Colecionador e um certificado (aba Minigames).") }
+  else if (srv && lg.cert.album && W.ok && !skinHas("colecionador") && !rewardsCheck.col) { rewardsCheck.col = 1; walletCall("wallet_claim_skin", { p_id: "colecionador" }, { quiet: true }).then(walletRefresh) }
   if (ch) lgSave(true);
 }
 const CERT = {

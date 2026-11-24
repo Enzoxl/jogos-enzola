@@ -97,7 +97,7 @@ function snOver(won) {
   sn.state = "over"; sn.shake = 1; const st = snStats(); st.plays = (st.plays || 0) + 1;
   sn.newBest = sn.score > (st.best || 0); if (sn.newBest) st.best = sn.score;
   sn.level = snLevel(sn.score); const want = snCoinsFor(sn.score), room = Math.max(0, SN.dayCap - (st.earned || 0)); sn.coins = Math.min(want, room); sn.capped = want > room;
-  if (sn.coins > 0 && typeof lgAward === "function" && user) { st.earned += sn.coins; lgAward(sn.coins) } else lgSave(true);
+  if (sn.coins > 0 && typeof lgAward === "function" && user) { st.earned += sn.coins; lgAward(sn.coins, "snake") } else lgSave(true);
   sn.won = !!won; snUI();
 }
 function snUI() {

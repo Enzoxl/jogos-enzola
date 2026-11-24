@@ -1066,7 +1066,7 @@ button.card,button.fav{font:inherit;color:inherit;text-align:left;background:non
 :root.calm .music-btn .mb-eq i{animation:none;height:7px}
 @media (prefers-reduced-motion:reduce){.music-btn .mb-eq i{animation:none;height:7px}}
 @media (max-width:860px){.music-btn{bottom:calc(80px + env(safe-area-inset-bottom,0px));left:8px;width:30px;height:30px}}
-body:has(.install-bar) .music-btn{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+body:has(.install-bar:not([hidden])) .music-btn{bottom:calc(190px + env(safe-area-inset-bottom,0px))}
 .music-pop{position:fixed;left:12px;bottom:calc(56px + env(safe-area-inset-bottom,0px));z-index:40;width:min(268px,calc(100vw - 24px));padding:12px 14px;border-radius:16px;background:var(--surface);border:1px solid var(--line-2);box-shadow:var(--shadow-lg);display:grid;gap:10px;animation:mpin .16s ease-out both}
 @media (max-width:860px){.music-pop{left:8px;bottom:calc(118px + env(safe-area-inset-bottom,0px))}}
 .mp-info{display:grid;gap:2px;min-width:0}
@@ -1082,7 +1082,7 @@ body:has(.install-bar) .music-btn{bottom:calc(150px + env(safe-area-inset-bottom
 .mp-a{display:flex;justify-content:flex-end;gap:8px}
 @keyframes mpin{from{opacity:0;transform:translateY(6px)}}
 #music-vol{width:110px;margin-right:10px;accent-color:var(--accent);vertical-align:middle}
-body:has(.install-bar) .music-btn{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+body:has(.install-bar:not([hidden])) .music-btn{bottom:calc(190px + env(safe-area-inset-bottom,0px))}
 .music-btn[hidden]{display:none}
 .music-btn{touch-action:none}
 .music-btn.dragging{transition:none;opacity:.6}
@@ -1277,25 +1277,56 @@ a.spn:hover .sp-logo,a.spn:focus-visible .sp-logo{opacity:1;transform:translateY
 :root.calm .lgh-img{animation:none!important}
 @media (prefers-reduced-motion:reduce){.lgh-img,.lg-start,.lg-confetti i{animation:none!important}}
 
-/* ---------- carregamento: hipopótamo nadando ---------- */
-.hload{display:grid;justify-items:center;gap:12px;padding:34px 16px;text-align:center;grid-column:1/-1}
+/* ---------- carregamento: filhote nadando na nossa direção ---------- */
+.hload{display:grid;justify-items:center;gap:12px;padding:30px 16px;text-align:center;grid-column:1/-1}
 .hload p{margin:0;color:var(--muted);font-weight:600;font-size:14px}
-.hl-pool{position:relative;width:min(340px,86vw);height:120px;border-radius:0 0 60px 60px/0 0 30px 30px;overflow:hidden;background:linear-gradient(180deg,transparent 0 38%,color-mix(in srgb,#1CB0F6 22%,transparent) 38%,color-mix(in srgb,#1CB0F6 34%,transparent) 100%)}
-.hload.big .hl-pool{width:min(440px,90vw);height:150px}
-.hl-wave{position:absolute;left:0;right:0;top:calc(38% - 7px);height:14px;background:radial-gradient(circle at 10px -3px,transparent 9px,color-mix(in srgb,#1CB0F6 45%,transparent) 10px) 0 0/20px 14px repeat-x;animation:hlwave 1.6s linear infinite;opacity:.8}
-.hl-swim{position:absolute;top:14%;left:0;width:84px;animation:hlswim 5.2s ease-in-out infinite}
-.hload.big .hl-swim{width:104px}
-.hl-swim img{display:block;width:100%;height:auto;filter:drop-shadow(0 6px 8px rgba(0,0,0,.3));animation:hlpaddle .7s ease-in-out infinite alternate}
-.hl-b{position:absolute;bottom:-8px;width:9px;height:9px;border-radius:50%;border:2px solid color-mix(in srgb,#fff 55%,transparent);animation:hlbub 2.4s ease-in infinite}
-.hl-b:nth-of-type(1){left:22%}.hl-b:nth-of-type(2){left:52%;animation-delay:.8s;width:6px;height:6px}.hl-b:nth-of-type(3){left:78%;animation-delay:1.5s}
-@keyframes hlswim{0%{transform:translateX(-10%) scaleX(1)}47%{transform:translateX(calc(min(340px,86vw) - 90%)) scaleX(1)}50%{transform:translateX(calc(min(340px,86vw) - 90%)) scaleX(-1)}97%{transform:translateX(-10%) scaleX(-1)}100%{transform:translateX(-10%) scaleX(1)}}
-.hload.big .hl-swim{animation-name:hlswimb}
-@keyframes hlswimb{0%{transform:translateX(-10%) scaleX(1)}47%{transform:translateX(calc(min(440px,90vw) - 90%)) scaleX(1)}50%{transform:translateX(calc(min(440px,90vw) - 90%)) scaleX(-1)}97%{transform:translateX(-10%) scaleX(-1)}100%{transform:translateX(-10%) scaleX(1)}}
-@keyframes hlpaddle{from{transform:translateY(0) rotate(-5deg)}to{transform:translateY(7px) rotate(4deg)}}
-@keyframes hlwave{to{background-position:20px 0}}
-@keyframes hlbub{0%{transform:translateY(0);opacity:0}15%{opacity:1}100%{transform:translateY(-80px);opacity:0}}
-:root.calm .hl-swim,:root.calm .hl-swim img,:root.calm .hl-b,:root.calm .hl-wave{animation-duration:0s!important;animation-iteration-count:1!important}
-@media (prefers-reduced-motion:reduce){.hl-swim,.hl-swim img,.hl-b,.hl-wave{animation:none!important}.hl-swim{left:35%}}
+.hl-pool{--w:min(320px,84vw);--h:150px;--wl:46%;position:relative;width:var(--w);height:var(--h);border-radius:22px;overflow:hidden;isolation:isolate;
+  background:radial-gradient(120% 70% at 50% 0%,color-mix(in srgb,#7fd3ff 16%,transparent),transparent 70%)}
+.hload.big .hl-pool{--w:min(420px,90vw);--h:180px}
+.hl-sky{position:absolute;inset:0 0 calc(100% - var(--wl)) 0;background:radial-gradient(60% 80% at 50% 100%,color-mix(in srgb,#9be3ff 14%,transparent),transparent)}
+/* água do fundo (atrás do filhote) */
+.hl-far{position:absolute;left:-10%;right:-10%;top:calc(var(--wl) - 6px);bottom:0;
+  background:linear-gradient(180deg,color-mix(in srgb,#2fb8f5 38%,transparent),color-mix(in srgb,#0b6fb0 55%,transparent));
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='12'%3E%3Cpath d='M0 6 Q20 0 40 6 T80 6 V12 H0Z'/%3E%3C/svg%3E") 0 0/80px 12px repeat-x,linear-gradient(#000,#000) 0 11px/100% 100% no-repeat;
+          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='12'%3E%3Cpath d='M0 6 Q20 0 40 6 T80 6 V12 H0Z'/%3E%3C/svg%3E") 0 0/80px 12px repeat-x,linear-gradient(#000,#000) 0 11px/100% 100% no-repeat;
+  animation:hlfar 3.8s linear infinite}
+/* ondulações que saem do filhote na linha d'água */
+.hl-rip{position:absolute;left:50%;top:var(--wl);width:0;height:0;z-index:1}
+.hl-rip i{position:absolute;left:0;top:0;width:120px;height:26px;margin:-13px 0 0 -60px;border-radius:50%;border:2px solid color-mix(in srgb,#dff6ff 70%,transparent);opacity:0;animation:hlrip 2.7s ease-out infinite}
+.hl-rip i:nth-child(2){animation-delay:.9s}.hl-rip i:nth-child(3){animation-delay:1.8s}
+/* o filhote: balança na superfície, vem e volta um pouquinho */
+.hl-swim{position:absolute;left:50%;top:calc(var(--wl) - 50px);width:92px;margin-left:-46px;z-index:2;transform-origin:50% 55%;animation:hlbob 2.6s ease-in-out infinite}
+.hload.big .hl-swim{width:112px;margin-left:-56px;top:calc(var(--wl) - 61px)}
+.hl-swim img{display:block;width:100%;height:auto;filter:drop-shadow(0 4px 6px rgba(0,0,0,.25));animation:hlnear 7s ease-in-out infinite}
+/* água da frente: cobre o corpo do queixo para baixo, translúcida e com ondas que passam */
+.hl-front{position:absolute;left:0;right:0;top:calc(var(--wl) - 4px);bottom:0;z-index:3;overflow:hidden;
+  background:linear-gradient(180deg,color-mix(in srgb,#3cc4ff 46%,transparent) 0,color-mix(in srgb,#0f86c9 72%,transparent) 45%,color-mix(in srgb,#08507e 90%,transparent));
+  -webkit-backdrop-filter:blur(1.6px) saturate(1.3) hue-rotate(-8deg);backdrop-filter:blur(1.6px) saturate(1.3) hue-rotate(-8deg);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='10'%3E%3Cpath d='M0 5 Q15 0 30 5 T60 5 V10 H0Z'/%3E%3C/svg%3E") 0 0/60px 10px repeat-x,linear-gradient(#000,#000) 0 9px/100% 100% no-repeat;
+          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='10'%3E%3Cpath d='M0 5 Q15 0 30 5 T60 5 V10 H0Z'/%3E%3C/svg%3E") 0 0/60px 10px repeat-x,linear-gradient(#000,#000) 0 9px/100% 100% no-repeat;
+  animation:hlfront 2.2s linear infinite}
+.hl-crest{position:absolute;left:-60px;right:-60px;top:3px;height:3px;border-radius:3px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.75) 20%,transparent 35%,rgba(255,255,255,.6) 55%,transparent 70%,rgba(255,255,255,.7) 88%,transparent);animation:hlcrest 3.2s linear infinite}
+.hl-crest.b{top:14px;height:2px;opacity:.45;animation-duration:4.6s;animation-direction:reverse}
+/* rastro de espuma dos dois lados */
+.hl-wake{position:absolute;left:50%;top:calc(var(--wl) - 2px);z-index:4;width:0}
+.hl-wake i{position:absolute;top:0;width:58px;height:8px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.75),transparent);animation:hlwake 1.3s ease-in-out infinite alternate}
+.hl-wake i:first-child{right:26px}.hl-wake i:last-child{left:26px;animation-delay:.65s}
+.hl-b{position:absolute;bottom:-10px;z-index:4;width:8px;height:8px;border-radius:50%;border:1.6px solid rgba(255,255,255,.6);background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.5),transparent 60%);animation:hlbub 2.6s ease-in infinite}
+.hl-b:nth-of-type(1){left:38%}.hl-b:nth-of-type(2){left:58%;animation-delay:.7s;width:5px;height:5px}.hl-b:nth-of-type(3){left:46%;animation-delay:1.4s;width:6px;height:6px}.hl-b:nth-of-type(4){left:64%;animation-delay:2s}
+.hl-drop{position:absolute;z-index:4;top:calc(var(--wl) - 6px);width:4px;height:5px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:rgba(230,248,255,.9);opacity:0;animation:hldrop 2.6s ease-out infinite}
+.hl-drop:nth-of-type(1){left:calc(50% - 34px)}.hl-drop:nth-of-type(2){left:calc(50% + 30px);animation-delay:1.3s}
+@keyframes hlfar{to{-webkit-mask-position:80px 0,0 11px;mask-position:80px 0,0 11px}}
+@keyframes hlfront{to{-webkit-mask-position:-60px 0,0 9px;mask-position:-60px 0,0 9px}}
+@keyframes hlcrest{to{transform:translateX(60px)}}
+@keyframes hlbob{0%,100%{transform:translateY(0) rotate(-2.5deg)}50%{transform:translateY(5px) rotate(2.5deg)}}
+@keyframes hlnear{0%,100%{transform:scale(.94) translateX(-6px)}50%{transform:scale(1.04) translateX(6px)}}
+@keyframes hlrip{0%{transform:scale(.45);opacity:0}15%{opacity:.85}100%{transform:scale(2.2);opacity:0}}
+@keyframes hlwake{from{transform:scaleX(.7);opacity:.35}to{transform:scaleX(1.15);opacity:.85}}
+@keyframes hlbub{0%{transform:translateY(0) scale(.7);opacity:0}15%{opacity:1}85%{opacity:.9}100%{transform:translateY(-78px) scale(1);opacity:0}}
+@keyframes hldrop{0%,55%{transform:translate(0,0);opacity:0}60%{opacity:1}80%{transform:translate(var(--dx,-6px),-16px)}100%{transform:translate(calc(var(--dx,-6px)*1.6),2px);opacity:0}}
+.hl-drop:nth-of-type(2){--dx:7px}
+:root.calm .hl-pool *,:root.calm .hl-pool *::before{animation-duration:0s!important;animation-iteration-count:1!important}
+@media (prefers-reduced-motion:reduce){.hl-pool *{animation:none!important}.hl-rip i,.hl-drop{display:none}}
 .list .hload,.grid .hload,.wgrid .hload{grid-column:1/-1}
 .lg-path{padding-top:46px}
 .lg-end-a .btn:not(.ghost){background:#58CC02;color:#fff;box-shadow:0 4px 0 #46A302}
@@ -1870,7 +1901,7 @@ button.cg-st{cursor:pointer;transition:background .15s,transform .12s}button.cg-
 
 /* Salas: ajustes de celular, avisos e câmera */
 @media (min-width:861px){#sl-pill{bottom:24px}}
-body:has(.install-bar) #sl-pill{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+body:has(.install-bar:not([hidden])) #sl-pill{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
 @media (max-width:860px){html.on-salas .install-bar,html.on-salas .music-btn,html.on-salas .music-pop{display:none!important}}
 .sl-b .ic{width:22px;height:22px}.sl-b:focus-visible,.sl-bar-x:focus-visible{outline:2px solid var(--accent,#5b7cff);outline-offset:2px}
 .sl-voice{min-height:0}
@@ -1883,3 +1914,12 @@ body:has(.install-bar) #sl-pill{bottom:calc(150px + env(safe-area-inset-bottom,0
 .sl-ask-bg{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.55);display:grid;place-items:center;padding:16px}
 .sl-ask{background:var(--surface);border:1px solid var(--line-2,var(--line));border-radius:18px;padding:20px;max-width:380px;display:grid;gap:10px;box-shadow:var(--shadow-lg)}.sl-ask p{margin:0;color:var(--muted);font-size:14px;line-height:1.45}.sl-ask .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
 @media (max-width:860px){.sl-ctl{gap:8px}.sl-b{width:58px}}
+
+/* celular: 7 abas cabem sem cortar o nome (rótulo curto onde precisa) */
+@media (max-width:860px){
+  .tabs button span[data-short]{font-size:0}
+  .tabs button span[data-short]::after{content:attr(data-short);font-size:10.5px}
+  /* a barra "Instale o app" fica acima das abas: a página ganha espaço para o fim não ficar escondido */
+  body:has(.install-bar:not([hidden])){padding-bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+  html.on-salas body{padding-bottom:calc(70px + env(safe-area-inset-bottom,0px))}
+}

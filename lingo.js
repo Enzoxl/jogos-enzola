@@ -13,99 +13,7 @@ const LG_LANGS = {
   en: { name: "Inglês", flag: "🇺🇸", voice: "en-US", hello: "Bora treinar inglês?" },
   es: { name: "Espanhol", flag: "🇪🇸", voice: "es-ES", hello: "¿Vamos a practicar español?" },
 };
-// [português, inglês, espanhol]
-const LG_UNITS = [
-  {
-    title: "Primeiros passos", desc: "Cumprimentos e apresentações", color: "#58CC02",
-    items: [
-      ["Olá!", "Hello!", "¡Hola!"], ["Bom dia.", "Good morning.", "Buenos días."], ["Boa noite.", "Good night.", "Buenas noches."],
-      ["Obrigado.", "Thank you.", "Gracias."], ["Por favor.", "Please.", "Por favor."], ["Meu nome é Enzo.", "My name is Enzo.", "Me llamo Enzo."],
-      ["Como você está?", "How are you?", "¿Cómo estás?"], ["Eu estou bem.", "I am fine.", "Estoy bien."], ["Tchau!", "Goodbye!", "¡Adiós!"],
-      ["Prazer em conhecer você.", "Nice to meet you.", "Mucho gusto."], ["Eu sou do Brasil.", "I am from Brazil.", "Soy de Brasil."], ["Até amanhã.", "See you tomorrow.", "Hasta mañana."],
-    ],
-    words: [["sim", "yes", "sí"], ["não", "no", "no"], ["água", "water", "agua"], ["amigo", "friend", "amigo"], ["casa", "house", "casa"], ["dia", "day", "día"], ["noite", "night", "noche"], ["nome", "name", "nombre"]],
-  },
-  {
-    title: "Modo gamer", desc: "Frases para jogar com os amigos", color: "#1CB0F6",
-    items: [
-      ["Eu jogo videogame.", "I play video games.", "Juego videojuegos."], ["Vamos jogar!", "Let's play!", "¡Vamos a jugar!"], ["Eu ganhei.", "I won.", "Gané."],
-      ["Eu perdi.", "I lost.", "Perdí."], ["O jogo é divertido.", "The game is fun.", "El juego es divertido."], ["Salve o jogo.", "Save the game.", "Guarda el juego."],
-      ["Meu amigo joga comigo.", "My friend plays with me.", "Mi amigo juega conmigo."], ["Esse chefe é muito difícil.", "This boss is very hard.", "Este jefe es muy difícil."],
-      ["Eu preciso de mais vidas.", "I need more lives.", "Necesito más vidas."], ["Fim de jogo.", "Game over.", "Fin del juego."],
-      ["Eu comprei um jogo novo.", "I bought a new game.", "Compré un juego nuevo."], ["Qual é o seu jogo favorito?", "What is your favorite game?", "¿Cuál es tu juego favorito?"],
-    ],
-    words: [["jogo", "game", "juego"], ["nível", "level", "nivel"], ["vida", "life", "vida"], ["vitória", "victory", "victoria"], ["chefe", "boss", "jefe"], ["tela", "screen", "pantalla"], ["jogador", "player", "jugador"], ["amigos", "friends", "amigos"]],
-  },
-  {
-    title: "Dia a dia", desc: "Comida, tempo e lugares", color: "#FF9600",
-    items: [
-      ["Eu estou com fome.", "I am hungry.", "Tengo hambre."], ["Eu gosto de pizza.", "I like pizza.", "Me gusta la pizza."], ["Onde fica o banheiro?", "Where is the bathroom?", "¿Dónde está el baño?"],
-      ["Que horas são?", "What time is it?", "¿Qué hora es?"], ["Eu estou cansado.", "I am tired.", "Estoy cansado."], ["Hoje é sexta-feira.", "Today is Friday.", "Hoy es viernes."],
-      ["A água está fria.", "The water is cold.", "El agua está fría."], ["Eu tenho um cachorro.", "I have a dog.", "Tengo un perro."], ["Está chovendo.", "It is raining.", "Está lloviendo."],
-      ["Eu moro em Belo Horizonte.", "I live in Belo Horizonte.", "Vivo en Belo Horizonte."], ["Quanto custa?", "How much is it?", "¿Cuánto cuesta?"], ["Eu amo música.", "I love music.", "Me encanta la música."],
-    ],
-    words: [["comida", "food", "comida"], ["pão", "bread", "pan"], ["leite", "milk", "leche"], ["gato", "cat", "gato"], ["cachorro", "dog", "perro"], ["escola", "school", "escuela"], ["livro", "book", "libro"], ["hoje", "today", "hoy"]],
-  },
-  {
-    title: "Hipopótamo", desc: "O mascote do Enzola", color: "#CE82FF",
-    items: [
-      ["O hipopótamo está feliz.", "The hippo is happy.", "El hipopótamo está feliz."], ["O hipopótamo nada no rio.", "The hippo swims in the river.", "El hipopótamo nada en el río."],
-      ["O hipopótamo é meu amigo.", "The hippo is my friend.", "El hipopótamo es mi amigo."], ["O hipopótamo come muito.", "The hippo eats a lot.", "El hipopótamo come mucho."],
-      ["O hipopótamo está com sono.", "The hippo is sleepy.", "El hipopótamo tiene sueño."], ["Eu vejo um hipopótamo grande.", "I see a big hippo.", "Veo un hipopótamo grande."],
-      ["O filhote é pequeno.", "The baby is small.", "El bebé es pequeño."], ["Os hipopótamos gostam de água.", "Hippos like water.", "A los hipopótamos les gusta el agua."],
-      ["O hipopótamo dorme de dia.", "The hippo sleeps during the day.", "El hipopótamo duerme de día."], ["Ele tem uma boca grande.", "He has a big mouth.", "Tiene una boca grande."],
-    ],
-    words: [["rio", "river", "río"], ["grande", "big", "grande"], ["pequeno", "small", "pequeño"], ["feliz", "happy", "feliz"], ["nadar", "to swim", "nadar"], ["comer", "to eat", "comer"], ["dormir", "to sleep", "dormir"], ["boca", "mouth", "boca"]],
-  },
-  {
-    title: "Viagem", desc: "Hotel, transporte e imprevistos", color: "#E8505B",
-    items: [
-      ["Eu gostaria de reservar um quarto.", "I would like to book a room.", "Me gustaría reservar una habitación."], ["A que horas sai o próximo trem?", "What time does the next train leave?", "¿A qué hora sale el próximo tren?"],
-      ["Perdi minha mala no aeroporto.", "I lost my suitcase at the airport.", "Perdí mi maleta en el aeropuerto."], ["Você pode me ajudar, por favor?", "Could you help me, please?", "¿Podría ayudarme, por favor?"],
-      ["Onde fica o ponto de ônibus mais próximo?", "Where is the nearest bus stop?", "¿Dónde está la parada de autobús más cercana?"], ["Eu estou procurando um bom restaurante.", "I am looking for a good restaurant.", "Estoy buscando un buen restaurante."],
-      ["Vamos chegar atrasados se não corrermos.", "We will be late if we don't hurry.", "Vamos a llegar tarde si no nos damos prisa."], ["A conta, por favor.", "The check, please.", "La cuenta, por favor."],
-      ["Eu nunca visitei essa cidade antes.", "I have never visited this city before.", "Nunca he visitado esta ciudad antes."], ["Posso pagar com cartão?", "Can I pay by card?", "¿Puedo pagar con tarjeta?"],
-      ["O voo foi cancelado por causa do tempo.", "The flight was canceled because of the weather.", "El vuelo fue cancelado por el mal tiempo."], ["Quanto tempo leva para chegar lá?", "How long does it take to get there?", "¿Cuánto tiempo se tarda en llegar allí?"],
-    ],
-    words: [["passaporte", "passport", "pasaporte"], ["bilhete", "ticket", "billete"], ["mala", "suitcase", "maleta"], ["mapa", "map", "mapa"], ["estrada", "road", "carretera"], ["praia", "beach", "playa"], ["ponte", "bridge", "puente"], ["fronteira", "border", "frontera"]],
-  },
-  {
-    title: "Trabalho e estudo", desc: "Reuniões, provas e prazos", color: "#2B7DE9",
-    items: [
-      ["Eu tenho uma reunião às três horas.", "I have a meeting at three o'clock.", "Tengo una reunión a las tres."], ["Preciso entregar o trabalho até sexta.", "I need to turn in the assignment by Friday.", "Necesito entregar el trabajo para el viernes."],
-      ["Ela trabalha como engenheira.", "She works as an engineer.", "Ella trabaja como ingeniera."], ["Estou aprendendo a programar.", "I am learning to code.", "Estoy aprendiendo a programar."],
-      ["Você pode repetir mais devagar?", "Can you repeat that more slowly?", "¿Puedes repetir más despacio?"], ["A prova foi mais difícil do que eu esperava.", "The test was harder than I expected.", "El examen fue más difícil de lo que esperaba."],
-      ["Eu estudo inglês há dois anos.", "I have been studying English for two years.", "Llevo dos años estudiando inglés."], ["Ele sempre chega antes de todo mundo.", "He always arrives before everyone else.", "Siempre llega antes que todos."],
-      ["Se eu tivesse mais tempo, eu estudaria mais.", "If I had more time, I would study more.", "Si tuviera más tiempo, estudiaría más."], ["Qual é a sua opinião sobre o projeto?", "What is your opinion about the project?", "¿Cuál es tu opinión sobre el proyecto?"],
-      ["Eu me esqueci de enviar o e-mail.", "I forgot to send the email.", "Me olvidé de enviar el correo."], ["Estamos esperando a resposta deles.", "We are waiting for their answer.", "Estamos esperando su respuesta."],
-    ],
-    words: [["empresa", "company", "empresa"], ["prova", "test", "examen"], ["nota", "grade", "nota"], ["mesa", "desk", "escritorio"], ["prazo", "deadline", "plazo"], ["salário", "salary", "salario"], ["tarefa", "task", "tarea"], ["reunião", "meeting", "reunión"]],
-  },
-  {
-    title: "Opiniões e sentimentos", desc: "Concordar, discordar e se expressar", color: "#14A38B",
-    items: [
-      ["Eu acho que você tem razão.", "I think you are right.", "Creo que tienes razón."], ["Não concordo com isso.", "I don't agree with that.", "No estoy de acuerdo con eso."],
-      ["Estou muito animado para o fim de semana.", "I am very excited about the weekend.", "Estoy muy emocionado por el fin de semana."], ["Ele ficou chateado porque perdeu o jogo.", "He got upset because he lost the game.", "Se enojó porque perdió el partido."],
-      ["Eu prefiro ficar em casa do que sair.", "I prefer staying home to going out.", "Prefiero quedarme en casa que salir."], ["Isso me deixa nervoso.", "That makes me nervous.", "Eso me pone nervioso."],
-      ["Apesar de estar cansado, ele continuou jogando.", "Although he was tired, he kept playing.", "Aunque estaba cansado, siguió jugando."], ["Eu me sinto orgulhoso do que conquistei.", "I feel proud of what I have achieved.", "Me siento orgulloso de lo que he logrado."],
-      ["Nunca é tarde para recomeçar.", "It is never too late to start over.", "Nunca es tarde para empezar de nuevo."], ["Ela parece estar preocupada.", "She seems to be worried.", "Ella parece estar preocupada."],
-      ["Fico feliz que você tenha vindo.", "I am glad that you came.", "Me alegra que hayas venido."], ["Você não deveria desistir agora.", "You shouldn't give up now.", "No deberías rendirte ahora."],
-    ],
-    words: [["raiva", "anger", "rabia"], ["medo", "fear", "miedo"], ["alegria", "joy", "alegría"], ["orgulho", "pride", "orgullo"], ["dúvida", "doubt", "duda"], ["esperança", "hope", "esperanza"], ["coragem", "courage", "valentía"], ["tristeza", "sadness", "tristeza"]],
-  },
-  {
-    title: "Tempos verbais", desc: "Passado, presente e futuro", color: "#8A4FFF",
-    items: [
-      ["Ontem eu joguei até tarde.", "Yesterday I played until late.", "Ayer jugué hasta tarde."], ["Amanhã vou terminar esse jogo.", "Tomorrow I am going to finish this game.", "Mañana voy a terminar este juego."],
-      ["Quando eu era criança, eu morava no interior.", "When I was a kid, I lived in the countryside.", "Cuando era niño, vivía en el campo."], ["Eu já terminei a lição de casa.", "I have already finished my homework.", "Ya terminé la tarea."],
-      ["Ela estava dormindo quando o telefone tocou.", "She was sleeping when the phone rang.", "Ella estaba durmiendo cuando sonó el teléfono."], ["Eu vou te ligar quando chegar.", "I will call you when I arrive.", "Te llamaré cuando llegue."],
-      ["Nós nos conhecemos há cinco anos.", "We met five years ago.", "Nos conocimos hace cinco años."], ["Se chover, ficaremos em casa.", "If it rains, we will stay home.", "Si llueve, nos quedaremos en casa."],
-      ["Eu nunca tinha visto algo assim.", "I had never seen anything like this.", "Nunca había visto algo así."], ["Ele disse que viria mais tarde.", "He said he would come later.", "Dijo que vendría más tarde."],
-      ["O jogo foi lançado no ano passado.", "The game was released last year.", "El juego fue lanzado el año pasado."], ["Estarei jogando às oito da noite.", "I will be playing at eight p.m.", "Estaré jugando a las ocho de la noche."],
-    ],
-    words: [["ontem", "yesterday", "ayer"], ["amanhã", "tomorrow", "mañana"], ["sempre", "always", "siempre"], ["nunca", "never", "nunca"], ["já", "already", "ya"], ["ainda", "still", "todavía"], ["agora", "now", "ahora"], ["depois", "later", "después"]],
-  },
-];
+// LG_UNITS (o banco de frases) fica em lingo-banco.js
 const LG_LESSONS = 4;          // lições por unidade
 const LG_Q = 10;               // perguntas por lição
 const LG_LIVES = 3;
@@ -123,6 +31,7 @@ function lgLoad() {
   const s = { ...base, ...(newer ? remote : local) }; s.skins = { ...(s.skins || {}) }; s.album = { ...(s.album || {}) }; s.cx = { ...(s.cx || {}) }; s.xf = { ...(s.xf || {}) };
   if (s.skins.oculos) { s.skins.pirata = s.skins.oculos; delete s.skins.oculos; } if (s.skin === "oculos") s.skin = "pirata";
   if (s.day !== lgToday()) { s.day = lgToday(); s.dayXp = 0 }
+  if (typeof walletMirror === "function") walletMirror(s);   // moedas, skins, fotos e baús vêm do servidor
   // ofensiva quebra se passou mais de um dia sem treinar
   if (s.last && s.last !== lgToday()) { const y = new Date(); y.setDate(y.getDate() - 1); const ys = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, "0")}-${String(y.getDate()).padStart(2, "0")}`; if (s.last !== ys) s.streak = 0 }
   return s;
@@ -131,7 +40,8 @@ let lg = null;
 function lgSave(sync) {
   lg.rev = (lg.rev || 0) + 1;
   lsSet(lgKey(), lg);
-  if (sync && user && profile && caps.v3) { profile.settings = { ...(profile.settings || {}), lingo: lg }; saveProfile({ settings: profile.settings }).catch(() => { }) }
+  if (user && profile) profile.settings = { ...(profile.settings || {}), lingo: { ...lg } };   // o perfil sempre leva o progresso mais novo deste aparelho
+  if (sync && user && profile && caps.v3) { clearTimeout(lgSave.t); lgSave.t = setTimeout(() => saveProfile({}), 600) }   // várias mudanças seguidas viram um salvamento só
 }
 const lgDoneKey = (u, l) => `${lg.lang}-${u}-${l}`;
 function lgUnlocked(u, l) {
@@ -177,47 +87,94 @@ function lgSpeak(text, slow) {
 }
 
 /* ---------- montar perguntas ---------- */
+// "a|b": a primeira é a forma principal (blocos, alternativas, voz); todas valem na digitação
+const lgMain = s => String(s).split("|")[0];
+const lgAlts = s => String(s).split("|");
 const lgShuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]] } return a };
 const lgTokens = s => s.replace(/[.,!?¡¿]/g, " ").split(/\s+/).filter(Boolean);
-const lgNorm = s => norm(String(s).replace(/[¡¿]/g, ""));
+const lgNorm = s => norm(String(s).replace(/[¡¿]/g, "").replace(/['’`´]/g, ""));   // "I'm" = "Im" (apóstrofo não conta)
 function lgPool(units) { return units.flatMap(u => LG_UNITS[u].items) }
-function lgMakeQ(type, item, pool, wordsPool) {
-  const t = LG_IDX[lg.lang];
-  const others = lgShuffle(pool.filter(x => x !== item));
-  if (type === "mc") return { type, prompt: "Como se diz isto?", show: item[0], answer: item[t], options: lgShuffle([item[t], others[0][t], others[1][t]]), speak: item[t] };
-  if (type === "mcr") return { type: "mc", prompt: "O que significa?", show: item[t], showLang: true, answer: item[0], options: lgShuffle([item[0], others[0][0], others[1][0]]), speak: item[t], speakFirst: true };
-  if (type === "listen") return { type, prompt: "Toque no que você ouvir", answer: item[t], options: lgShuffle([item[t], others[0][t], others[1][t]]), speak: item[t] };
+/* ---------- dificuldade ----------
+   d = unidade + lição/4 (0 a ~14). Quanto maior: mais digitação e ditado, 4 alternativas parecidas,
+   mais blocos-armadilha (inclusive formas quase iguais: was/were, es/está…) e lições um pouco mais longas. */
+const lgLevel = (u, l) => u + l / LG_LESSONS;
+const LG_TWINS = {
+  en: { is: "are", are: "is", was: "were", were: "was", has: "have", have: "has", do: "does", does: "do", did: "does", a: "an", an: "a", the: "a", would: "will", will: "would", had: "has", can: "could", could: "can", "don't": "doesn't", "doesn't": "don't", me: "my", my: "me", to: "for", for: "to", in: "on", on: "in", at: "in", been: "being", than: "then", then: "than", their: "there", there: "their", your: "you're", its: "it's", "it's": "its", should: "would", if: "when", when: "if", since: "for", ago: "before" },
+  es: { es: "está", está: "es", estoy: "soy", soy: "estoy", fue: "era", era: "fue", ha: "he", he: "ha", el: "la", la: "el", un: "una", una: "un", que: "qué", habría: "había", había: "habría", por: "para", para: "por", me: "mi", mi: "me", tu: "tú", tú: "tu", si: "sí", sí: "si", hay: "ha", se: "sé", de: "del", del: "de", muy: "mucho", mucho: "muy", pero: "sino", sino: "pero", aunque: "porque", porque: "aunque" },
+};
+// forma "quase certa" de uma palavra (para blocos e alternativas de completar)
+function lgTwin(w) {
+  const L = lg.lang, low = w.toLowerCase(), T = LG_TWINS[L] || {};
+  if (T[low]) return w[0] === w[0].toUpperCase() && w[0] !== w[0].toLowerCase() ? T[low][0].toUpperCase() + T[low].slice(1) : T[low];
+  if (L === "es") { if (/[aeiou]s$/.test(low) && low.length > 4) return w.slice(0, -1); if (/a$/.test(low) && low.length > 4) return w.slice(0, -1) + "e"; if (/e$/.test(low) && low.length > 4) return w.slice(0, -1) + "a"; if (/ó$/.test(low)) return w.slice(0, -1) + "aba" }
+  if (L === "en") { if (/ed$/.test(low) && low.length > 4) return w.slice(0, -2); if (/[^su]s$/.test(low) && low.length > 4 && !/(ous|ics|ness|less|this|his|was|has|is)$/.test(low)) return w.slice(0, -1) }
+  return null;
+}
+function lgMakeQ(type, item, pool, wordsPool, d = 0) {
+  const t = LG_IDX[lg.lang], main = it => lgMain(it[t]);
+  const nOpt = d >= 5 ? 4 : 3;
+  // alternativas: no começo, qualquer frase; depois, as de tamanho parecido (mais difíceis de eliminar)
+  let others = item ? lgShuffle(pool.filter(x => x !== item && main(x) !== main(item))) : [];
+  if (d >= 4 && item) { const len = lgTokens(main(item)).length; others = others.sort((a, b) => Math.abs(lgTokens(main(a)).length - len) - Math.abs(lgTokens(main(b)).length - len)).slice(0, 8); others = lgShuffle(others) }
+  const ans = item ? main(item) : "";
+  if (type === "mc") return { type, prompt: "Como se diz isto?", show: item[0], answer: ans, options: lgShuffle([ans, ...others.slice(0, nOpt - 1).map(main)]), speak: ans };
+  if (type === "mcr") return { type: "mc", prompt: "O que significa?", show: ans, showLang: true, answer: item[0], options: lgShuffle([item[0], ...others.slice(0, nOpt - 1).map(o => o[0])]), speak: ans, speakFirst: true };
+  if (type === "listen") return { type, prompt: "Toque no que você ouvir", answer: ans, options: lgShuffle([ans, ...others.slice(0, nOpt - 1).map(main)]), speak: ans };
   if (type === "build") {
-    const words = lgTokens(item[t]);
-    const extra = lgShuffle(lgTokens(others.slice(0, 3).map(o => o[t]).join(" ")).filter(w => !words.map(lgNorm).includes(lgNorm(w)))).slice(0, Math.min(3, Math.max(2, 7 - words.length)));
-    return { type, prompt: "Monte a tradução", show: item[0], answer: item[t], target: words, bank: lgShuffle([...words, ...extra]).map((w, i) => ({ w, i })), speak: item[t] };
+    const words = lgTokens(ans), nx = d < 2 ? 2 : d < 5 ? 3 : d < 9 ? 4 : 5;
+    const twins = d >= 6 ? lgShuffle(words.map(lgTwin).filter(w => w && !words.map(lgNorm).includes(lgNorm(w)))).slice(0, d >= 9 ? 3 : 2) : [];
+    const extra = lgShuffle(lgTokens(others.slice(0, 4).map(main).join(" ")).filter(w => !words.map(lgNorm).includes(lgNorm(w)) && !twins.map(lgNorm).includes(lgNorm(w)))).slice(0, Math.max(1, nx - twins.length));
+    return { type, prompt: "Monte a tradução", show: item[0], answer: ans, target: words, bank: lgShuffle([...words, ...twins, ...extra]).map((w, i) => ({ w, i })), speak: ans };
   }
   if (type === "fill") {
-    const parts = item[t].split(" "), okIdx = parts.map((w, i) => [w.replace(/[.,!?¡¿]/g, ""), i]).filter(([w, i]) => i > 0 && lgNorm(w).length >= 3);
-    const [w, wi] = okIdx.length ? okIdx[Math.floor(Math.random() * okIdx.length)] : [parts[parts.length - 1].replace(/[.,!?¡¿]/g, ""), parts.length - 1];
+    const parts = ans.split(" "), okIdx = parts.map((w, i) => [w.replace(/[.,!?¡¿;]/g, ""), i]).filter(([w, i]) => (i > 0 || d >= 6) && lgNorm(w).length >= (d >= 6 ? 2 : 3));
+    // nos níveis altos, prefere lacunas em palavras que têm "gêmea" (verbo/artigo/preposição): aí a gramática decide
+    const pickable = d >= 6 ? okIdx.filter(([w]) => lgTwin(w)) : [];
+    const src = pickable.length ? pickable : okIdx;
+    const [w, wi] = src.length ? src[Math.floor(Math.random() * src.length)] : [parts[parts.length - 1].replace(/[.,!?¡¿;]/g, ""), parts.length - 1];
     const blanked = parts.map((p, i) => i === wi ? p.replace(w, "_____") : p).join(" ");
-    const pool2 = [...new Set(pool.filter(x => x !== item).flatMap(x => lgTokens(x[t])).filter(x => lgNorm(x).length >= 3 && lgNorm(x) !== lgNorm(w)).map(x => x.toLowerCase()))];
-    const wrong = lgShuffle(pool2).slice(0, 2);
-    return { type: "mc", prompt: "Complete a frase", show: blanked, sub: item[0], answer: w, options: lgShuffle([w, ...wrong]), speak: item[t] };
+    const pool2 = [...new Set(pool.filter(x => x !== item).flatMap(x => lgTokens(main(x))).filter(x => lgNorm(x).length >= 3 && lgNorm(x) !== lgNorm(w)).map(x => x.toLowerCase()))];
+    const tw = d >= 6 ? lgTwin(w) : null, wrong = [...(tw && lgNorm(tw) !== lgNorm(w) ? [tw] : []), ...lgShuffle(pool2)].filter((x, i, a) => a.findIndex(y => lgNorm(y) === lgNorm(x)) === i).slice(0, nOpt - 1);
+    return { type: "mc", prompt: "Complete a frase", show: blanked, sub: d >= 9 ? "" : item[0], answer: w, options: lgShuffle([w, ...wrong]), speak: ans };
   }
-  if (type === "type") return { type, prompt: `Escreva em ${LG_LANGS[lg.lang].name.toLowerCase()}`, show: item[0], answer: item[t], speak: item[t] };
+  if (type === "type") return { type, prompt: `Escreva em ${LG_LANGS[lg.lang].name.toLowerCase()}`, show: item[0], answer: ans, alts: lgAlts(item[t]), speak: ans };
+  if (type === "dict") {
+    if (!lgCanSpeak()) return lgMakeQ("type", item, pool, wordsPool, d);
+    return { type: "type", dict: true, prompt: "Escreva o que você ouvir", answer: ans, alts: lgAlts(item[t]), speak: ans, speakFirst: true, hint: d < 10 ? item[0] : "" };
+  }
   if (type === "match") {
-    const pairs = lgShuffle(wordsPool).slice(0, 4);
+    const pairs = lgShuffle(wordsPool).slice(0, d >= 4 ? 5 : 4);
     return { type, prompt: "Toque nos pares", pairs, left: lgShuffle(pairs.map((p, i) => ({ i, w: p[t] }))), right: lgShuffle(pairs.map((p, i) => ({ i, w: p[0] }))), answer: pairs.map(p => `${p[t]} = ${p[0]}`).join(" · ") };
   }
 }
+// quais tipos de pergunta entram em cada faixa de dificuldade (sem contar o "ligar pares")
+const LG_MIX = [
+  [0, ["mc", "mc", "mcr", "fill", "build", "build", "build", "listen", "type"]],
+  [2, ["mc", "mcr", "fill", "fill", "build", "build", "build", "listen", "type", "type"]],
+  [4, ["mcr", "fill", "fill", "build", "build", "type", "type", "type", "listen", "dict"]],
+  [7, ["mcr", "fill", "fill", "build", "build", "type", "type", "type", "type", "dict", "dict"]],
+  [10, ["fill", "fill", "build", "build", "type", "type", "type", "type", "type", "dict", "dict"]],
+];
 function lgLesson(u, l) {
-  const items = LG_UNITS[u].items, n = items.length, size = Math.ceil(n / LG_LESSONS) + 2;
-  const start = Math.min(n - size, Math.floor(l * (n - size) / Math.max(1, LG_LESSONS - 1)));
-  const focus = lgShuffle(items.slice(Math.max(0, start), Math.max(0, start) + size));
-  const pool = items;
-  const listen = lgCanSpeak() ? "listen" : "build";
-  const types = lgShuffle(u >= 4 ? ["fill", "fill", "type", "type", "build", "build", "mcr", listen, "type"]
-    : u >= 2 ? ["mc", "mcr", "fill", "fill", "build", "build", "type", listen, "build"]
-    : ["mc", "mc", "mcr", "fill", "build", "build", "build", listen, "type"]);
-  const qs = types.map((ty, i) => lgMakeQ(ty, focus[i % focus.length], pool, LG_UNITS[u].words));
-  qs.splice(2 + Math.floor(Math.random() * 4), 0, lgMakeQ("match", null, pool, LG_UNITS[u].words));
-  return qs.slice(0, LG_Q);
+  const d = lgLevel(u, l), items = LG_UNITS[u].items, n = items.length;
+  // cada lição foca num trecho diferente da unidade (com sobreposição) e, depois da 1ª unidade, revisa as anteriores
+  const size = Math.min(n, Math.max(7, Math.ceil(n / LG_LESSONS) + 4));
+  const start = Math.floor(l * (n - size) / Math.max(1, LG_LESSONS - 1));
+  if (!lgLesson.id) { lgLesson.id = new Map(); LG_UNITS.forEach((U, uu) => U.items.forEach((it, i) => lgLesson.id.set(it, uu + "." + i))) }
+  const seen = lg.seen || {}, key = it => lg.lang + lgLesson.id.get(it);   // ex.: "en3.12" = inglês, unidade 4, frase 13
+  // dentro do trecho, as frases menos vistas vêm primeiro (para não repetir sempre as mesmas)
+  let focus = lgShuffle(items.slice(start, start + size)).sort((a, b) => (seen[key(a)] || 0) - (seen[key(b)] || 0));
+  const prev = LG_UNITS.slice(Math.max(0, u - 3), u).flatMap(x => x.items);
+  const review = prev.length ? lgShuffle(prev).sort((a, b) => (seen[key(a)] || 0) - (seen[key(b)] || 0)).slice(0, d >= 6 ? 3 : 2) : [];
+  const mix = LG_MIX.filter(([min]) => d >= min).pop()[1];
+  const types = lgShuffle(mix.map(x => x === "listen" && !lgCanSpeak() ? "build" : x));
+  const list = [...focus, ...review], pool = [...items, ...review];
+  const qs = types.map((ty, i) => lgMakeQ(ty, i >= types.length - review.length && review.length ? review[i % review.length] : list[i % focus.length], pool, LG_UNITS[u].words, d));
+  if (d < 7) qs.splice(2 + Math.floor(Math.random() * 4), 0, lgMakeQ("match", null, pool, LG_UNITS[u].words, d));
+  for (const it of [...focus.slice(0, types.length), ...review]) seen[key(it)] = (seen[key(it)] || 0) + 1;
+  for (const k of Object.keys(seen)) if (!/^(en|es)\d+\.\d+$/.test(k)) delete seen[k];
+  lg.seen = seen;
+  return qs.slice(0, LG_Q + (d >= 4 ? 1 : 0) + (d >= 8 ? 1 : 0));
 }
 
 /* ---------- tela inicial (trilha) ---------- */
@@ -297,7 +254,7 @@ function lgRenderQ() {
     body = `${q.type === "listen" ? `<div class="lg-listen"><button class="lg-spk big" data-lg-say aria-label="Ouvir de novo">🔊</button><button class="lg-spk slow" data-lg-say="slow" aria-label="Ouvir devagar">🐢</button></div>` : ""}
       <div class="lg-opts">${q.options.map((o, i) => `<button class="lg-opt" data-lg-opt="${i}"><kbd>${i + 1}</kbd><span>${esc(o)}</span></button>`).join("")}</div>`;
   } else if (q.type === "type") {
-    body = `<input type="text" id="lg-in" class="lg-input" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Digite a tradução aqui" aria-label="Sua resposta">`;
+    body = `${q.dict ? `<div class="lg-listen"><button class="lg-spk big" data-lg-say aria-label="Ouvir de novo">🔊</button><button class="lg-spk slow" data-lg-say="slow" aria-label="Ouvir devagar">🐢</button></div>${q.hint ? `<div class="lg-sub">Dica: ${esc(q.hint)}</div>` : ""}` : ""}<input type="text" id="lg-in" class="lg-input" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="${q.dict ? "Digite o que você ouviu" : "Digite a tradução aqui"}" aria-label="Sua resposta">`;
   } else if (q.type === "build") {
     body = `<div class="lg-line" id="lg-line" aria-label="Sua resposta"></div><div class="lg-bank" id="lg-bank">${q.bank.map(b => `<button class="lg-tile" data-lg-tile="${b.i}">${esc(b.w)}</button>`).join("")}</div>`;
   } else if (q.type === "match") {
@@ -316,7 +273,7 @@ function lgCheck() {
   const s = lgS, q = s.qs[s.i]; if (!q || s.answered) return;
   let ok;
   if (q.type === "build") ok = lgNorm(s.built.map(i => q.bank.find(b => b.i === i).w).join(" ")) === lgNorm(q.target.join(" "));
-  else if (q.type === "type") { const inp = $("#lg-in"); ok = lgNorm(inp.value) === lgNorm(q.answer); inp.disabled = true; inp.classList.add(ok ? "ok" : "bad") }
+  else if (q.type === "type") { const inp = $("#lg-in"), v = lgNorm(inp.value); ok = (q.alts || [q.answer]).some(a => lgNorm(a) === v); inp.disabled = true; inp.classList.add(ok ? "ok" : "bad") }
   else if (q.type === "match") ok = true;
   else ok = lgNorm(q.options[s.pick]) === lgNorm(q.answer);
   lgResult(ok);
@@ -366,10 +323,10 @@ function lgFinish(failed) {
   if (xp) {
     const was = lg.dayXp; lg.xp += xp; lg.dayXp += xp;
     if (lg.last !== lgToday()) { lg.streak = (lg.streak || 0) + 1; lg.last = lgToday() }
-    if (was < LG_GOAL && lg.dayXp >= LG_GOAL) { msg += " Meta de hoje batida! 🎯 +10 Enzola Coins"; gb += 10; if (typeof chestGive === "function" && chestGive(1, null, "raro")) msg += " 🎁 E um baú raro!" }
-    else if (!failed && !s.meta.rush && !s.wrong && Math.random() < .3 && typeof chestGive === "function" && chestGive(1)) msg += " 🎁 Lição perfeita rendeu um baú comum!"
+    if (was < LG_GOAL && lg.dayXp >= LG_GOAL) { msg += " Meta de hoje batida! 🎯 +10 Enzola Coins"; gb += 10; if (typeof chestGive === "function" && chestGive(1, null, "raro", "lingo_goal")) msg += " 🎁 E um baú raro!" }
+    else if (!failed && !s.meta.rush && !s.wrong && Math.random() < .3 && typeof chestGive === "function" && chestGive(1, null, "comum", "lingo_perfect")) msg += " 🎁 Lição perfeita rendeu um baú comum!"
   }
-  if (gb) lg.goiabas = (lg.goiabas || 0) + gb;
+  if (gb) lgAward(gb, "lingo", { group: false });   // pontos de grupo já contam pelo XP abaixo
   if (typeof grpLog === "function") grpLog(xp);
   lgSave(true);
   if (typeof rewardsCheck === "function") rewardsCheck();
@@ -389,9 +346,11 @@ function lgFinish(failed) {
   box.querySelector("[data-lg-quit]").focus({ preventScroll: true });
 }
 function lgRushBatch() {
-  const units = LG_UNITS.map((_, u) => u).filter(u => lgUnlocked(u, 0));
-  const pool = lgPool(units.length ? units : [0]);
-  return lgShuffle(pool).slice(0, 10).map((it, i) => lgMakeQ(i % 4 === 3 ? "fill" : i % 3 === 2 ? "mcr" : "mc", it, pool, []));
+  const units = LG_UNITS.map((_, u) => u).filter(u => lgUnlocked(u, 0)), top = units.length ? units[units.length - 1] : 0;
+  // o desafio puxa mais frases das unidades recentes e fica mais difícil conforme você avança na trilha
+  const pool = lgPool(units.length ? units : [0]), recent = lgPool(units.slice(-3).length ? units.slice(-3) : [0]);
+  const pick = lgShuffle([...lgShuffle(recent).slice(0, 7), ...lgShuffle(pool).slice(0, 3)]);
+  return pick.map((it, i) => lgMakeQ(i % 4 === 3 ? "fill" : i % 3 === 2 ? "mcr" : "mc", it, recent.length >= 6 ? recent : pool, [], top));
 }
 
 /* ---------- toques e teclado ---------- */
@@ -438,7 +397,7 @@ document.addEventListener("keydown", e => {
   if (!lgS || !$("#lg-lesson")) return;
   if (e.key === "Escape") { e.preventDefault(); lgClose(); return }
   if (e.key === "Enter" && !e.target.closest("button:not(#lg-check)")) { const b = $("#lg-check"); if (b && !b.disabled && !b.hidden) { e.preventDefault(); b.click() } return }
-  if (/^[1-3]$/.test(e.key) && !lgS.answered) { const o = document.querySelector(`[data-lg-opt="${+e.key - 1}"]`); if (o) { e.preventDefault(); o.click() } }
+  if (/^[1-4]$/.test(e.key) && !lgS.answered && e.target.id !== "lg-in") { const o = document.querySelector(`[data-lg-opt="${+e.key - 1}"]`); if (o) { e.preventDefault(); o.click() } }
 });
 if (lgCanSpeak()) { try { speechSynthesis.getVoices(); speechSynthesis.addEventListener("voiceschanged", () => { }) } catch (e) { } }
 

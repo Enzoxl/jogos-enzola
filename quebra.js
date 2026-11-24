@@ -58,7 +58,7 @@ function pzCheck() {
   pz.state = "done"; pz.sec = Math.floor((Date.now() - pz.t0) / 1000); clearInterval(pz.timer);
   const st = pzStats(), d = st.done[pz.id] = st.done[pz.id] || {}; st.plays++;
   pz.first = !d[pz.diff];
-  if (pz.first) { d[pz.diff] = pz.sec || 1; const room = Math.max(0, PZ.dayCap - (st.earned || 0)); pz.coins = Math.min(PZ.coins[pz.diff], room); if (pz.coins > 0 && typeof lgAward === "function") { st.earned += pz.coins; lgAward(pz.coins) } else lgSave(true) }
+  if (pz.first) { d[pz.diff] = pz.sec || 1; const room = Math.max(0, PZ.dayCap - (st.earned || 0)); pz.coins = Math.min(PZ.coins[pz.diff], room); if (pz.coins > 0 && typeof lgAward === "function") { st.earned += pz.coins; lgAward(pz.coins, "puzzle") } else lgSave(true) }
   else { d[pz.diff] = Math.min(d[pz.diff], pz.sec || 1); lgSave(true) }
 }
 function pzTile(i) {

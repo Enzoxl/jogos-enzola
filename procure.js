@@ -43,11 +43,17 @@ function fhBack(c, W, H, th) {
     c.strokeStyle = "rgba(255,255,255,.7)"; c.lineWidth = 3; c.strokeRect(W * .06, H * .08, W * .88, H * .84); c.beginPath(); c.moveTo(W / 2, H * .08); c.lineTo(W / 2, H * .92); c.stroke(); c.beginPath(); c.arc(W / 2, H / 2, H * .15, 0, 7); c.stroke();
   }
 }
+// cenários em "saco": passa pelos 6 antes de repetir e nunca repete o mesmo em fases seguidas
+let fhBag = [], fhLast = null;
+function fhTheme() {
+  if (!fhBag.length) { fhBag = FH_THEMES.slice().sort(() => Math.random() - .5); if (fhBag[fhBag.length - 1] === fhLast) fhBag.unshift(fhBag.pop()) }
+  return fhLast = fhBag.pop();
+}
 function fhBuild(cv, round) {
   const W = cv.clientWidth, H = Math.round(W * .8), dpr = Math.min(2, window.devicePixelRatio || 1);
   cv.width = W * dpr; cv.height = H * dpr; cv.style.height = H + "px";
   const c = cv.getContext("2d"); c.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const th = pick(FH_THEMES), lv = (round - 1) / (FH.rounds - 1);
+  const th = fhTheme(), lv = (round - 1) / (FH.rounds - 1);
   const hh = W * (.2 - .125 * lv), hip = fhImg("hipopotamo.webp"), ar = (hip.naturalWidth || 480) / (hip.naturalHeight || 562), hw = hh * ar;
   const tx = rnd(hw * .6, W - hw * .6), ty = rnd(hh * .55, H - hh * .55), box = { x: tx - hw / 2, y: ty - hh / 2, w: hw, h: hh };
   fhBack(c, W, H, th);
@@ -128,7 +134,7 @@ function fhOver(timeout) {
   const st = fhStats(); st.plays++; st.best = Math.max(st.best || 0, fh.found);
   const want = FH.coins[Math.min(fh.found, FH.rounds)], room = Math.max(0, FH.dayCap - (st.earned || 0));
   fh.coins = Math.min(want, room); fh.capped = want > room;
-  if (fh.coins > 0 && typeof lgAward === "function") { st.earned += fh.coins; lgAward(fh.coins) } else lgSave(true);
+  if (fh.coins > 0 && typeof lgAward === "function") { st.earned += fh.coins; lgAward(fh.coins, "find") } else lgSave(true);
   fh.state = "reveal"; fh.over = false;
   setTimeout(() => { if (fh.view !== "game" || !$(".fh")) return; fh.over = true; fh.state = "done"; cancelAnimationFrame(fh.raf); $(".fh").insertAdjacentHTML("beforeend", fhEndHTML()) }, 1800);
 }
