@@ -268,9 +268,9 @@ function slRenderVoice() {
     <div class="sl-ctl" role="toolbar" aria-label="Controles da chamada">
       <button class="sl-b${c.muted ? " off" : ""}" data-sl="mute" aria-pressed="${c.muted}" title="${c.muted ? "Ativar microfone" : "Silenciar microfone"}">${c.muted ? "🔇" : "🎙"}<span>${c.muted ? "Mudo" : "Mic"}</span></button>
       <button class="sl-b${c.deaf ? " off" : ""}" data-sl="deaf" aria-pressed="${c.deaf}" title="Ensurdecer (parar de ouvir)">${c.deaf ? "🔕" : "🎧"}<span>${c.deaf ? "Surdo" : "Áudio"}</span></button>
-      ${canShare ? `<button class="sl-b${c.screen ? " on" : ""}" data-sl="share" aria-pressed="${!!c.screen}" title="${c.screen ? "Parar transmissão" : "Transmitir tela"}">🖥<span>${c.screen ? "Parar" : "Tela"}</span></button>` : ""}
+      ${true ? `<button class="sl-b${c.screen ? " on" : ""}${canShare ? "" : " na"}" data-sl="share" aria-pressed="${!!c.screen}" title="${c.screen ? "Parar transmissão" : "Transmitir tela"}">🖥<span>${c.screen ? "Parar" : "Tela"}</span></button>` : ""}
       <button class="sl-b end" data-sl="leave" title="Sair da chamada">📞<span>Sair</span></button></div>
-    ${canShare ? "" : `<p class="muted sl-note">Transmitir tela só funciona no computador.</p>`}`;
+    ${canShare ? "" : `<p class="muted sl-note">Neste aparelho o navegador não permite transmitir a tela (funciona no computador e no iPhone com iOS 27 ou mais novo).</p>`}`;
   box.querySelectorAll("[data-slv]").forEach(f => { const s = shares[+f.dataset.slv]; if (s && s.el) f.insertBefore(s.el, f.firstChild) });
 }
 function slLocalShare(c) {
@@ -291,6 +291,7 @@ function slApplyDeaf() { const c = sl.call; Object.values(sl.vel).forEach(e => {
 async function slShare() {
   const c = sl.call; if (!c) return;
   if (c.screen) return slShareStop();
+  if (!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia)) { toast("Este navegador não permite transmitir a tela. Use o computador ou um iPhone com iOS 27+."); return }
   let s; try { s = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: true }) } catch (e) { if (e && e.name !== "NotAllowedError") toast("Não consegui iniciar a transmissão de tela."); return }
   if (!sl.call) { s.getTracks().forEach(t => t.stop()); return }
   c.screen = s; const v = s.getVideoTracks()[0]; if (v) { try { v.contentHint = "detail" } catch (e) { } v.onended = () => { if (sl.call && sl.call.screen === s) slShareStop() } }

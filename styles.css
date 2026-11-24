@@ -1866,3 +1866,4 @@ button.cg-st{cursor:pointer;transition:background .15s,transform .12s}button.cg-
   .sl-back{display:inline-grid}.sl-chs{border-right:0}
 }
 .sl-ctl{position:sticky;bottom:0;background:var(--surface);padding-bottom:4px;z-index:2}
+.sl-b.na{opacity:.5}
