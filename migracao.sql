@@ -483,3 +483,34 @@ begin
 end $$;
 revoke all on function public.group_log(int), public.group_claim(uuid,int) from public, anon;
 grant execute on function public.group_log(int), public.group_claim(uuid,int) to authenticated;
+
+-- ===== Salas: chat de texto por grupo e chamadas (voz, câmera e tela) =====
+-- Pode rodar de novo: não apaga nada. Se a tabela já existir, só garante as regras de acesso.
+create table if not exists public.group_messages (
+  id uuid primary key default gen_random_uuid(),
+  group_id uuid not null references public.groups(id) on delete cascade,
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  body text not null check (char_length(body) between 1 and 1000),
+  created_at timestamptz not null default now()
+);
+create index if not exists group_messages_group_idx on public.group_messages (group_id, created_at desc);
+alter table public.group_messages enable row level security;
+drop policy if exists "salas: membros leem" on public.group_messages;
+create policy "salas: membros leem" on public.group_messages for select to authenticated using (public.is_group_member(group_id, auth.uid()));
+drop policy if exists "salas: membros escrevem" on public.group_messages;
+create policy "salas: membros escrevem" on public.group_messages for insert to authenticated with check (user_id = auth.uid() and public.is_group_member(group_id, auth.uid()));
+drop policy if exists "salas: autor apaga" on public.group_messages;
+create policy "salas: autor apaga" on public.group_messages for delete to authenticated using (user_id = auth.uid());
+do $$ begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime')
+     and not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'group_messages') then
+    alter publication supabase_realtime add table public.group_messages;
+  end if;
+end $$;
+-- Canal privado "call:<id do grupo>" (presença + sinalização das chamadas): só membros do grupo entram e enviam.
+drop policy if exists "salas: membros ouvem a chamada" on realtime.messages;
+create policy "salas: membros ouvem a chamada" on realtime.messages for select to authenticated using (
+  case when realtime.topic() ~ '^call:[0-9a-f-]{36}$' then public.is_group_member(substring(realtime.topic() from 6)::uuid, auth.uid()) else false end);
+drop policy if exists "salas: membros falam na chamada" on realtime.messages;
+create policy "salas: membros falam na chamada" on realtime.messages for insert to authenticated with check (
+  case when realtime.topic() ~ '^call:[0-9a-f-]{36}$' then public.is_group_member(substring(realtime.topic() from 6)::uuid, auth.uid()) else false end);

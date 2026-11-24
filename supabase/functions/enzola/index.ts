@@ -8,6 +8,8 @@
 //   push_key/push  → notificações no celular (cutucadas, sugestões, mensagens). As chaves são criadas sozinhas.
 //   recuperar      → troca a senha com o código de recuperação (sem e-mail).
 //   excluir_conta  → apaga a conta e todos os dados do usuário logado.
+//   turn           → servidor TURN para as chamadas da aba Salas (conecta em 4G e redes com firewall).
+//                    Segredos: CF_TURN_KEY_ID + CF_TURN_API_TOKEN (Cloudflare) ou TURN_URLS + TURN_USERNAME + TURN_CREDENTIAL.
 //
 // Como publicar: Supabase > Edge Functions > Deploy a new function > nome "enzola" > cole este arquivo > Deploy.
 // Segredos (Edge Functions > Secrets): ITAD_KEY e YOUTUBE_KEY são opcionais.
@@ -304,6 +306,29 @@ async function recuperar(b: any) {
   return json({ ok: true, email: user.email });
 }
 
+// ---------------- TURN para as chamadas (aba Salas) ----------------
+// Só para quem está logado. Cloudflare gera credenciais temporárias; ou usa um TURN fixo dos segredos.
+async function turn(req: Request) {
+  const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+  const me = await fetch(`${SB()}/auth/v1/user`, { headers: { apikey: KEY(), Authorization: `Bearer ${token}` } });
+  if (!me.ok) return json({ iceServers: [] }, 401);
+  const id = env("CF_TURN_KEY_ID"), tok = env("CF_TURN_API_TOKEN");
+  if (id && tok) {
+    const r = await fetch(`https://rtc.live.cloudflare.com/v1/turn/keys/${id}/credentials/generate-ice-servers`, {
+      method: "POST", headers: { Authorization: `Bearer ${tok}`, "Content-Type": "application/json" }, body: JSON.stringify({ ttl: 86400 }),
+    });
+    if (r.ok) {
+      const d = await r.json();
+      // as portas 53 costumam travar no navegador
+      const list = (d.iceServers || []).map((x: any) => ({ ...x, urls: [].concat(x.urls).filter((u: string) => !/:53\b/.test(u)) })).filter((x: any) => x.urls.length);
+      return json({ iceServers: list });
+    }
+  }
+  const urls = env("TURN_URLS").split(",").map((u: string) => u.trim()).filter(Boolean);
+  if (urls.length) return json({ iceServers: [{ urls, username: env("TURN_USERNAME"), credential: env("TURN_CREDENTIAL") }] });
+  return json({ iceServers: [] });
+}
+
 // ---------------- administrador (oculto) ----------------
 async function adminId(req: Request): Promise<string | null> {
   const token = (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
@@ -390,6 +415,7 @@ export async function handle(req: Request): Promise<Response> {
       case "recuperar": return await recuperar(b);
       case "admin_me": case "admin_list": case "admin_ban": case "admin_unban": return await admin(req, b);
       case "excluir_conta": return await excluirConta(req);
+      case "turn": return await turn(req);
       case "ping": return json({ ok: true, itad: !!env("ITAD_KEY"), youtube: !!env("YOUTUBE_KEY") });
       default: return json({ error: "ação desconhecida" }, 400);
     }

@@ -72,3 +72,17 @@ continuam funcionando.
 ## 10. Se a busca disser que a chave da RAWG foi recusada
 A chave grátis da RAWG tem limite mensal. Crie outra em https://rawg.io/apidocs e troque `RAWG_KEY` no `config.js`.
 Com a função publicada, a busca continua achando jogos pela Steam mesmo com a RAWG fora.
+
+## 11. Salas (chat e chamadas por grupo)
+1. **Banco:** rode o `migracao.sql` de novo. O final dele cria a tabela `group_messages` (se ainda não existir) e as regras
+   que deixam só os membros do grupo entrarem no canal da chamada (`realtime.messages`).
+   No Supabase, em Realtime > Settings, deixe desligado "Allow public access" (os canais das salas são privados).
+2. **Função:** publique de novo o `supabase/functions/enzola/index.ts` (ganhou a ação `turn`).
+3. **TURN (recomendado):** sem ele, chamadas entre pessoas no 4G ou em redes com firewall podem não conectar.
+   - Cloudflare (grátis para pouco uso): painel da Cloudflare > Realtime > TURN Server > Create. Copie o *Token ID* e o
+     *API Token* e crie os segredos `CF_TURN_KEY_ID` e `CF_TURN_API_TOKEN` em Edge Functions > Secrets.
+   - Ou outro provedor com usuário e senha fixos: segredos `TURN_URLS` (separadas por vírgula), `TURN_USERNAME` e `TURN_CREDENTIAL`.
+   Nenhuma chave fica no GitHub: o site pede as credenciais à função na hora de entrar na sala.
+4. **Celular:** os navegadores do Android e do iPhone não deixam sites transmitirem a tela (limitação do sistema).
+   No celular o botão "Tela" explica isso e oferece a **câmera** (frontal ou traseira). No computador a tela funciona normalmente.
+5. Entrar numa sala em outro aparelho encerra a chamada no aparelho anterior (igual ao Discord).
