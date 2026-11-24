@@ -154,6 +154,7 @@ async function slJoin(room) {
   slChan(gid); const ch = sl.chans[gid];
   if (ch.state === "joined") slTrack();   // senão o track sai no SUBSCRIBED
   if (!sl.speakT) sl.speakT = setInterval(slSpeakTick, 140);
+  if (typeof musicPause === "function") musicPause();   // música de fundo para enquanto estiver na chamada
   slRender(); slPill();
 }
 async function slLeave(silent) {
@@ -168,6 +169,7 @@ async function slLeave(silent) {
   if (c.gid !== sl.gid || !sl.open) slDrop(c.gid);
   if (!silent) { slRender() }
   slPill();
+  if (!silent && typeof musicPlay === "function" && typeof bgm !== "undefined" && bgm.started && !bgm.userPaused) musicPlay();
 }
 function slReconcile() {
   const c = sl.call; if (!c) return;
