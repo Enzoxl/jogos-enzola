@@ -31,6 +31,7 @@ async function loadFriends() {
   }
   fr.loaded = true; fr.allGames = null; updateBadge();
   if (tab === "amigos") renderFriends(); if (tab === "amigo") renderFriendPage(); if (tab === "jogo" && gv) renderGame();
+  if (tab === "salas" && typeof slGroupsChanged === "function") slGroupsChanged();
 }
 function updateBadge() {
   const b = $("#fr-badge"); if (!b) return;
@@ -271,7 +272,7 @@ function subscribeRT() {
 }
 function unsubRT() { for (const c of rtChans) { try { sb.removeChannel(c) } catch (e) { } } rtChans = [] }
 async function socialStart() { await loadFriends(); await applyInvite(); await loadNotifs(); subscribeRT(); pushSync() }
-function socialReset() { if (typeof hmReset === "function") hmReset(); unsubRT(); fr = newFr(); fpv = null; chat = null; updateBadge(); updateBell() }
+function socialReset() { if (typeof slReset === "function") slReset(); if (typeof hmReset === "function") hmReset(); unsubRT(); fr = newFr(); fpv = null; chat = null; updateBadge(); updateBell() }
 
 /* ---------- jogos dos amigos (para "amigos que têm") ---------- */
 async function friendsWithGame(name) {

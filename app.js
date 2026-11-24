@@ -11,7 +11,7 @@ const labCls = n => n.length > 8 ? " xl" : n.length > 5 ? " md" : n.length > 3 ?
 const TIERS = [["S", "#F28B82"], ["A", "#F6B26B"], ["B", "#F5DC78"], ["C", "#A8D5A2"], ["D", "#9CC0F5"]];
 const PLATS = ["PC", "PlayStation", "Xbox", "Switch", "Outro"];
 const PLATCOL = { "PC": "#6C93FF", "PlayStation": "#4F8BE8", "Xbox": "#4ADE9B", "Switch": "#FF7A7A", "Outro": "#A88BFA" };
-const TABS = ["inicio", "movimento", "perfil", "catalogo", "galeria", "tier", "desejos", "amigos", "resumo", "idiomas", "config"];
+const TABS = ["inicio", "movimento", "perfil", "catalogo", "galeria", "tier", "desejos", "amigos", "salas", "resumo", "idiomas", "config"];
 const CAT_SUBS = ["catalogo", "desejos", "resumo"];   // Lista de desejos e Resumo agora ficam dentro do Catálogo
 const NEW_COLS = ["hours", "metacritic", "playtime", "rawg_id", "steam_id", "target_price", "price", "price_checked_at"];
 const PRICE_TTL = 12 * 3600 * 1000;
@@ -866,6 +866,9 @@ function show(h) {
   for (const s of $$("main.wrap > section")) s.hidden = s.id !== tab;
   if (tab === "idiomas") { renderLingo(); window.scrollTo({ top: 0 }); if (window.xfOpenInbox) { window.xfOpenInbox = false; if (typeof xfStart === "function") { xf.st = { step: "inbox" }; xfRender(); xfLoad() } } return }
   closeMenus();
+  if (tab !== "salas" && typeof slLeaveTab === "function") slLeaveTab();
+  if (typeof slPill === "function") slPill();
+  if (tab === "salas") { slOpen(); window.scrollTo({ top: 0 }); return }
   if (tab === "amigos" && user) loadFriends();
   if (tab === "desejos" && loaded) refreshPrices(false);
   if (tab === "jogo") { openGame(routeArg); window.scrollTo({ top: 0 }); return }

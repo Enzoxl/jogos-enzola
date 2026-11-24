@@ -69,6 +69,7 @@
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4l2-2z"/><path d="M10 20a2 2 0 0 0 4 0"/></symbol>
   <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
   <symbol id="i-hand" viewBox="0 0 24 24"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V12"/><path d="M11 11.5v-2a1.5 1.5 0 0 1 3 0V12"/><path d="M14 10.5a1.5 1.5 0 0 1 3 0V12"/><path d="M17 11.5a1.5 1.5 0 0 1 3 0V16a6 6 0 0 1-6 6h-2a6 6 0 0 1-5-2.7L4.3 15a1.6 1.6 0 0 1 2.6-1.8L8 14.5"/></symbol>
+  <symbol id="i-headset" viewBox="0 0 24 24"><path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></symbol>
   <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3 10 14"/><path d="m21 3-7 18-4-7-7-4 18-7z"/></symbol>
   <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
   <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m10.8 12.2 9.2-9.2M17 6l3 3M14 9l2 2"/></symbol>
@@ -170,6 +171,7 @@
         <button role="tab" data-tab="galeria"><svg class="ic"><use href="#i-grid"/></svg><span>Galeria</span></button>
         <button role="tab" data-tab="tier"><svg class="ic"><use href="#i-layers"/></svg><span>Tier List</span></button>
         <button role="tab" data-tab="amigos"><svg class="ic"><use href="#i-users"/></svg><span>Amigos</span><i class="nb" id="fr-badge" hidden></i></button>
+        <button role="tab" data-tab="salas"><svg class="ic"><use href="#i-headset"/></svg><span>Salas</span></button>
         <button role="tab" data-tab="idiomas"><svg class="ic"><use href="#i-lingo"/></svg><span>Minigames</span></button>
       </nav>
       <div class="who">
@@ -255,6 +257,7 @@
     </section>
 
     <section id="amigos" hidden></section>
+    <section id="salas" hidden></section>
     <section id="amigo" hidden></section>
     <section id="jogo" hidden></section>
     <section id="config" hidden></section>
@@ -310,6 +313,7 @@
 <script src="corrida.js"></script>
 <script src="procure.js"></script>
 <script src="quebra.js"></script>
+<script src="salas.js"></script>
 <script src="arcade.js"></script>
 <script src="polish.js" defer></script>
 <script src="show.js"></script>
