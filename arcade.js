@@ -1,7 +1,7 @@
 /* Jogos Enzola — aba "Outros jogos": lista de minigames. Primeiro: Cobra do Hipopótamo (estilo Snake). */
 const AR_GAMES = [
   { id: "snake", emoji: "🍉", name: "Cobra do Hipopótamo", desc: "Guie o hipopótamo, coma melancias e cresça sem bater na parede nem em si mesmo." },
-  { id: "cards", emoji: "🃏", name: "Duelo de Cartas", desc: "49 cartas de hipopótamos, personagens e skins. Escolha o atributo certo e vença a CPU em 5 rodadas." },
+  { id: "cards", emoji: "🃏", name: "Duelo de Cartas", desc: "55 cartas de hipopótamos, personagens e skins. Escolha o atributo certo e vença a CPU em 5 rodadas." },
   { id: "race", emoji: "🏁", name: "Corrida de Hipopótamos", desc: "Escolha o hipopótamo vencedor, aposte Enzola Coins e receba o dobro se ele ganhar." },
   { id: "find", emoji: "🔎", name: "Cadê o Enzola?", desc: "Ache o hipopótamo escondido em cenários lotados de personagens, antes do tempo acabar." },
   { id: "puzzle", emoji: "🧩", name: "Quebra-cabeça de Hipopótamos", desc: "Monte as fotos do álbum: 3 tamanhos, dicas e moedas na primeira vez que completar cada foto." },

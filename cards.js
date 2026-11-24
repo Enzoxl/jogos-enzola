@@ -1,5 +1,5 @@
 /* Jogos Enzola — Duelo de Cartas (aba "Outros jogos")
-   49 cartas: personagens da intro e da loja, bichos extras, fotos de hipopótamos do álbum, skins de hipopótamo
+   55 cartas: personagens da intro e da loja, bichos extras, fotos de hipopótamos do álbum, skins de hipopótamo
    (com o fundo do banner) e o Coringa (hipopótamo principal). Regras completas em CG_HELP. */
 const CG_ATT = [{ k: "for", n: "Força", i: "💪" }, { k: "fof", n: "Fofura", i: "🥰" }, { k: "sor", n: "Sorte", i: "🍀" }, { k: "esp", n: "Esperteza", i: "🧠" }];
 const CG_RAR = ["", "Comum", "Rara", "Épica", "Lendária"];
